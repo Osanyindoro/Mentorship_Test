@@ -124,7 +124,7 @@ export const apiService = {
 
         localStorage.setItem('mently_user', JSON.stringify(authPayload.user));
         localStorage.setItem('mently_auth_token', authPayload.token);
-        resolve(authPayload.user);
+        resolve(authPayload);
       }, 300);
     });
   },
