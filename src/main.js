@@ -576,12 +576,19 @@ function renderLoginPage() {
         <div class="login-card-side">
           <div class="login-card">
             
+            <!-- Top Tab Switcher: Log In vs Sign Up / Register -->
+            <div style="display: flex; gap: 0.4rem; background: var(--bg-main); padding: 0.35rem; border-radius: 12px; border: 1px solid var(--border-color); margin-bottom: 1.5rem;">
+              <button type="button" id="tabModeLogin" style="flex: 1; padding: 0.65rem 0.5rem; border-radius: 8px; border: none; font-weight: 800; font-size: 0.88rem; cursor: pointer; transition: all 0.2s ease; background: ${state.loginMode === 'login' ? 'var(--brand-primary)' : 'transparent'}; color: ${state.loginMode === 'login' ? '#ffffff' : 'var(--text-secondary)'}; shadow: ${state.loginMode === 'login' ? '0 2px 8px rgba(0,0,0,0.12)' : 'none'};">
+                <i class="fa-solid fa-right-to-bracket"></i> Log In
+              </button>
+              <button type="button" id="tabModeRegister" style="flex: 1; padding: 0.65rem 0.5rem; border-radius: 8px; border: none; font-weight: 800; font-size: 0.88rem; cursor: pointer; transition: all 0.2s ease; background: ${state.loginMode === 'register' ? 'var(--brand-primary)' : 'transparent'}; color: ${state.loginMode === 'register' ? '#ffffff' : 'var(--text-secondary)'}; shadow: ${state.loginMode === 'register' ? '0 2px 8px rgba(0,0,0,0.12)' : 'none'};">
+                <i class="fa-solid fa-user-plus"></i> Sign Up / Register
+              </button>
+            </div>
+
             <div class="login-card-header">
-              <div style="width: 48px; height: 48px; border-radius: 12px; background: var(--badge-blue-bg); color: var(--brand-primary); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; margin: 0 auto 1rem auto;">
-                <i class="fa-solid ${state.loginMode === 'register' ? 'fa-user-plus' : 'fa-lock'}"></i>
-              </div>
-              <h2 class="login-card-title">${state.loginMode === 'register' ? 'Create Your Profile' : 'Welcome Back'}</h2>
-              <p class="login-card-sub">${state.loginMode === 'register' ? 'Sign up as a Candidate/Associate or Mentor to get started.' : 'Sign in to access your mentorship portal.'}</p>
+              <h2 class="login-card-title">${state.loginMode === 'register' ? 'Create Your Account' : 'Welcome Back'}</h2>
+              <p class="login-card-sub">${state.loginMode === 'register' ? 'Register your candidate or mentor profile to access the portal.' : 'Sign in to access your mentorship workspace.'}</p>
             </div>
 
             <!-- Error Alert -->
@@ -593,12 +600,27 @@ function renderLoginPage() {
             ` : ''}
 
             ${state.loginMode === 'register' ? `
-              <!-- REGISTRATION FORM -->
+              <!-- REGISTRATION FORM WITH AVATAR UPLOAD -->
               <form id="registerAuthForm">
                 
+                <!-- AVATAR PHOTO UPLOADER -->
+                <div class="form-group" style="text-align: center; margin-bottom: 1.25rem;">
+                  <label class="form-label">Profile Photo</label>
+                  <div style="display: flex; align-items: center; justify-content: center; gap: 1rem; margin-top: 0.5rem;">
+                    <img src="${state.registerForm.avatar || '/assets/assoc_amina.jpg'}" id="regAvatarPreview" style="width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 3px solid var(--brand-primary); flex-shrink: 0;" />
+                    <div style="text-align: left;">
+                      <label for="regAvatarInput" class="btn-brand-primary" style="padding: 0.4rem 0.85rem; font-size: 0.8rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem;">
+                        <i class="fa-solid fa-upload"></i> Upload Headshot
+                      </label>
+                      <input type="file" id="regAvatarInput" accept="image/*" style="display: none;" />
+                      <div style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 0.3rem;">JPG or PNG photo file</div>
+                    </div>
+                  </div>
+                </div>
+
                 <!-- FIELD 1: ACCOUNT TYPE -->
                 <div class="form-group">
-                  <label class="form-label" for="regRole">I am signing up as a</label>
+                  <label class="form-label" for="regRole">Account Type</label>
                   <select class="form-select" id="regRole" required style="border-radius: 10px; padding: 0.7rem 1rem;">
                     <option value="associate" ${state.registerForm.role === 'associate' ? 'selected' : ''}>Candidate / Associate Scholar</option>
                     <option value="mentor" ${state.registerForm.role === 'mentor' ? 'selected' : ''}>Mentor / Employer</option>
@@ -649,10 +671,6 @@ function renderLoginPage() {
                 <button type="submit" class="btn-brand-primary login-submit-btn" id="btnSubmitRegister" ${form.isSubmitting ? 'disabled' : ''}>
                   ${form.isSubmitting ? `<i class="fa-solid fa-circle-notch fa-spin"></i> Creating Profile...` : '<i class="fa-solid fa-user-check"></i> CREATE PROFILE & LOG IN'}
                 </button>
-
-                <div style="text-align: center; margin-top: 1rem; font-size: 0.88rem; color: var(--text-secondary);">
-                  Already have an account? <a id="btnToggleLogin" style="color: var(--brand-primary); font-weight: 800; cursor: pointer;">Sign In</a>
-                </div>
               </form>
             ` : `
               <!-- LOGIN FORM -->
@@ -1871,7 +1889,19 @@ function bindEvents() {
       showToast('Password reset instructions have been sent to your email.', 'fa-envelope');
     });
 
-    // Toggle between Login & Register mode
+    // Top Mode Tab Switcher: Log In vs Sign Up / Register
+    document.getElementById('tabModeLogin')?.addEventListener('click', () => {
+      state.loginMode = 'login';
+      state.loginForm.errorMessage = null;
+      render();
+    });
+    document.getElementById('tabModeRegister')?.addEventListener('click', () => {
+      state.loginMode = 'register';
+      state.loginForm.errorMessage = null;
+      render();
+    });
+
+    // Toggle between Login & Register mode links
     document.getElementById('btnToggleRegister')?.addEventListener('click', () => {
       state.loginMode = 'register';
       state.loginForm.errorMessage = null;
@@ -1886,6 +1916,24 @@ function bindEvents() {
       state.registerForm.role = e.target.value;
       render();
     });
+
+    // Sign Up Profile Photo File Upload Listener
+    const regAvatarInput = document.getElementById('regAvatarInput');
+    if (regAvatarInput) {
+      regAvatarInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (evt) => {
+            state.registerForm.avatar = evt.target.result;
+            const preview = document.getElementById('regAvatarPreview');
+            if (preview) preview.src = evt.target.result;
+            showToast('Profile photo selected!', 'fa-image');
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
 
     // Registration Form Submit Handler
     const regFormEl = document.getElementById('registerAuthForm');
@@ -1913,7 +1961,8 @@ function bindEvents() {
             institutionOrOrg,
             title: role === 'associate' ? 'Mastercard Foundation Scholar' : 'Executive Mentor',
             trackOrDomain,
-            bio
+            bio,
+            avatar: state.registerForm.avatar
           });
 
           state.currentUser = authResult.user;

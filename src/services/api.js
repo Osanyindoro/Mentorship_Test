@@ -128,7 +128,7 @@ export const apiService = {
   },
 
   // Register Account API Layer (Associate or Mentor)
-  async register({ selectedRole, name, email, password, institutionOrOrg, title, trackOrDomain, bio }) {
+  async register({ selectedRole, name, email, password, institutionOrOrg, title, trackOrDomain, bio, avatar }) {
     if (!selectedRole) throw new Error("Please select account type (Associate or Mentor).");
     if (!name) throw new Error("Please enter your full name.");
     const cleanEmail = (email || '').trim().toLowerCase();
@@ -139,7 +139,7 @@ export const apiService = {
       try {
         const res = await request('/auth/register', {
           method: 'POST',
-          body: JSON.stringify({ role: selectedRole, name, email: cleanEmail, password, institutionOrOrg, title, trackOrDomain, bio })
+          body: JSON.stringify({ role: selectedRole, name, email: cleanEmail, password, institutionOrOrg, title, trackOrDomain, bio, avatar })
         });
         if (res.token) {
           localStorage.setItem('mently_auth_token', res.token);
@@ -164,10 +164,10 @@ export const apiService = {
             email: cleanEmail,
             password,
             institution: institutionOrOrg || "Ashesi University / Carnegie Mellon Africa",
-            title: title || "Mastercard Foundation Scholar & Tech Fellow",
-            track: trackOrDomain || "Software Engineering & Data Science",
+            title: title || "Mastercard Foundation Scholar",
+            track: trackOrDomain || "Software Engineering & AI",
             bio: bio || "Passionate scholar focused on leadership and career excellence.",
-            avatar: "/assets/assoc_amina.jpg",
+            avatar: avatar || "/assets/assoc_amina.jpg",
             skills: ["Leadership", "Problem Solving", "Teamwork"],
             careerGoal: "Lead innovative projects in Africa."
           };
@@ -180,11 +180,11 @@ export const apiService = {
             name,
             email: cleanEmail,
             password,
-            title: title || "Senior Consultant & Executive Mentor",
+            title: title || "Executive Mentor",
             organization: institutionOrOrg || "Jobberman Partner Network",
             domain: trackOrDomain || "Software Engineering & AI",
             bio: bio || "Experienced industry professional eager to empower Mastercard Foundation Scholars.",
-            avatar: "/assets/mentor_samuel.jpg",
+            avatar: avatar || "/assets/mentor_samuel.jpg",
             rating: 5.0,
             totalSessions: 0,
             expertise: ["Mentorship", "Career Roadmap", "Interview Prep"],

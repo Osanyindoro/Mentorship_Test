@@ -91,7 +91,7 @@ export default function handler(req, res) {
   }
 
   if (req.method === 'POST' && url.includes('/auth/register')) {
-    const { role, name, email, institutionOrOrg, title, trackOrDomain, bio } = req.body || {};
+    const { role, name, email, institutionOrOrg, title, trackOrDomain, bio, avatar } = req.body || {};
     const cleanEmail = (email || '').trim().toLowerCase();
     const selectedRole = role || 'associate';
     const newId = selectedRole === 'associate' ? `MCF-2026-REG-${Math.floor(100 + Math.random() * 900)}` : `MEN-REG-${Math.floor(100 + Math.random() * 900)}`;
@@ -107,7 +107,7 @@ export default function handler(req, res) {
       track: trackOrDomain || 'Software Engineering & AI',
       domain: trackOrDomain || 'Software Engineering & AI',
       bio: bio || 'Active Mastercard Foundation portal member.',
-      avatar: selectedRole === 'associate' ? '/assets/assoc_amina.jpg' : '/assets/mentor_samuel.jpg'
+      avatar: avatar || (selectedRole === 'associate' ? '/assets/assoc_amina.jpg' : '/assets/mentor_samuel.jpg')
     };
 
     if (selectedRole === 'mentor') {
