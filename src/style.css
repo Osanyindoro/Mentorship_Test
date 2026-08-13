@@ -158,6 +158,19 @@ a {
   box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
 }
 
+.brand-logo-img {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
+  transition: var(--transition-fast);
+}
+
+[data-theme="dark"] .brand-logo-img {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
 .brand-text {
   display: flex;
   flex-direction: column;
@@ -292,33 +305,110 @@ a {
   box-shadow: var(--shadow-md);
 }
 
-/* Navigation Sub-bar */
-.mently-subnav {
-  background: var(--bg-card);
-  border-bottom: 1px solid var(--border-color);
-  padding: 0 2rem;
+/* ==========================================================================
+   VERTICAL SIDEBAR NAVIGATION LAYOUT
+   ========================================================================== */
+.portal-app-wrapper {
   display: flex;
-  align-items: center;
-  gap: 1.5rem;
+  min-height: calc(100vh - 72px);
+  width: 100%;
 }
 
-.subnav-link {
-  padding: 0.85rem 0.25rem;
-  font-size: 0.88rem;
-  font-weight: 700;
-  color: var(--text-secondary);
-  border-bottom: 3px solid transparent;
-  cursor: pointer;
+.portal-sidebar-nav {
+  width: 250px;
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border-color);
+  padding: 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex-shrink: 0;
+  transition: transform var(--transition-medium);
+  z-index: 100;
+}
+
+.portal-sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.nav-sidebar-link {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.85rem;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  text-decoration: none;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+}
+
+.nav-sidebar-link i {
+  font-size: 1.05rem;
+  width: 20px;
+  text-align: center;
+  color: var(--text-muted);
   transition: var(--transition-fast);
 }
 
-.subnav-link:hover, .subnav-link.active {
-  color: var(--brand-primary);
-  border-bottom-color: var(--brand-primary);
+.nav-sidebar-link:hover {
+  background: var(--bg-input);
+  color: var(--text-primary);
 }
+
+.nav-sidebar-link:hover i {
+  color: var(--brand-primary);
+}
+
+.nav-sidebar-link.active {
+  background: var(--badge-blue-bg);
+  color: var(--brand-primary);
+  font-weight: 800;
+}
+
+.nav-sidebar-link.active i {
+  color: var(--brand-primary);
+}
+
+.sidebar-bottom-help {
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+  margin-top: auto;
+}
+
+.portal-main-view {
+  flex: 1;
+  min-width: 0;
+  padding: 2rem;
+  background: var(--bg-main);
+  overflow-y: auto;
+}
+
+/* Mobile Sidebar Drawer Overlay & Toggle */
+.btn-mobile-nav-toggle {
+  display: none;
+}
+
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 99;
+}
+
 
 /* ==========================================================================
    MAIN LAYOUT & DISCOVERY
@@ -1464,24 +1554,45 @@ a {
 .auth-user-badge {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  background: var(--bg-input);
-  padding: 0.35rem 0.85rem 0.35rem 0.4rem;
-  border-radius: 50px;
-  border: 1px solid var(--border-color);
+  gap: 0.65rem;
+  background: transparent;
+  padding: 0.2rem 0.5rem;
 }
 
 .auth-user-avatar {
-  width: 28px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   object-fit: cover;
 }
 
+.auth-user-info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
 .auth-user-name {
-  font-size: 0.82rem;
+  font-size: 0.88rem;
   font-weight: 700;
   color: var(--text-primary);
+}
+
+.auth-user-role {
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.auth-user-role.role-associate, .auth-user-role.role-Associate {
+  color: #2563EB !important;
+}
+
+.auth-user-role.role-mentor, .auth-user-role.role-Mentor {
+  color: #D97706 !important;
+}
+
+.auth-user-role.role-admin, .auth-user-role.role-Admin {
+  color: #7C3AED !important;
 }
 
 .btn-logout {
@@ -1504,8 +1615,34 @@ a {
   border-color: var(--brand-rose);
 }
 
-/* Media Queries for Public & Login Pages */
+/* Media Queries for Public & Login Pages & Navigation Drawer */
 @media (max-width: 992px) {
+  .btn-mobile-nav-toggle {
+    display: inline-flex;
+  }
+
+  .portal-sidebar-nav {
+    position: fixed;
+    top: 72px;
+    left: 0;
+    bottom: 0;
+    width: 270px;
+    transform: translateX(-100%);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .portal-sidebar-nav.mobile-open {
+    transform: translateX(0);
+  }
+
+  .sidebar-backdrop.active {
+    display: block;
+  }
+
+  .portal-main-view {
+    padding: 1.25rem 1rem;
+  }
+
   .landing-hero {
     grid-template-columns: 1fr;
     padding: 2.5rem 1.75rem;
@@ -1557,3 +1694,214 @@ a {
     padding: 1.5rem;
   }
 }
+
+/* ==========================================================================
+   CALENDLY-STYLE AVAILABILITY MODAL & DATE PICKER
+   ========================================================================== */
+.calendly-modal-card {
+  max-width: 520px;
+  width: 100%;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.calendly-picker-container {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  background: var(--bg-main);
+}
+
+.calendly-month-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.calendly-month-title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.calendly-month-nav {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.calendly-nav-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.calendly-nav-btn:hover {
+  background: var(--bg-input);
+  color: var(--brand-primary);
+}
+
+.calendly-weekdays-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.calendly-weekday-col {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  padding: 0.4rem 0;
+}
+
+.calendly-days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.35rem;
+}
+
+.calendly-day-btn {
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 0.88rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: var(--transition-fast);
+}
+
+.calendly-day-btn:hover:not(.disabled) {
+  background: var(--bg-input);
+  color: var(--brand-primary);
+}
+
+.calendly-day-btn.selected {
+  background: var(--brand-primary) !important;
+  color: #FFFFFF !important;
+  font-weight: 800 !important;
+  box-shadow: var(--shadow-sm);
+}
+
+.calendly-day-btn.disabled {
+  color: var(--text-muted);
+  opacity: 0.35;
+  cursor: default;
+}
+
+.calendly-day-btn.today::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--brand-primary);
+}
+
+.calendly-day-btn.selected.today::after {
+  background: #FFFFFF;
+}
+
+.time-range-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.time-range-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 800;
+  font-size: 0.92rem;
+  color: var(--text-primary);
+}
+
+.btn-add-time-range {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--badge-blue-bg);
+  color: var(--brand-primary);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: var(--transition-fast);
+}
+
+.btn-add-time-range:hover {
+  background: var(--brand-primary);
+  color: #FFFFFF;
+}
+
+.time-range-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.time-range-row select {
+  flex: 1;
+  padding: 0.6rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-input);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.time-range-separator {
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.btn-remove-time-range {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.4rem;
+  font-size: 0.9rem;
+  transition: var(--transition-fast);
+}
+
+.btn-remove-time-range:hover {
+  color: var(--brand-rose);
+}
+
+.calendly-actions-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.8rem;
+  margin-top: 0.5rem;
+}
+
