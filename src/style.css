@@ -312,6 +312,7 @@ a {
   display: flex;
   min-height: calc(100vh - 72px);
   width: 100%;
+  align-items: flex-start;
 }
 
 .portal-sidebar-nav {
@@ -325,6 +326,11 @@ a {
   flex-shrink: 0;
   transition: transform var(--transition-medium);
   z-index: 100;
+  position: sticky;
+  top: 72px;
+  height: calc(100vh - 72px);
+  align-self: flex-start;
+  overflow-y: auto;
 }
 
 .portal-sidebar-menu {
