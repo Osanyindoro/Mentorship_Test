@@ -124,7 +124,9 @@ export const apiService = {
 
         localStorage.setItem('mently_user', JSON.stringify(authPayload.user));
         localStorage.setItem('mently_auth_token', authPayload.token);
-
+        resolve(authPayload.user);
+      }, 300);
+    });
   },
 
   // Register Account API Layer (Associate or Mentor)
