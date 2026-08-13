@@ -577,11 +577,11 @@ function renderLoginPage() {
           <div class="login-card">
             
             <!-- Top Tab Switcher: Log In vs Sign Up / Register -->
-            <div style="display: flex; gap: 0.4rem; background: var(--bg-main); padding: 0.35rem; border-radius: 12px; border: 1px solid var(--border-color); margin-bottom: 1.5rem;">
-              <button type="button" id="tabModeLogin" style="flex: 1; padding: 0.65rem 0.5rem; border-radius: 8px; border: none; font-weight: 800; font-size: 0.88rem; cursor: pointer; transition: all 0.2s ease; background: ${state.loginMode === 'login' ? 'var(--brand-primary)' : 'transparent'}; color: ${state.loginMode === 'login' ? '#ffffff' : 'var(--text-secondary)'}; shadow: ${state.loginMode === 'login' ? '0 2px 8px rgba(0,0,0,0.12)' : 'none'};">
+            <div class="auth-mode-tab-bar">
+              <button type="button" id="tabModeLogin" class="auth-mode-tab-btn ${state.loginMode === 'login' ? 'active' : ''}">
                 <i class="fa-solid fa-right-to-bracket"></i> Log In
               </button>
-              <button type="button" id="tabModeRegister" style="flex: 1; padding: 0.65rem 0.5rem; border-radius: 8px; border: none; font-weight: 800; font-size: 0.88rem; cursor: pointer; transition: all 0.2s ease; background: ${state.loginMode === 'register' ? 'var(--brand-primary)' : 'transparent'}; color: ${state.loginMode === 'register' ? '#ffffff' : 'var(--text-secondary)'}; shadow: ${state.loginMode === 'register' ? '0 2px 8px rgba(0,0,0,0.12)' : 'none'};">
+              <button type="button" id="tabModeRegister" class="auth-mode-tab-btn ${state.loginMode === 'register' ? 'active' : ''}">
                 <i class="fa-solid fa-user-plus"></i> Sign Up / Register
               </button>
             </div>
@@ -606,14 +606,14 @@ function renderLoginPage() {
                 <!-- AVATAR PHOTO UPLOADER -->
                 <div class="form-group" style="text-align: center; margin-bottom: 1.25rem;">
                   <label class="form-label">Profile Photo</label>
-                  <div style="display: flex; align-items: center; justify-content: center; gap: 1rem; margin-top: 0.5rem;">
-                    <img src="${state.registerForm.avatar || '/assets/assoc_amina.jpg'}" id="regAvatarPreview" style="width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 3px solid var(--brand-primary); flex-shrink: 0;" />
+                  <div class="avatar-upload-container">
+                    <img src="${state.registerForm.avatar || '/assets/assoc_amina.jpg'}" id="regAvatarPreview" class="avatar-upload-preview" />
                     <div style="text-align: left;">
                       <label for="regAvatarInput" class="btn-brand-primary" style="padding: 0.4rem 0.85rem; font-size: 0.8rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem;">
                         <i class="fa-solid fa-upload"></i> Upload Headshot
                       </label>
-                      <input type="file" id="regAvatarInput" accept="image/*" style="display: none;" />
-                      <div style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 0.3rem;">JPG or PNG photo file</div>
+                      <input type="file" id="regAvatarInput" accept="image/jpeg,image/png,image/webp" style="display: none;" />
+                      <div style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 0.3rem;">JPG or PNG photo (Max 5MB)</div>
                     </div>
                   </div>
                 </div>
@@ -671,6 +671,10 @@ function renderLoginPage() {
                 <button type="submit" class="btn-brand-primary login-submit-btn" id="btnSubmitRegister" ${form.isSubmitting ? 'disabled' : ''}>
                   ${form.isSubmitting ? `<i class="fa-solid fa-circle-notch fa-spin"></i> Creating Profile...` : '<i class="fa-solid fa-user-check"></i> CREATE PROFILE & LOG IN'}
                 </button>
+
+                <div style="text-align: center; margin-top: 1.25rem; font-size: 0.88rem; color: var(--text-secondary);">
+                  Already have an account? <a id="btnToggleLogin" style="color: var(--brand-primary); font-weight: 800; cursor: pointer;">Sign In</a>
+                </div>
               </form>
             ` : `
               <!-- LOGIN FORM -->
@@ -1779,6 +1783,53 @@ function renderModals() {
   return '';
 }
 
+// Image File Validator & Canvas Compressor (~25KB DataURL)
+function compressImageFile(file, callback) {
+  if (!file) return;
+  const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+  if (!validTypes.includes(file.type)) {
+    showToast('Please select a valid image (JPG, PNG, WEBP).', 'fa-triangle-exclamation');
+    return;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    showToast('File size must be under 5MB.', 'fa-triangle-exclamation');
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const maxDim = 300;
+      let width = img.width;
+      let height = img.height;
+
+      if (width > height) {
+        if (width > maxDim) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        }
+      } else {
+        if (height > maxDim) {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
+        }
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+
+      const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.75);
+      callback(compressedDataUrl);
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
 // --------------------------------------------------------------------------
 // EVENT BINDINGS
 // --------------------------------------------------------------------------
@@ -1917,20 +1968,18 @@ function bindEvents() {
       render();
     });
 
-    // Sign Up Profile Photo File Upload Listener
+    // Sign Up Profile Photo File Upload Listener (Canvas Compressed to ~25KB max)
     const regAvatarInput = document.getElementById('regAvatarInput');
     if (regAvatarInput) {
       regAvatarInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (file) {
-          const reader = new FileReader();
-          reader.onload = (evt) => {
-            state.registerForm.avatar = evt.target.result;
+          compressImageFile(file, (compressedDataUrl) => {
+            state.registerForm.avatar = compressedDataUrl;
             const preview = document.getElementById('regAvatarPreview');
-            if (preview) preview.src = evt.target.result;
-            showToast('Profile photo selected!', 'fa-image');
-          };
-          reader.readAsDataURL(file);
+            if (preview) preview.src = compressedDataUrl;
+            showToast('Profile photo optimized!', 'fa-image');
+          });
         }
       });
     }
