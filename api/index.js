@@ -96,20 +96,35 @@ export default function handler(req, res) {
     const selectedRole = role || 'associate';
     const newId = selectedRole === 'associate' ? `MCF-2026-REG-${Math.floor(100 + Math.random() * 900)}` : `MEN-REG-${Math.floor(100 + Math.random() * 900)}`;
 
+    const userObj = {
+      id: newId,
+      role: selectedRole,
+      name: name || "New Member",
+      email: cleanEmail,
+      institution: institutionOrOrg || (selectedRole === 'associate' ? 'Mastercard Foundation Partner' : 'Jobberman Partner Network'),
+      organization: institutionOrOrg || 'Jobberman Partner Network',
+      title: title || (selectedRole === 'associate' ? 'Mastercard Foundation Scholar' : 'Executive Mentor'),
+      track: trackOrDomain || 'Software Engineering & AI',
+      domain: trackOrDomain || 'Software Engineering & AI',
+      bio: bio || 'Active Mastercard Foundation portal member.',
+      avatar: selectedRole === 'associate' ? '/assets/assoc_amina.jpg' : '/assets/mentor_samuel.jpg'
+    };
+
+    if (selectedRole === 'mentor') {
+      mentors.unshift({
+        ...userObj,
+        rating: 5.0,
+        totalSessions: 0,
+        expertise: [trackOrDomain || 'Software Engineering & AI', 'Mentorship'],
+        schedule: [
+          { id: Date.now(), date: '2026-08-22', time: '10:00 AM', isBooked: false, bookedBy: null }
+        ]
+      });
+    }
+
     return res.status(201).json({
       token: `mcf_live_token_${Date.now()}`,
-      user: {
-        id: newId,
-        role: selectedRole,
-        name: name || "Registered User",
-        email: cleanEmail,
-        institution: institutionOrOrg || "Ashesi University / Carnegie Mellon Africa",
-        organization: institutionOrOrg || "Jobberman Partner Network",
-        title: title || "Mastercard Foundation Scholar / Mentor",
-        track: trackOrDomain || "Software Engineering & AI",
-        bio: bio || "",
-        avatar: selectedRole === 'associate' ? '/assets/assoc_amina.jpg' : '/assets/mentor_samuel.jpg'
-      }
+      user: userObj
     });
   }
 

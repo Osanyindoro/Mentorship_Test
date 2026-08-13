@@ -804,6 +804,7 @@ function renderNavigationTabs() {
       <div class="subnav-link ${state.associateTab === 'group_sessions' ? 'active' : ''}" data-tab="group_sessions"><i class="fa-solid fa-people-group"></i> Group Sessions</div>
       <div class="subnav-link ${state.associateTab === 'tasks' ? 'active' : ''}" data-tab="tasks"><i class="fa-solid fa-list-check"></i> Tasks</div>
       <div class="subnav-link ${state.associateTab === 'sessions' ? 'active' : ''}" data-tab="sessions"><i class="fa-solid fa-calendar-check"></i> My Sessions</div>
+      <div class="subnav-link ${state.associateTab === 'profile' ? 'active' : ''}" data-tab="profile"><i class="fa-solid fa-user-gear"></i> My Profile & Edit</div>
     `;
   } else if (role === 'mentor') {
     return `
@@ -811,6 +812,7 @@ function renderNavigationTabs() {
       <div class="subnav-link ${state.mentorTab === 'availability' ? 'active' : ''}" data-tab="availability"><i class="fa-solid fa-clock"></i> 1-on-1 Slots</div>
       <div class="subnav-link ${state.mentorTab === 'group_sessions' ? 'active' : ''}" data-tab="group_sessions"><i class="fa-solid fa-people-group"></i> Group Masterclasses</div>
       <div class="subnav-link ${state.mentorTab === 'tasks' ? 'active' : ''}" data-tab="tasks"><i class="fa-solid fa-tasks"></i> Mentee Tasks</div>
+      <div class="subnav-link ${state.mentorTab === 'profile' ? 'active' : ''}" data-tab="profile"><i class="fa-solid fa-user-pen"></i> My Profile & Edit</div>
     `;
   } else {
     return `
@@ -823,18 +825,47 @@ function renderNavigationTabs() {
 
 // Render View by Role
 function renderRoleView(associate, mentor) {
-  const role = state.currentUser ? state.currentUser.role : state.currentRole;
+  const user = state.currentUser;
+  const role = user ? user.role : state.currentRole;
+
+  // Bind genuine registered user data dynamically
+  const activeUserAssoc = user && user.role === 'associate' ? {
+    ...associate,
+    id: user.id || associate.id,
+    name: user.name || associate.name,
+    email: user.email || associate.email,
+    institution: user.institution || associate.institution,
+    title: user.title || associate.title,
+    track: user.track || associate.track,
+    bio: user.bio || associate.bio,
+    avatar: user.avatar || associate.avatar
+  } : associate;
+
+  const activeUserMentor = user && user.role === 'mentor' ? {
+    ...mentor,
+    id: user.id || mentor.id,
+    name: user.name || mentor.name,
+    email: user.email || mentor.email,
+    organization: user.organization || mentor.organization,
+    title: user.title || mentor.title,
+    domain: user.domain || mentor.domain,
+    bio: user.bio || mentor.bio,
+    avatar: user.avatar || mentor.avatar
+  } : mentor;
+
   if (role === 'associate') {
-    if (state.associateTab === 'home') return renderMenteeHome(associate);
+    if (state.associateTab === 'home') return renderMenteeHome(activeUserAssoc);
     if (state.associateTab === 'mentors') return renderMenteeDiscovery();
     if (state.associateTab === 'group_sessions') return renderGroupSessionsList();
     if (state.associateTab === 'tasks') return renderMenteeTasksList();
     if (state.associateTab === 'sessions') return renderMenteeSessionsList();
+    if (state.associateTab === 'profile') return renderMenteeProfile(activeUserAssoc);
   } else if (role === 'mentor') {
-    if (state.mentorTab === 'dashboard') return renderMentorDashboard(mentor);
-    if (state.mentorTab === 'availability') return renderMentorAvailability(mentor);
-    if (state.mentorTab === 'group_sessions') return renderMentorGroupSessions(mentor);
-    if (state.mentorTab === 'tasks') return renderMentorTasks(mentor);
+    if (state.mentorTab === 'dashboard') return renderMentorDashboard(activeUserMentor);
+    if (state.mentorTab === 'availability') return renderMentorAvailability(activeUserMentor);
+    if (state.mentorTab === 'group_sessions') return renderMentorGroupSessions(activeUserMentor);
+    if (state.mentorTab === 'tasks') return renderMentorTasks(activeUserMentor);
+    if (state.mentorTab === 'profile') return renderMentorProfile(activeUserMentor);
   } else if (role === 'admin') {
     if (state.adminTab === 'analytics') return renderAdminAnalytics();
     if (state.adminTab === 'mentors') return renderAdminMentorManagement();
