@@ -1,6 +1,4 @@
 {
-  "buildCommand": "vite build",
-  "outputDirectory": "dist",
   "rewrites": [
     {
       "source": "/v1/(.*)",
@@ -11,7 +9,7 @@
       "destination": "/api/index.js"
     },
     {
-      "source": "/((?!assets/|.*\\..*).*)",
+      "source": "/(.*)",
       "destination": "/index.html"
     }
   ]
