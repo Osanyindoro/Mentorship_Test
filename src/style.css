@@ -530,23 +530,30 @@ a {
 }
 
 .mentor-avatar-lg {
-  width: 64px;
-  height: 64px;
+  width: 76px;
+  height: 76px;
   border-radius: 50%;
   object-fit: cover;
-  border: 3px solid var(--brand-gold);
+  border: 3.5px solid #F59E0B;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);
   flex-shrink: 0;
+  transition: var(--transition-smooth);
+}
+
+.mentor-card:hover .mentor-avatar-lg {
+  transform: scale(1.05);
+  box-shadow: 0 6px 18px rgba(245, 158, 11, 0.45);
 }
 
 .mentor-name {
   font-family: var(--font-display);
-  font-size: 1.15rem;
+  font-size: 1.2rem;
   font-weight: 800;
   color: var(--text-primary);
 }
 
 .mentor-title {
-  font-size: 0.84rem;
+  font-size: 0.86rem;
   font-weight: 600;
   color: var(--text-secondary);
   line-height: 1.35;
@@ -554,20 +561,9 @@ a {
 }
 
 .mentor-org {
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   font-weight: 800;
   color: var(--brand-primary);
-}
-
-.mentor-bio-preview {
-  font-size: 0.86rem;
-  color: var(--text-secondary);
-  line-height: 1.5;
-  margin-bottom: 1.2rem;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
 }
 
 .card-tags-flex {
@@ -633,10 +629,20 @@ a {
 .card-footer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 0.75rem;
   margin-top: auto;
-  padding-top: 1rem;
+  padding-top: 1.1rem;
   border-top: 1px solid var(--border-color);
+}
+
+.card-footer button {
+  flex: 1;
+  justify-content: center;
+  border-radius: 50px;
+  padding: 0.55rem 1rem;
+  font-size: 0.84rem;
+  font-weight: 700;
+  box-shadow: var(--shadow-sm);
 }
 
 /* ==========================================================================
