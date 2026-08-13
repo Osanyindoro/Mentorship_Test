@@ -1,4 +1,5 @@
 import './style.css';
+import jobbermanLogo from './assets/jobberman-logo.png';
 import { getStoredTheme, saveStoredTheme } from './data/mockData.js';
 import { apiService } from './services/api.js';
 
@@ -274,7 +275,7 @@ function renderPublicLandingPage() {
       <!-- Public Header -->
       <header class="mently-header" style="justify-content: space-between;">
         <div class="brand-wrapper" style="cursor: pointer;" id="btnNavBrandHome">
-          <img src="/assets/jobberman-logo.png" onerror="this.src='/jobberman-logo.png'" alt="Jobberman Logo" class="brand-logo-img" />
+          <img src="${jobbermanLogo}" alt="Jobberman Logo" class="brand-logo-img" />
           <div class="brand-text">
             <span class="brand-name" style="font-size: 1.1rem; line-height: 1.2;">Mastercard Foundation Associate Program</span>
             <span class="brand-tagline">ASSOCIATE MENTORSHIP PORTAL</span>
@@ -464,7 +465,7 @@ function renderPublicLandingPage() {
         <div style="max-width: 1240px; margin: 0 auto;">
           <div class="footer-top-grid">
             <div class="brand-wrapper">
-              <img src="/assets/jobberman-logo.png" onerror="this.src='/jobberman-logo.png'" alt="Jobberman Logo" class="brand-logo-img" />
+              <img src="${jobbermanLogo}" alt="Jobberman Logo" class="brand-logo-img" />
               <div class="brand-text">
                 <span class="brand-name" style="font-size: 1.05rem;">Mastercard Foundation Associate Program</span>
                 <span class="brand-tagline">ASSOCIATE MENTORSHIP PORTAL</span>
@@ -526,7 +527,7 @@ function renderLoginPage() {
       <!-- Login Top Bar -->
       <header class="login-header-bar">
         <div class="brand-wrapper" style="cursor: pointer;" id="btnBackToHomeBrand">
-          <img src="/assets/jobberman-logo.png" onerror="this.src='/jobberman-logo.png'" alt="Jobberman Logo" class="brand-logo-img" />
+          <img src="${jobbermanLogo}" alt="Jobberman Logo" class="brand-logo-img" />
           <div class="brand-text">
             <span class="brand-name" style="font-size: 1.05rem;">Mastercard Foundation Associate Program</span>
             <span class="brand-tagline">ASSOCIATE MENTORSHIP PORTAL</span>
@@ -667,7 +668,7 @@ function renderAuthenticatedDashboard() {
         </button>
 
         <div class="brand-wrapper" style="cursor: pointer;" id="btnNavBrandHome">
-          <img src="/assets/jobberman-logo.png" onerror="this.src='/jobberman-logo.png'" alt="Jobberman Logo" class="brand-logo-img" />
+          <img src="${jobbermanLogo}" alt="Jobberman Logo" class="brand-logo-img" />
           <div class="brand-text">
             <span class="brand-name" style="font-size: 1.1rem; line-height: 1.2;">Mastercard Foundation Associate Program</span>
             <span class="brand-tagline">ASSOCIATE MENTORSHIP PORTAL</span>
