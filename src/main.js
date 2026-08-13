@@ -502,16 +502,14 @@ function renderLandingMentorCard(m) {
         </div>
       </div>
 
-      <p class="mentor-bio-preview">${m.bio}</p>
-
       <div class="card-tags-flex">
         <span class="badge-tag badge-blue"><i class="fa-solid fa-briefcase"></i> ${m.domain}</span>
         <span class="badge-tag badge-gold"><i class="fa-solid fa-star"></i> ${m.rating} (${m.totalSessions} sessions)</span>
       </div>
 
-      <div class="card-footer" style="margin-top: 1.25rem;">
-        <button class="btn-brand-primary btn-inspect-profile" data-id="${m.id}" style="padding: 0.45rem 1rem; font-size: 0.82rem;">View Profile</button>
-        <button class="btn-brand-primary btn-landing-book" data-id="${m.id}" style="padding: 0.45rem 1rem; font-size: 0.82rem; background: var(--brand-violet);">Book Session</button>
+      <div class="card-footer">
+        <button class="btn-brand-primary btn-inspect-profile" data-id="${m.id}">View Profile</button>
+        <button class="btn-brand-primary btn-landing-book" data-id="${m.id}" style="background: var(--brand-violet);">Book Session</button>
       </div>
     </div>
   `;
@@ -960,7 +958,7 @@ function renderMenteeDiscovery() {
 }
 
 function renderMentorCard(mentor) {
-  const availableSlot = mentor.schedule.find(s => !s.isBooked);
+  const availableSlot = mentor.schedule ? mentor.schedule.find(s => !s.isBooked) : null;
   return `
     <div class="mentor-card">
       <div class="card-header-flex">
@@ -972,8 +970,6 @@ function renderMentorCard(mentor) {
         </div>
       </div>
 
-      <p class="mentor-bio-preview">${mentor.bio}</p>
-
       <div class="card-tags-flex">
         <span class="badge-tag badge-blue"><i class="fa-solid fa-briefcase"></i> ${mentor.domain}</span>
         <span class="badge-tag badge-gold"><i class="fa-solid fa-star"></i> ${mentor.rating} (${mentor.totalSessions} sessions)</span>
@@ -981,8 +977,8 @@ function renderMentorCard(mentor) {
       </div>
 
       <div class="card-footer">
-        <button class="btn-brand-primary btn-inspect-profile" data-id="${mentor.id}" style="padding: 0.45rem 1rem; font-size: 0.82rem;">View Profile</button>
-        <button class="btn-brand-primary btn-book-slot" data-id="${mentor.id}" style="padding: 0.45rem 1rem; font-size: 0.82rem; background: var(--brand-violet);">Book 1-on-1</button>
+        <button class="btn-brand-primary btn-inspect-profile" data-id="${mentor.id}">View Profile</button>
+        <button class="btn-brand-primary btn-book-slot" data-id="${mentor.id}" style="background: var(--brand-violet);">Book 1-on-1</button>
       </div>
     </div>
   `;
@@ -1464,36 +1460,63 @@ function renderModals() {
 
   if (state.activeModal === 'mentor_profile' && state.inspectingMentor) {
     const m = state.inspectingMentor;
+    const availableSlot = m.schedule ? m.schedule.find(s => !s.isBooked) : null;
+
     return `
       <div class="modal-overlay">
-        <div class="modal-content-card">
+        <div class="modal-content-card" style="max-width: 580px; width: 100%;">
           <div class="modal-header-flex">
-            <div class="modal-title">${m.name}</div>
+            <div style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 800;">Mentor Profile Overview</div>
             <button class="close-modal-btn btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
           </div>
-          <div class="card-header-flex">
-            <img src="${m.avatar}" class="mentor-avatar-lg" />
+
+          <div style="display: flex; gap: 1.25rem; align-items: center; margin-bottom: 1.25rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--border-color);">
+            <img src="${m.avatar}" class="mentor-avatar-lg" style="width: 76px; height: 76px; border: 3.5px solid #F59E0B; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);" />
             <div>
-              <div style="font-weight: 800; font-size: 1.1rem;">${m.title}</div>
-              <div class="mentor-org">${m.organization}</div>
+              <h3 style="font-family: var(--font-display); font-size: 1.3rem; font-weight: 800; color: var(--text-primary); margin-bottom: 0.2rem;">${m.name}</h3>
+              <div style="font-size: 0.88rem; font-weight: 600; color: var(--text-secondary); line-height: 1.35; margin-bottom: 0.3rem;">${m.title}</div>
+              <div style="font-size: 0.84rem; font-weight: 800; color: var(--brand-primary);">${m.organization}</div>
             </div>
           </div>
-          <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 1.25rem;">${m.bio}</p>
 
+          <!-- Badges & Rating -->
+          <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.25rem;">
+            <span class="badge-tag badge-blue" style="padding: 0.35rem 0.8rem;"><i class="fa-solid fa-briefcase"></i> ${m.domain}</span>
+            <span class="badge-tag badge-gold" style="padding: 0.35rem 0.8rem;"><i class="fa-solid fa-star"></i> ${m.rating} (${m.totalSessions} sessions completed)</span>
+            ${availableSlot ? `<span class="badge-tag badge-green" style="padding: 0.35rem 0.8rem;"><i class="fa-regular fa-circle-check"></i> Next Open Slot: ${availableSlot.date}</span>` : ''}
+          </div>
+
+          <!-- Full Bio / Background -->
           <div style="margin-bottom: 1.25rem;">
-            <div style="font-size: 0.78rem; font-weight: 800; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 0.5rem;">Social & Professional Profiles</div>
+            <h4 style="font-size: 0.78rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; margin-bottom: 0.4rem;">About & Background</h4>
+            <p style="font-size: 0.92rem; color: var(--text-secondary); line-height: 1.6; background: var(--bg-main); padding: 0.9rem 1.1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">${m.bio}</p>
+          </div>
+
+          <!-- Expertise / Focus Areas -->
+          ${m.expertise && m.expertise.length > 0 ? `
+            <div style="margin-bottom: 1.25rem;">
+              <h4 style="font-size: 0.78rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; margin-bottom: 0.5rem;">Expertise & Mentorship Areas</h4>
+              <div style="display: flex; flex-wrap: wrap; gap: 0.45rem;">
+                ${m.expertise.map(e => `<span class="badge-tag badge-blue" style="font-size: 0.78rem;">${e}</span>`).join('')}
+              </div>
+            </div>
+          ` : ''}
+
+          <!-- Social Links -->
+          <div style="margin-bottom: 1.5rem;">
+            <h4 style="font-size: 0.78rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; margin-bottom: 0.5rem;">Social & Professional Handles</h4>
             <div style="display: flex; flex-wrap: wrap; gap: 0.6rem;">
               ${m.socialLinks?.linkedin ? `<a href="${m.socialLinks.linkedin}" target="_blank" class="social-link-badge linkedin"><i class="fa-brands fa-linkedin"></i> LinkedIn</a>` : ''}
               ${m.socialLinks?.github ? `<a href="${m.socialLinks.github}" target="_blank" class="social-link-badge github"><i class="fa-brands fa-github"></i> GitHub</a>` : ''}
               ${m.socialLinks?.twitter ? `<a href="${m.socialLinks.twitter}" target="_blank" class="social-link-badge twitter"><i class="fa-brands fa-x-twitter"></i> Twitter / X</a>` : ''}
-              ${!m.socialLinks?.linkedin && !m.socialLinks?.github && !m.socialLinks?.twitter ? `<span style="font-size: 0.84rem; color: var(--text-muted);">No social handles attached yet.</span>` : ''}
+              ${!m.socialLinks?.linkedin && !m.socialLinks?.github && !m.socialLinks?.twitter ? `<span style="font-size: 0.84rem; color: var(--text-muted);">No social handles attached.</span>` : ''}
             </div>
           </div>
 
-          <div class="card-tags-flex" style="margin-bottom: 1.5rem;">
-            ${m.expertise.map(e => `<span class="badge-tag badge-blue">${e}</span>`).join('')}
-          </div>
-          <button class="btn-brand-primary btn-book-slot" data-id="${m.id}" style="width: 100%; justify-content: center;">Book Session Now</button>
+          <!-- Action Button -->
+          <button class="btn-brand-primary btn-book-slot" data-id="${m.id}" style="width: 100%; justify-content: center; padding: 0.85rem; font-size: 0.95rem; font-weight: 800; border-radius: 50px; background: var(--brand-violet); box-shadow: 0 4px 14px rgba(124, 58, 237, 0.35);">
+            <i class="fa-solid fa-calendar-plus" style="margin-right: 0.4rem;"></i> Book 1-on-1 Session Now
+          </button>
         </div>
       </div>
     `;
@@ -2020,27 +2043,33 @@ function bindEvents() {
 
     // View Mentor Profile Modal
     document.querySelectorAll('.btn-inspect-profile').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const m = state.mentors.find(x => x.id === btn.dataset.id);
-        state.inspectingMentor = m;
-        state.activeModal = 'mentor_profile';
-        render();
-      });
+      btn.onclick = (e) => {
+        const id = e.currentTarget.dataset.id;
+        const m = state.mentors.find(x => x.id === id);
+        if (m) {
+          state.inspectingMentor = m;
+          state.activeModal = 'mentor_profile';
+          render();
+        }
+      };
     });
 
     // Book 1-on-1 Slot Modal
-    document.querySelectorAll('.btn-book-slot').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const m = state.mentors.find(x => x.id === btn.dataset.id);
-        state.bookingMentor = m;
-        state.activeModal = 'booking';
-        const availableSlot = m.schedule.find(s => !s.isBooked);
-        if (availableSlot) {
-          state.bookingData.date = availableSlot.date;
-          state.bookingData.time = availableSlot.time;
+    document.querySelectorAll('.btn-book-slot, .btn-landing-book').forEach(btn => {
+      btn.onclick = (e) => {
+        const id = e.currentTarget.dataset.id;
+        const m = state.mentors.find(x => x.id === id);
+        if (m) {
+          state.bookingMentor = m;
+          state.activeModal = 'booking';
+          const availableSlot = m.schedule ? m.schedule.find(s => !s.isBooked) : null;
+          if (availableSlot) {
+            state.bookingData.date = availableSlot.date;
+            state.bookingData.time = availableSlot.time;
+          }
+          render();
         }
-        render();
-      });
+      };
     });
 
     // Slot Picker Buttons in Modal
