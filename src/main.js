@@ -1959,12 +1959,15 @@ function bindEvents() {
             password
           });
 
-          state.currentUser = authResult.user;
-          state.currentRole = authResult.user.role;
+          const user = authResult?.user || (authResult?.role ? authResult : null);
+          if (!user) throw new Error("Authentication response was invalid. Please try again.");
+
+          state.currentUser = user;
+          state.currentRole = user.role;
           state.loginForm.isSubmitting = false;
 
-          showToast(`Welcome back, ${authResult.user.name}!`);
-          navigateTo(`/${authResult.user.role}`);
+          showToast(`Welcome back, ${user.name}!`);
+          navigateTo(`/${user.role}`);
         } catch (err) {
           state.loginForm.isSubmitting = false;
           state.loginForm.errorMessage = err.message || 'The email or password you entered is incorrect.';
