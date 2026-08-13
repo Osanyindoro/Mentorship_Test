@@ -9,7 +9,7 @@
       "destination": "/api/index.js"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!v1|api|assets).*)",
       "destination": "/index.html"
     }
   ]
