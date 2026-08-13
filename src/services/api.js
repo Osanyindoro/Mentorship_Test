@@ -124,95 +124,6 @@ export const apiService = {
 
         localStorage.setItem('mently_user', JSON.stringify(authPayload.user));
         localStorage.setItem('mently_auth_token', authPayload.token);
-        resolve(authPayload);
-      }, 300);
-    });
-  },
-
-  // Register Account API Layer (Associate or Mentor)
-  async register({ selectedRole, name, email, password, institutionOrOrg, title, trackOrDomain, bio }) {
-    if (!selectedRole) throw new Error("Please select account type (Associate or Mentor).");
-    if (!name) throw new Error("Please enter your full name.");
-    const cleanEmail = (email || '').trim().toLowerCase();
-    if (!cleanEmail || !cleanEmail.includes('@')) throw new Error("Please enter a valid email address.");
-    if (!password || password.length < 6) throw new Error("Password must be at least 6 characters long.");
-
-    if (!USE_MOCK) {
-      try {
-        const res = await request('/auth/register', {
-          method: 'POST',
-          body: JSON.stringify({ role: selectedRole, name, email: cleanEmail, password, institutionOrOrg, title, trackOrDomain, bio })
-        });
-        if (res.token) {
-          localStorage.setItem('mently_auth_token', res.token);
-          localStorage.setItem('mently_user', JSON.stringify(res.user));
-        }
-        return res;
-      } catch (err) {
-        console.warn('[API Register Fallback] Remote registration failed, using local storage:', err.message);
-      }
-    }
-
-    // Local Persistence Mock Registration
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        let newUser = null;
-
-        if (selectedRole === 'associate') {
-          const associates = getStoredAssociates();
-          newUser = {
-            id: `MCF-2026-REG-${Math.floor(100 + Math.random() * 900)}`,
-            name,
-            email: cleanEmail,
-            password,
-            institution: institutionOrOrg || "Ashesi University / Carnegie Mellon Africa",
-            title: title || "Mastercard Foundation Scholar & Tech Fellow",
-            track: trackOrDomain || "Software Engineering & Data Science",
-            bio: bio || "Passionate scholar focused on leadership and career excellence.",
-            avatar: "/assets/assoc_amina.jpg",
-            skills: ["Leadership", "Problem Solving", "Teamwork"],
-            careerGoal: "Lead innovative projects in Africa."
-          };
-          associates.unshift(newUser);
-          saveStoredAssociates(associates);
-        } else {
-          const mentors = getStoredMentors();
-          newUser = {
-            id: `MEN-REG-${Math.floor(100 + Math.random() * 900)}`,
-            name,
-            email: cleanEmail,
-            password,
-            title: title || "Senior Consultant & Executive Mentor",
-            organization: institutionOrOrg || "Jobberman Partner Network",
-            domain: trackOrDomain || "Software Engineering & AI",
-            bio: bio || "Experienced industry professional eager to empower Mastercard Foundation Scholars.",
-            avatar: "/assets/mentor_samuel.jpg",
-            rating: 5.0,
-            totalSessions: 0,
-            expertise: ["Mentorship", "Career Roadmap", "Interview Prep"],
-            schedule: [
-              { date: "2026-08-22", time: "10:00 AM", isBooked: false },
-              { date: "2026-08-22", time: "02:00 PM", isBooked: false }
-            ]
-          };
-          mentors.unshift(newUser);
-          saveStoredMentors(mentors);
-        }
-
-        const authPayload = {
-          user: {
-            id: newUser.id,
-            name: newUser.name,
-            email: newUser.email,
-            avatar: newUser.avatar,
-            title: newUser.title,
-            role: selectedRole
-          },
-          token: `mently_token_${selectedRole}_${Date.now()}`
-        };
-
-        localStorage.setItem('mently_user', JSON.stringify(authPayload.user));
-        localStorage.setItem('mently_auth_token', authPayload.token);
 
         resolve(authPayload);
       }, 500);
@@ -228,9 +139,18 @@ export const apiService = {
     }
   },
 
+  async loginUser(email, password, selectedRole) {
+    const res = await this.login({ selectedRole, email, password });
+    return res.user || res;
+  },
+
   logout() {
     localStorage.removeItem('mently_user');
     localStorage.removeItem('mently_auth_token');
+  },
+
+  logoutUser() {
+    this.logout();
   },
 
   // Google Authentication Helper for Mentors
