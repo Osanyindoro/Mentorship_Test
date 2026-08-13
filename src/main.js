@@ -22,15 +22,16 @@ const state = {
   currentRole: initialUser ? initialUser.role : 'associate',
 
   // Active Navigation Tabs for Dashboards
-  associateTab: 'home',               // 'home' | 'mentors' | 'group_sessions' | 'tasks' | 'sessions'
-  mentorTab: 'dashboard',             // 'dashboard' | 'availability' | 'group_sessions' | 'tasks'
-  adminTab: 'analytics',              // 'analytics' | 'mentors' | 'sessions'
+  associateTab: 'home',               // 'home' | 'mentors' | 'group_sessions' | 'tasks' | 'sessions' | 'profile'
+  mentorTab: 'dashboard',             // 'dashboard' | 'availability' | 'group_sessions' | 'tasks' | 'profile'
+  adminTab: 'analytics',              // 'analytics' | 'mentors' | 'sessions' | 'profile'
 
   currentAssociateIndex: 0,
   currentMentorIndex: 0,
   googleUser: initialUser && initialUser.role === 'mentor' ? initialUser : null,
 
   isNotificationOpen: false,
+  isMobileNavOpen: false,
   isLoadingData: true,
 
   // Search & Filter State
@@ -40,8 +41,7 @@ const state = {
   selectedSessionType: 'all',
   onlyAvailableThisWeek: false,
 
-  // Login & Registration Form State
-  loginMode: 'login',                // 'login' | 'register'
+  // Login Form State
   loginForm: {
     selectedRole: '',
     email: '',
@@ -50,24 +50,24 @@ const state = {
     isSubmitting: false,
     errorMessage: null
   },
-  registerForm: {
-    role: 'associate',
-    name: '',
-    email: '',
-    password: '',
-    institutionOrOrg: '',
-    title: '',
-    trackOrDomain: 'Software Engineering & AI',
-    bio: ''
-  },
 
   // Modal State
-  activeModal: null,                 // null | 'booking' | 'mentor_profile' | 'group_create' | 'task_create' | 'admin_cap' | 'edit_mentor_profile'
+  activeModal: null,                 // null | 'booking' | 'mentor_profile' | 'group_create' | 'task_create' | 'admin_cap' | 'edit_mentor_profile' | 'manage_availability'
   bookingMentor: null,
   inspectingMentor: null,
   inspectingSession: null,
   editingCapMentor: null,
   editingMentorProfile: null,
+
+  availabilityModal: {
+    year: 2026,
+    month: 7,                        // August 2026 (0-indexed: 7)
+    selectedDates: ['2026-08-14'],
+    timeRanges: [
+      { id: 1, startTime: '09:00 AM', endTime: '10:00 AM' },
+      { id: 2, startTime: '01:00 PM', endTime: '02:00 PM' }
+    ]
+  },
 
   bookingData: {
     date: null,
@@ -274,7 +274,7 @@ function renderPublicLandingPage() {
       <!-- Public Header -->
       <header class="mently-header" style="justify-content: space-between;">
         <div class="brand-wrapper" style="cursor: pointer;" id="btnNavBrandHome">
-          <div class="brand-logo-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+          <img src="/assets/jobberman-logo.png" alt="Jobberman Logo" class="brand-logo-img" />
           <div class="brand-text">
             <span class="brand-name" style="font-size: 1.1rem; line-height: 1.2;">Mastercard Foundation Associate Program</span>
             <span class="brand-tagline">ASSOCIATE MENTORSHIP PORTAL</span>
@@ -344,7 +344,7 @@ function renderPublicLandingPage() {
               <div class="hero-stats-badge">
                 <i class="fa-solid fa-users-viewfinder" style="font-size: 1.4rem; color: var(--brand-primary);"></i>
                 <div>
-                  <div style="font-weight: 900; font-size: 1rem; color: var(--text-primary);">4,120+ Scholars</div>
+                  <div style="font-weight: 900; font-size: 1rem; color: var(--text-primary);">4,120+ Associates</div>
                   <div style="font-size: 0.75rem; color: var(--text-secondary);">Empowered Across Africa</div>
                 </div>
               </div>
@@ -406,7 +406,7 @@ function renderPublicLandingPage() {
         <section class="public-section" id="section-value">
           <div class="public-section-header">
             <h2 class="public-section-title">Your growth journey starts here</h2>
-            <p class="public-section-sub">Empowering scholars with world-class mentorship, technical guidance, and leadership acceleration.</p>
+            <p class="public-section-sub">Empowering associates with world-class mentorship, technical guidance, and leadership acceleration.</p>
           </div>
 
           <div class="value-cards-grid">
@@ -464,7 +464,7 @@ function renderPublicLandingPage() {
         <div style="max-width: 1240px; margin: 0 auto;">
           <div class="footer-top-grid">
             <div class="brand-wrapper">
-              <div class="brand-logo-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+              <img src="/assets/jobberman-logo.png" alt="Jobberman Logo" class="brand-logo-img" />
               <div class="brand-text">
                 <span class="brand-name" style="font-size: 1.05rem;">Mastercard Foundation Associate Program</span>
                 <span class="brand-tagline">ASSOCIATE MENTORSHIP PORTAL</span>
@@ -526,7 +526,7 @@ function renderLoginPage() {
       <!-- Login Top Bar -->
       <header class="login-header-bar">
         <div class="brand-wrapper" style="cursor: pointer;" id="btnBackToHomeBrand">
-          <div class="brand-logo-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+          <img src="/assets/jobberman-logo.png" alt="Jobberman Logo" class="brand-logo-img" />
           <div class="brand-text">
             <span class="brand-name" style="font-size: 1.05rem;">Mastercard Foundation Associate Program</span>
             <span class="brand-tagline">ASSOCIATE MENTORSHIP PORTAL</span>
@@ -552,9 +552,9 @@ function renderLoginPage() {
             <div style="display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(255, 255, 255, 0.15); padding: 0.35rem 0.9rem; border-radius: 50px; font-size: 0.78rem; font-weight: 800; margin-bottom: 1.5rem;">
               <i class="fa-solid fa-shield-halved"></i> Secure Access Portal
             </div>
-            <h1 class="login-banner-title">Empowering Scholars<br/>Across Africa</h1>
+            <h1 class="login-banner-title">Empowering Associates<br/>Across Africa</h1>
             <p style="font-size: 1rem; opacity: 0.9; line-height: 1.6; max-width: 440px;">
-              Join thousands of scholars connecting with global leaders in AI, Fintech, Public Health, and Cloud Architecture.
+              Join thousands of associates connecting with global leaders in AI, Fintech, Public Health, and Cloud Architecture.
             </p>
 
             <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 2rem; font-size: 0.9rem; font-weight: 700;">
@@ -570,16 +570,16 @@ function renderLoginPage() {
           </div>
         </div>
 
-        <!-- Right Side: Login / Register Card Form -->
+        <!-- Right Side: Login Card Form -->
         <div class="login-card-side">
           <div class="login-card">
             
             <div class="login-card-header">
               <div style="width: 48px; height: 48px; border-radius: 12px; background: var(--badge-blue-bg); color: var(--brand-primary); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; margin: 0 auto 1rem auto;">
-                <i class="fa-solid ${state.loginMode === 'register' ? 'fa-user-plus' : 'fa-lock'}"></i>
+                <i class="fa-solid fa-lock"></i>
               </div>
-              <h2 class="login-card-title">${state.loginMode === 'register' ? 'Create Your Profile' : 'Welcome Back'}</h2>
-              <p class="login-card-sub">${state.loginMode === 'register' ? 'Sign up as a Candidate/Associate or Mentor to get started.' : 'Sign in to access your mentorship portal.'}</p>
+              <h2 class="login-card-title">Welcome Back</h2>
+              <p class="login-card-sub">Sign in to access your mentorship portal.</p>
             </div>
 
             <!-- Error Alert -->
@@ -590,126 +590,55 @@ function renderLoginPage() {
               </div>
             ` : ''}
 
-            ${state.loginMode === 'register' ? `
-              <!-- REGISTRATION FORM -->
-              <form id="registerAuthForm">
-                
-                <!-- FIELD 1: ACCOUNT TYPE -->
-                <div class="form-group">
-                  <label class="form-label" for="regRole">I am signing up as a</label>
-                  <select class="form-select" id="regRole" required style="border-radius: 10px; padding: 0.7rem 1rem;">
-                    <option value="associate" ${state.registerForm.role === 'associate' ? 'selected' : ''}>Candidate / Associate Scholar</option>
-                    <option value="mentor" ${state.registerForm.role === 'mentor' ? 'selected' : ''}>Mentor / Employer</option>
-                  </select>
-                </div>
+            <!-- 3-Field Login Form -->
+            <form id="loginAuthForm">
+              
+              <!-- FIELD 1: PROFILE TYPE -->
+              <div class="form-group">
+                <label class="form-label" for="loginRole">Login as</label>
+                <select class="form-select" id="loginRole" required style="border-radius: 10px; padding: 0.7rem 1rem;">
+                  <option value="" ${!form.selectedRole ? 'selected' : ''}>Select profile</option>
+                  <option value="associate" ${form.selectedRole === 'associate' ? 'selected' : ''}>Associate</option>
+                  <option value="mentor" ${form.selectedRole === 'mentor' ? 'selected' : ''}>Mentor</option>
+                  <option value="admin" ${form.selectedRole === 'admin' ? 'selected' : ''}>Admin</option>
+                </select>
+              </div>
 
-                <!-- FIELD 2: FULL NAME -->
-                <div class="form-group">
-                  <label class="form-label" for="regName">Full Name</label>
-                  <input type="text" class="form-input" id="regName" placeholder="e.g. Emmanuel Okon" value="${state.registerForm.name}" required style="border-radius: 10px; padding: 0.7rem 1rem;" />
-                </div>
+              <!-- FIELD 2: EMAIL ADDRESS -->
+              <div class="form-group">
+                <label class="form-label" for="loginEmail">Email Address</label>
+                <input type="email" class="form-input" id="loginEmail" placeholder="Enter your email address" value="${form.email}" autocomplete="email" required style="border-radius: 10px; padding: 0.7rem 1rem;" />
+              </div>
 
-                <!-- FIELD 3: EMAIL -->
-                <div class="form-group">
-                  <label class="form-label" for="regEmail">Email Address</label>
-                  <input type="email" class="form-input" id="regEmail" placeholder="name@domain.com" value="${state.registerForm.email}" required style="border-radius: 10px; padding: 0.7rem 1rem;" />
-                </div>
-
-                <!-- FIELD 4: PASSWORD -->
-                <div class="form-group">
-                  <label class="form-label" for="regPassword">Password (Min 6 chars)</label>
-                  <input type="password" class="form-input" id="regPassword" placeholder="Create a secure password" value="${state.registerForm.password}" required style="border-radius: 10px; padding: 0.7rem 1rem;" />
-                </div>
-
-                <!-- FIELD 5: INSTITUTION OR ORGANIZATION -->
-                <div class="form-group">
-                  <label class="form-label" for="regInstitution">${state.registerForm.role === 'mentor' ? 'Company / Organization' : 'Partner Institution'}</label>
-                  <input type="text" class="form-input" id="regInstitution" placeholder="${state.registerForm.role === 'mentor' ? 'e.g. Google / Paystack / Jobberman Partner' : 'e.g. Ashesi University / Carnegie Mellon Africa'}" value="${state.registerForm.institutionOrOrg}" style="border-radius: 10px; padding: 0.7rem 1rem;" />
-                </div>
-
-                <!-- FIELD 6: TRACK / DOMAIN -->
-                <div class="form-group">
-                  <label class="form-label" for="regTrack">${state.registerForm.role === 'mentor' ? 'Domain Expertise' : 'Program Track'}</label>
-                  <select class="form-select" id="regTrack" style="border-radius: 10px; padding: 0.7rem 1rem;">
-                    <option value="Software Engineering & AI">Software Engineering & AI</option>
-                    <option value="Fintech & Product">Fintech & Product</option>
-                    <option value="Public Health & Social Impact">Public Health & Social Impact</option>
-                    <option value="Software Engineering & Data">Software Engineering & Data</option>
-                  </select>
-                </div>
-
-                <!-- FIELD 7: BIO -->
-                <div class="form-group">
-                  <label class="form-label" for="regBio">Biography & Background Summary</label>
-                  <textarea class="form-textarea" id="regBio" rows="2" placeholder="Briefly describe your career focus and goals..." style="border-radius: 10px; padding: 0.7rem 1rem;">${state.registerForm.bio}</textarea>
-                </div>
-
-                <button type="submit" class="btn-brand-primary login-submit-btn" id="btnSubmitRegister" ${form.isSubmitting ? 'disabled' : ''}>
-                  ${form.isSubmitting ? `<i class="fa-solid fa-circle-notch fa-spin"></i> Creating Profile...` : '<i class="fa-solid fa-user-check"></i> CREATE PROFILE & LOG IN'}
-                </button>
-
-                <div style="text-align: center; margin-top: 1rem; font-size: 0.88rem; color: var(--text-secondary);">
-                  Already have an account? <a id="btnToggleLogin" style="color: var(--brand-primary); font-weight: 800; cursor: pointer;">Sign In</a>
-                </div>
-              </form>
-            ` : `
-              <!-- LOGIN FORM -->
-              <form id="loginAuthForm">
-                
-                <!-- FIELD 1: PROFILE TYPE -->
-                <div class="form-group">
-                  <label class="form-label" for="loginRole">Login as</label>
-                  <select class="form-select" id="loginRole" required style="border-radius: 10px; padding: 0.7rem 1rem;">
-                    <option value="" ${!form.selectedRole ? 'selected' : ''}>Select profile</option>
-                    <option value="associate" ${form.selectedRole === 'associate' ? 'selected' : ''}>Associate</option>
-                    <option value="mentor" ${form.selectedRole === 'mentor' ? 'selected' : ''}>Mentor</option>
-                    <option value="admin" ${form.selectedRole === 'admin' ? 'selected' : ''}>Admin</option>
-                  </select>
-                </div>
-
-                <!-- FIELD 2: EMAIL ADDRESS -->
-                <div class="form-group">
-                  <label class="form-label" for="loginEmail">Email Address</label>
-                  <input type="email" class="form-input" id="loginEmail" placeholder="Enter your email address" value="${form.email}" autocomplete="email" required style="border-radius: 10px; padding: 0.7rem 1rem;" />
-                </div>
-
-                <!-- FIELD 3: PASSWORD -->
-                <div class="form-group">
-                  <label class="form-label" for="loginPassword">Password</label>
-                  <div class="password-input-wrapper">
-                    <input type="${form.showPassword ? 'text' : 'password'}" class="form-input" id="loginPassword" placeholder="Enter your password" value="${form.password}" autocomplete="current-password" required style="border-radius: 10px; padding: 0.7rem 1rem;" />
-                    <button type="button" class="btn-toggle-password" id="btnTogglePassword" aria-label="Toggle password visibility">
-                      <i class="fa-regular ${form.showPassword ? 'fa-eye-slash' : 'fa-eye'}"></i>
-                    </button>
-                  </div>
-                </div>
-
-                <div style="display: flex; justify-content: flex-end; margin-bottom: 1.25rem;">
-                  <a href="#" id="btnForgotPassword" style="font-size: 0.82rem; font-weight: 700; color: var(--brand-primary);">Forgot Password?</a>
-                </div>
-
-                <button type="submit" class="btn-brand-primary login-submit-btn" id="btnSubmitLogin" ${form.isSubmitting ? 'disabled' : ''}>
-                  ${form.isSubmitting ? `<i class="fa-solid fa-circle-notch fa-spin"></i> Signing in...` : 'LOGIN'}
-                </button>
-
-                <div style="text-align: center; margin-top: 1.25rem; font-size: 0.88rem; color: var(--text-secondary);">
-                  Don't have an account yet? <a id="btnToggleRegister" style="color: var(--brand-primary); font-weight: 800; cursor: pointer;">Sign Up / Register</a>
-                </div>
-              </form>
-
-              <!-- Quick Demo Credentials Helper -->
-              <div class="demo-credentials-box">
-                <div style="font-weight: 800; color: var(--text-secondary);">Need test credentials? Click to fill:</div>
-                <div class="demo-cred-buttons">
-                  <button type="button" class="demo-cred-btn" data-role="associate" data-email="amina.kwame@ashesi.edu.gh">Associate</button>
-                  <button type="button" class="demo-cred-btn" data-role="mentor" data-email="samuel.osei@mcf-mentors.org">Mentor</button>
-                  <button type="button" class="demo-cred-btn" data-role="admin" data-email="admin@mcf-portal.org">Admin</button>
+              <!-- FIELD 3: PASSWORD -->
+              <div class="form-group">
+                <label class="form-label" for="loginPassword">Password</label>
+                <div class="password-input-wrapper">
+                  <input type="${form.showPassword ? 'text' : 'password'}" class="form-input" id="loginPassword" placeholder="Enter your password" value="${form.password}" autocomplete="current-password" required style="border-radius: 10px; padding: 0.7rem 1rem;" />
+                  <button type="button" class="btn-toggle-password" id="btnTogglePassword" aria-label="Toggle password visibility">
+                    <i class="fa-regular ${form.showPassword ? 'fa-eye-slash' : 'fa-eye'}"></i>
+                  </button>
                 </div>
               </div>
-            `}
 
-          </div>
-        </div>
+              <div style="display: flex; justify-content: flex-end; margin-bottom: 1.25rem;">
+                <a href="#" id="btnForgotPassword" style="font-size: 0.82rem; font-weight: 700; color: var(--brand-primary);">Forgot Password?</a>
+              </div>
+
+              <button type="submit" class="btn-brand-primary login-submit-btn" id="btnSubmitLogin" ${form.isSubmitting ? 'disabled' : ''}>
+                ${form.isSubmitting ? `<i class="fa-solid fa-circle-notch fa-spin"></i> Signing in...` : 'LOGIN'}
+              </button>
+            </form>
+
+            <!-- Quick Demo Credentials Helper -->
+            <div class="demo-credentials-box">
+              <div style="font-weight: 800; color: var(--text-secondary);">Need test credentials? Click to fill:</div>
+              <div class="demo-cred-buttons">
+                <button type="button" class="demo-cred-btn" data-role="associate" data-email="amina.kwame@ashesi.edu.gh">Associate</button>
+                <button type="button" class="demo-cred-btn" data-role="mentor" data-email="samuel.osei@mcf-mentors.org">Mentor</button>
+                <button type="button" class="demo-cred-btn" data-role="admin" data-email="admin@mcf-portal.org">Admin</button>
+              </div>
+            </div>
 
           </div>
         </div>
@@ -731,11 +660,18 @@ function renderAuthenticatedDashboard() {
   return `
     <!-- Top Header -->
     <header class="mently-header">
-      <div class="brand-wrapper">
-        <div class="brand-logo-icon"><i class="fa-solid fa-graduation-cap"></i></div>
-        <div class="brand-text">
-          <span class="brand-name" style="font-size: 1.1rem; line-height: 1.2;">Mastercard Foundation Associate Program</span>
-          <span class="brand-tagline">ASSOCIATE MENTORSHIP PORTAL</span>
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <!-- Mobile Navigation Menu Toggle Button -->
+        <button class="btn-icon-circle btn-mobile-nav-toggle" id="btnMobileNavToggle" title="Toggle Navigation Menu">
+          <i class="fa-solid ${state.isMobileNavOpen ? 'fa-xmark' : 'fa-bars'}"></i>
+        </button>
+
+        <div class="brand-wrapper" style="cursor: pointer;" id="btnNavBrandHome">
+          <img src="/assets/jobberman-logo.png" alt="Jobberman Logo" class="brand-logo-img" />
+          <div class="brand-text">
+            <span class="brand-name" style="font-size: 1.1rem; line-height: 1.2;">Mastercard Foundation Associate Program</span>
+            <span class="brand-tagline">ASSOCIATE MENTORSHIP PORTAL</span>
+          </div>
         </div>
       </div>
 
@@ -750,10 +686,12 @@ function renderAuthenticatedDashboard() {
         <!-- Auth User Profile Badge -->
         <div class="auth-user-badge">
           <img src="${user?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80'}" class="auth-user-avatar" />
-          <span class="auth-user-name">${user?.name || 'User'}</span>
-          <span class="badge-tag ${user?.role === 'admin' ? 'badge-purple' : user?.role === 'mentor' ? 'badge-gold' : 'badge-blue'}" style="font-size: 0.72rem; padding: 0.15rem 0.5rem; text-transform: capitalize;">
-            ${user?.role || state.currentRole}
-          </span>
+          <div class="auth-user-info">
+            <span class="auth-user-name">${user?.name || 'User'}</span>
+            <span class="auth-user-role role-${(user?.role || state.currentRole).toLowerCase()}" style="color: ${(user?.role || state.currentRole).toLowerCase() === 'mentor' ? '#D97706' : (user?.role || state.currentRole).toLowerCase() === 'admin' ? '#7C3AED' : '#2563EB'} !important;">
+              ${(user?.role || state.currentRole).charAt(0).toUpperCase() + (user?.role || state.currentRole).slice(1)}
+            </span>
+          </div>
         </div>
 
         <!-- Notification Bell -->
@@ -777,46 +715,152 @@ function renderAuthenticatedDashboard() {
     <!-- Notification Drawer -->
     ${state.isNotificationOpen ? renderNotificationDrawer() : ''}
 
-    <!-- Navigation Subbar -->
-    <nav class="mently-subnav">
-      ${renderNavigationTabs()}
-    </nav>
+    <!-- Mobile Navigation Backdrop Overlay -->
+    <div class="sidebar-backdrop ${state.isMobileNavOpen ? 'active' : ''}" id="sidebarBackdrop"></div>
 
-    <!-- Main Workspace Area -->
-    <main class="mently-container">
-      ${renderRoleView(activeAssociate, activeMentor)}
-    </main>
+    <!-- Main Workspace Layout with Vertical Navigation Sidebar -->
+    <div class="portal-app-wrapper">
+      ${renderVerticalSidebar()}
+
+      <!-- Main Content Area -->
+      <main class="portal-main-view">
+        ${renderRoleView(activeAssociate, activeMentor)}
+      </main>
+    </div>
 
     <!-- Active Modals -->
     ${renderModals()}
   `;
 }
 
-// Render Navigation Tabs based on Role
-function renderNavigationTabs() {
+// Render Vertical Navigation Sidebar
+function renderVerticalSidebar() {
   const role = state.currentUser ? state.currentUser.role : state.currentRole;
+
+  let linksHtml = '';
   if (role === 'associate') {
-    return `
-      <div class="subnav-link ${state.associateTab === 'home' ? 'active' : ''}" data-tab="home"><i class="fa-solid fa-house"></i> Home</div>
-      <div class="subnav-link ${state.associateTab === 'mentors' ? 'active' : ''}" data-tab="mentors"><i class="fa-solid fa-users"></i> Find Mentors</div>
-      <div class="subnav-link ${state.associateTab === 'group_sessions' ? 'active' : ''}" data-tab="group_sessions"><i class="fa-solid fa-people-group"></i> Group Sessions</div>
-      <div class="subnav-link ${state.associateTab === 'tasks' ? 'active' : ''}" data-tab="tasks"><i class="fa-solid fa-list-check"></i> Tasks</div>
-      <div class="subnav-link ${state.associateTab === 'sessions' ? 'active' : ''}" data-tab="sessions"><i class="fa-solid fa-calendar-check"></i> My Sessions</div>
+    linksHtml = `
+      <button class="nav-sidebar-link ${state.associateTab === 'home' ? 'active' : ''}" data-tab="home">
+        <i class="fa-solid fa-house"></i> <span>Home</span>
+      </button>
+      <button class="nav-sidebar-link ${state.associateTab === 'mentors' ? 'active' : ''}" data-tab="mentors">
+        <i class="fa-solid fa-user-group"></i> <span>Find Mentors</span>
+      </button>
+      <button class="nav-sidebar-link ${state.associateTab === 'group_sessions' ? 'active' : ''}" data-tab="group_sessions">
+        <i class="fa-solid fa-users"></i> <span>Group Sessions</span>
+      </button>
+      <button class="nav-sidebar-link ${state.associateTab === 'tasks' ? 'active' : ''}" data-tab="tasks">
+        <i class="fa-solid fa-list-check"></i> <span>Tasks</span>
+      </button>
+      <button class="nav-sidebar-link ${state.associateTab === 'sessions' ? 'active' : ''}" data-tab="sessions">
+        <i class="fa-regular fa-calendar-check"></i> <span>My Sessions</span>
+      </button>
+      <button class="nav-sidebar-link ${state.associateTab === 'profile' ? 'active' : ''}" data-tab="profile">
+        <i class="fa-regular fa-user"></i> <span>Profile</span>
+      </button>
     `;
   } else if (role === 'mentor') {
-    return `
-      <div class="subnav-link ${state.mentorTab === 'dashboard' ? 'active' : ''}" data-tab="dashboard"><i class="fa-solid fa-chart-line"></i> Dashboard</div>
-      <div class="subnav-link ${state.mentorTab === 'availability' ? 'active' : ''}" data-tab="availability"><i class="fa-solid fa-clock"></i> 1-on-1 Slots</div>
-      <div class="subnav-link ${state.mentorTab === 'group_sessions' ? 'active' : ''}" data-tab="group_sessions"><i class="fa-solid fa-people-group"></i> Group Masterclasses</div>
-      <div class="subnav-link ${state.mentorTab === 'tasks' ? 'active' : ''}" data-tab="tasks"><i class="fa-solid fa-tasks"></i> Mentee Tasks</div>
+    linksHtml = `
+      <button class="nav-sidebar-link ${state.mentorTab === 'dashboard' ? 'active' : ''}" data-tab="dashboard">
+        <i class="fa-solid fa-chart-line"></i> <span>Dashboard</span>
+      </button>
+      <button class="nav-sidebar-link ${state.mentorTab === 'availability' ? 'active' : ''}" data-tab="availability">
+        <i class="fa-regular fa-clock"></i> <span>1-on-1 Slots</span>
+      </button>
+      <button class="nav-sidebar-link ${state.mentorTab === 'group_sessions' ? 'active' : ''}" data-tab="group_sessions">
+        <i class="fa-solid fa-users"></i> <span>Group Masterclasses</span>
+      </button>
+      <button class="nav-sidebar-link ${state.mentorTab === 'tasks' ? 'active' : ''}" data-tab="tasks">
+        <i class="fa-solid fa-tasks"></i> <span>Mentee Tasks</span>
+      </button>
+      <button class="nav-sidebar-link ${state.mentorTab === 'profile' ? 'active' : ''}" data-tab="profile">
+        <i class="fa-regular fa-user"></i> <span>Profile</span>
+      </button>
     `;
   } else {
-    return `
-      <div class="subnav-link ${state.adminTab === 'analytics' ? 'active' : ''}" data-tab="analytics"><i class="fa-solid fa-chart-pie"></i> Programme Overview</div>
-      <div class="subnav-link ${state.adminTab === 'mentors' ? 'active' : ''}" data-tab="mentors"><i class="fa-solid fa-sliders"></i> Mentor Caps & Onboarding</div>
-      <div class="subnav-link ${state.adminTab === 'sessions' ? 'active' : ''}" data-tab="sessions"><i class="fa-solid fa-video"></i> Session Audit Logs</div>
+    linksHtml = `
+      <button class="nav-sidebar-link ${state.adminTab === 'analytics' ? 'active' : ''}" data-tab="analytics">
+        <i class="fa-solid fa-chart-pie"></i> <span>Programme Overview</span>
+      </button>
+      <button class="nav-sidebar-link ${state.adminTab === 'mentors' ? 'active' : ''}" data-tab="mentors">
+        <i class="fa-solid fa-sliders"></i> <span>Mentor Caps & Onboarding</span>
+      </button>
+      <button class="nav-sidebar-link ${state.adminTab === 'sessions' ? 'active' : ''}" data-tab="sessions">
+        <i class="fa-solid fa-video"></i> <span>Session Audit Logs</span>
+      </button>
+      <button class="nav-sidebar-link ${state.adminTab === 'profile' ? 'active' : ''}" data-tab="profile">
+        <i class="fa-regular fa-user"></i> <span>Profile</span>
+      </button>
     `;
   }
+
+  return `
+    <aside class="portal-sidebar-nav ${state.isMobileNavOpen ? 'mobile-open' : ''}">
+      <div class="portal-sidebar-menu">
+        ${linksHtml}
+      </div>
+
+      <div class="sidebar-bottom-help">
+        <button class="nav-sidebar-link" id="btnSidebarHelp">
+          <i class="fa-regular fa-circle-question"></i> <span>Help & Support</span>
+        </button>
+      </div>
+    </aside>
+  `;
+}
+
+// Render User Profile Overview
+function renderUserProfileOverview() {
+  const user = state.currentUser || state.associates[state.currentAssociateIndex] || { name: 'Mastercard Associate', email: 'associate@mcf-portal.org', role: 'associate' };
+  const role = user.role || state.currentRole;
+
+  return `
+    <div class="content-area" style="width: 100%;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
+        <div>
+          <h2 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 800;">My Profile Overview</h2>
+          <p style="font-size: 0.88rem; color: var(--text-secondary);">Manage your account details and mentorship preferences.</p>
+        </div>
+        <button class="btn-brand-primary" id="btnEditUserProfile" style="padding: 0.45rem 1rem; font-size: 0.82rem;">
+          <i class="fa-solid fa-pen-to-square"></i> Edit Profile
+        </button>
+      </div>
+
+      <div class="mentor-card" style="max-width: 680px;">
+        <div style="display: flex; align-items: center; gap: 1.25rem; margin-bottom: 1.5rem;">
+          <img src="${user.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80'}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid var(--brand-primary);" />
+          <div>
+            <h3 style="font-family: var(--font-display); font-size: 1.3rem; font-weight: 800;">${user.name}</h3>
+            <div style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.2rem;">${user.title || user.email}</div>
+            ${user.organization ? `<div style="font-size: 0.82rem; color: var(--brand-primary); font-weight: 700; margin-top: 0.2rem;">${user.organization}</div>` : ''}
+            <span class="badge-tag badge-blue" style="margin-top: 0.5rem; display: inline-block; text-transform: capitalize;">${role}</span>
+          </div>
+        </div>
+
+        ${user.bio ? `
+          <div style="margin-bottom: 1.25rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">
+            <h4 style="font-size: 0.82rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.4rem;">Bio & Objectives</h4>
+            <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6;">${user.bio}</p>
+          </div>
+        ` : ''}
+
+        ${user.expertise && user.expertise.length > 0 ? `
+          <div style="margin-bottom: 1.25rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">
+            <h4 style="font-size: 0.82rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.4rem;">Expertise / Focus Areas</h4>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
+              ${user.expertise.map(e => `<span class="badge-tag badge-blue">${e}</span>`).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+        <div style="display: flex; flex-direction: column; gap: 0.8rem; font-size: 0.9rem;">
+          <div><strong>Email Address:</strong> ${user.email}</div>
+          <div><strong>Program:</strong> Mastercard Foundation Associates Program</div>
+          <div><strong>Status:</strong> Active Associate & Fellow</div>
+        </div>
+      </div>
+    </div>
+  `;
 }
 
 // Render View by Role
@@ -828,15 +872,18 @@ function renderRoleView(associate, mentor) {
     if (state.associateTab === 'group_sessions') return renderGroupSessionsList();
     if (state.associateTab === 'tasks') return renderMenteeTasksList();
     if (state.associateTab === 'sessions') return renderMenteeSessionsList();
+    if (state.associateTab === 'profile') return renderUserProfileOverview();
   } else if (role === 'mentor') {
     if (state.mentorTab === 'dashboard') return renderMentorDashboard(mentor);
     if (state.mentorTab === 'availability') return renderMentorAvailability(mentor);
     if (state.mentorTab === 'group_sessions') return renderMentorGroupSessions(mentor);
     if (state.mentorTab === 'tasks') return renderMentorTasks(mentor);
+    if (state.mentorTab === 'profile') return renderUserProfileOverview();
   } else if (role === 'admin') {
     if (state.adminTab === 'analytics') return renderAdminAnalytics();
     if (state.adminTab === 'mentors') return renderAdminMentorManagement();
     if (state.adminTab === 'sessions') return renderAdminSessionLogs();
+    if (state.adminTab === 'profile') return renderUserProfileOverview();
   }
 }
 
@@ -1050,55 +1097,56 @@ function renderMenteeTasksList() {
               </div>
               <div>
                 ${t.status === 'Completed' ? `
-                  <span class="badge-tag badge-green"><i class="fa-solid fa-check-double"></i> Completed</span>
+                  <span class="badge-tag badge-green"><i class="fa-solid fa-circle-check"></i> Completed</span>
                 ` : `
-                  <button class="btn-brand-primary btn-complete-task" data-id="${t.id}">Mark Completed</button>
+                  <button class="btn-brand-primary btn-complete-task" data-id="${t.id}" style="padding: 0.4rem 0.9rem; font-size: 0.8rem;">Mark Completed</button>
                 `}
               </div>
             </div>
           `).join('')}
         </div>
       ` : `
-        <div style="text-align: center; padding: 4rem 1rem; color: var(--text-muted);">
-          <i class="fa-solid fa-clipboard-check" style="font-size: 2.5rem; margin-bottom: 1rem;"></i>
-          <div style="font-weight: 800;">No pending tasks assigned right now.</div>
-        </div>
+        <div style="text-align: center; padding: 3rem; color: var(--text-muted);">No action tasks assigned yet.</div>
       `}
     </div>
   `;
 }
 
 function renderMenteeSessionsList() {
+  const activeAssoc = state.associates[state.currentAssociateIndex];
+  const mySessions = state.sessions.filter(s => s.associateId === activeAssoc.id || s.associateName === activeAssoc.name);
+
   return `
     <div class="content-area" style="width: 100%;">
-      <h2 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; margin-bottom: 1.5rem;">My Scheduled Sessions</h2>
+      <h2 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; margin-bottom: 1.5rem;">My 1-on-1 Sessions</h2>
 
-      <div style="display: flex; flex-direction: column; gap: 1.25rem;">
-        ${state.sessions.map(s => `
-          <div class="mentor-card">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.8rem;">
-              <div>
-                <div style="font-weight: 800; font-size: 1.1rem;">1-on-1 Session with ${s.mentorName}</div>
-                <div style="font-size: 0.85rem; color: var(--text-secondary);">${s.mentorDomain}</div>
+      ${mySessions.length > 0 ? `
+        <div class="cards-grid">
+          ${mySessions.map(s => `
+            <div class="mentor-card">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.8rem;">
+                <div style="font-weight: 800; font-size: 1.05rem;">${s.mentorName}</div>
+                <span class="badge-tag ${s.status === 'Accepted' ? 'badge-green' : 'badge-gold'}">${s.status}</span>
               </div>
-              <span class="badge-tag ${s.status === 'Accepted' ? 'badge-green' : 'badge-gold'}">${s.status}</span>
-            </div>
 
-            <div style="font-size: 0.86rem; color: var(--text-secondary); margin-bottom: 1rem;">
-              <strong>Objective:</strong> ${s.objective}
-            </div>
-
-            <div class="card-footer">
-              <div style="font-size: 0.82rem; color: var(--text-muted); font-weight: 700;">
-                <i class="fa-regular fa-clock"></i> ${s.date} at ${s.time} (${s.duration})
+              <div style="font-size: 0.86rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                <strong>Objective:</strong> ${s.objective}
               </div>
-              ${s.meetingLink ? `
-                <a href="${s.meetingLink}" target="_blank" class="btn-brand-primary" style="padding: 0.4rem 0.9rem; font-size: 0.8rem;"><i class="fa-solid fa-video"></i> Join Zoho Meet</a>
-              ` : ''}
+
+              <div class="card-footer">
+                <div style="font-size: 0.82rem; color: var(--text-muted); font-weight: 700;">
+                  <i class="fa-regular fa-clock"></i> ${s.date} at ${s.time} (${s.duration})
+                </div>
+                ${s.meetingLink ? `
+                  <a href="${s.meetingLink}" target="_blank" class="btn-brand-primary" style="padding: 0.4rem 0.9rem; font-size: 0.8rem;"><i class="fa-solid fa-video"></i> Join Zoho Meet</a>
+                ` : ''}
+              </div>
             </div>
-          </div>
-        `).join('')}
-      </div>
+          `).join('')}
+        </div>
+      ` : `
+        <div style="text-align: center; padding: 3rem; color: var(--text-muted);">No sessions booked yet.</div>
+      `}
     </div>
   `;
 }
@@ -1116,114 +1164,133 @@ function renderMentorDashboard(mentor) {
           <h2 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 800;">Mentor Dashboard — ${mentor.name}</h2>
           <p style="font-size: 0.88rem; color: var(--text-secondary);">${mentor.title} (${mentor.organization})</p>
         </div>
-        <button class="btn-brand-primary" id="btnEditMyProfile"><i class="fa-solid fa-user-pen"></i> Edit Profile</button>
+        <button class="btn-brand-primary" id="btnEditProfile" style="padding: 0.45rem 1rem; font-size: 0.82rem;"><i class="fa-solid fa-pen"></i> Edit Profile</button>
       </div>
 
-      <!-- Capacity Progress Meter -->
-      <div class="mentor-card" style="margin-bottom: 2rem; border-left: 4px solid var(--brand-primary);">
-        <div style="display: flex; justify-content: space-between; align-items: center; font-weight: 800; font-size: 0.9rem;">
-          <span>Monthly Session Capacity Usage</span>
-          <span>${mentor.sessionsUsedThisMonth} / ${mentor.monthlyCap} Sessions Used (${usagePct}%)</span>
-        </div>
-        <div class="capacity-progress-container">
-          <div class="capacity-progress-fill" style="width: ${Math.min(usagePct, 100)}%;"></div>
-        </div>
-        <div style="font-size: 0.78rem; color: var(--text-muted);">Adjusted by Programme Administrators in Admin Portal.</div>
-      </div>
-
-      <!-- Booked Sessions -->
-      <h3 style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 800; margin-bottom: 1rem;">Booked Mentorship Sessions</h3>
-      <div style="display: flex; flex-direction: column; gap: 1rem;">
-        ${state.sessions.map(s => `
-          <div class="mentor-card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem;">
-              <div style="font-weight: 800; font-size: 1.05rem;">Associate: ${s.associateName}</div>
-              <span class="badge-tag ${s.status === 'Accepted' ? 'badge-green' : 'badge-gold'}">${s.status}</span>
-            </div>
-            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.8rem;">${s.objective}</p>
-            <div class="card-footer">
-              <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted);"><i class="fa-regular fa-clock"></i> ${s.date} at ${s.time}</span>
-              ${s.status === 'Pending' ? `
-                <button class="btn-brand-primary btn-accept-session" data-id="${s.id}" style="padding: 0.4rem 0.9rem; font-size: 0.8rem;">Accept Session & Generate Zoho Link</button>
-              ` : `
-                <a href="${s.meetingLink}" target="_blank" class="btn-brand-primary" style="padding: 0.4rem 0.9rem; font-size: 0.8rem;"><i class="fa-solid fa-video"></i> Start Zoho Session</a>
-              `}
-            </div>
+      <!-- Metrics Cards Grid -->
+      <div class="stats-overview-grid">
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <span class="stat-label">Monthly 1-on-1 Capacity</span>
+            <div class="stat-icon"><i class="fa-solid fa-gauge-high"></i></div>
           </div>
-        `).join('')}
+          <div class="stat-value">${mentor.sessionsUsedThisMonth} / ${mentor.monthlyCap}</div>
+          <div class="capacity-progress-container">
+            <div class="capacity-progress-fill" style="width: ${Math.min(usagePct, 100)}%;"></div>
+          </div>
+          <div class="stat-meta">${mentor.monthlyCap - mentor.sessionsUsedThisMonth} slots remaining for mentees</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <span class="stat-label">Total Mentees Advised</span>
+            <div class="stat-icon" style="background: var(--badge-purple-bg); color: var(--brand-violet);"><i class="fa-solid fa-user-graduate"></i></div>
+          </div>
+          <div class="stat-value">${mentor.totalSessions}</div>
+          <div class="stat-meta">Completed 1-on-1 sessions</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <span class="stat-label">Average Mentee Rating</span>
+            <div class="stat-icon" style="background: var(--badge-gold-bg); color: var(--brand-gold);"><i class="fa-solid fa-star"></i></div>
+          </div>
+          <div class="stat-value">${mentor.rating} / 5.0</div>
+          <div class="stat-meta">Based on associate feedback</div>
+        </div>
+      </div>
+
+      <!-- Mentee Requests Table -->
+      <div class="mentor-card">
+        <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 800; margin-bottom: 1rem;">Pending 1-on-1 Booking Requests</h3>
+        
+        ${state.sessions.filter(s => s.mentorId === mentor.id && s.status === 'Pending').length > 0 ? `
+          <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+            ${state.sessions.filter(s => s.mentorId === mentor.id && s.status === 'Pending').map(s => `
+              <div style="display: flex; align-items: center; justify-content: space-between; padding: 1rem; background: var(--bg-input); border-radius: var(--radius-md);">
+                <div>
+                  <div style="font-weight: 800; font-size: 0.95rem;">${s.associateName}</div>
+                  <div style="font-size: 0.82rem; color: var(--text-secondary);">${s.objective}</div>
+                  <div style="font-size: 0.76rem; color: var(--brand-primary); font-weight: 700; margin-top: 0.2rem;"><i class="fa-regular fa-clock"></i> ${s.date} at ${s.time} (${s.duration})</div>
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                  <button class="btn-brand-primary btn-accept-session" data-id="${s.id}" style="padding: 0.35rem 0.8rem; font-size: 0.78rem;">Accept</button>
+                  <button class="btn-brand-primary btn-decline-session" data-id="${s.id}" style="padding: 0.35rem 0.8rem; font-size: 0.78rem; background: var(--brand-rose);">Decline</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        ` : `
+          <div style="font-size: 0.88rem; color: var(--text-muted);">No pending booking requests.</div>
+        `}
       </div>
     </div>
   `;
 }
 
 function renderMentorAvailability(mentor) {
-  const defaultDate = new Date().toISOString().split('T')[0];
+  const openSlotsCount = mentor.schedule.filter(s => !s.isBooked).length;
+  const bookedSlotsCount = mentor.schedule.filter(s => s.isBooked).length;
+
   return `
     <div class="content-area" style="width: 100%;">
-      <div class="mentor-card" style="margin-bottom: 2rem; border-radius: 16px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); padding: 1.75rem;">
-        <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 800; color: var(--brand-primary); margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
-          <i class="fa-solid fa-circle-plus"></i> Add Open Time Slot
-        </h3>
-        
-        <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 1.25rem; align-items: flex-end;">
-          <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label" style="font-weight: 700; color: var(--text-primary);">Available Date</label>
-            <input type="date" class="form-input" id="inputSlotDate" value="${defaultDate}" style="border-radius: 10px; padding: 0.65rem 1rem;" />
-          </div>
-          
-          <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label" style="font-weight: 700; color: var(--text-primary);">1–Hour Time Slot</label>
-            <select class="form-select" id="inputSlotTime" style="border-radius: 10px; padding: 0.65rem 1rem;">
-              <option value="09:00 AM - 10:00 AM">09:00 AM - 10:00 AM</option>
-              <option value="10:30 AM - 11:30 AM">10:30 AM - 11:30 AM</option>
-              <option value="01:00 PM - 02:00 PM">01:00 PM - 02:00 PM</option>
-              <option value="02:30 PM - 03:30 PM">02:30 PM - 03:30 PM</option>
-              <option value="04:00 PM - 05:00 PM">04:00 PM - 05:00 PM</option>
-              <option value="05:30 PM - 06:30 PM">05:30 PM - 06:30 PM</option>
-            </select>
-          </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <h2 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 800;">1-on-1 Availability Management</h2>
+          <p style="font-size: 0.88rem; color: var(--text-secondary);">Assign specific dates and time hours for associates to book mentorship sessions.</p>
+        </div>
 
-          <button class="btn-brand-primary" id="btnAddSlotSubmit" style="border-radius: 50px; padding: 0.75rem 1.6rem; font-weight: 800; white-space: nowrap;">
-            <i class="fa-solid fa-plus"></i> Add Slot
-          </button>
+        <button class="btn-brand-primary" id="btnOpenAvailabilityModal" style="padding: 0.7rem 1.35rem; font-size: 0.92rem; border-radius: 10px; box-shadow: var(--shadow-sm);">
+          <i class="fa-solid fa-calendar-days" style="margin-right: 0.4rem;"></i> Manage Availability & Hours
+        </button>
+      </div>
+
+      <!-- Quick Stats & Slot Overview -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+        <div class="stat-card" style="padding: 1.2rem; background: var(--bg-card); border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+          <div style="font-size: 0.78rem; font-weight: 800; text-transform: uppercase; color: var(--brand-primary); margin-bottom: 0.3rem;">Open 1-on-1 Slots</div>
+          <div style="font-size: 1.6rem; font-weight: 900; color: var(--text-primary);">${openSlotsCount}</div>
+          <div style="font-size: 0.76rem; color: var(--text-secondary); margin-top: 0.2rem;">Ready for associates to book</div>
+        </div>
+
+        <div class="stat-card" style="padding: 1.2rem; background: var(--bg-card); border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+          <div style="font-size: 0.78rem; font-weight: 800; text-transform: uppercase; color: var(--brand-violet); margin-bottom: 0.3rem;">Booked Sessions</div>
+          <div style="font-size: 1.6rem; font-weight: 900; color: var(--text-primary);">${bookedSlotsCount}</div>
+          <div style="font-size: 0.76rem; color: var(--text-secondary); margin-top: 0.2rem;">Confirmed associate meetings</div>
         </div>
       </div>
 
-      <div class="mentor-card" style="border-radius: 16px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); padding: 1.75rem;">
-        <h3 style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 800; margin-bottom: 1.25rem;">My Open & Booked Schedules</h3>
-        
-        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
-          <thead>
-            <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-secondary); font-weight: 800;">
-              <th style="padding: 0.85rem;">Date</th>
-              <th style="padding: 0.85rem;">1–Hour Time Slot</th>
-              <th style="padding: 0.85rem;">Status</th>
-              <th style="padding: 0.85rem;">Booked By</th>
-              <th style="padding: 0.85rem; text-align: right;">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${mentor.schedule.map((s, idx) => `
-              <tr style="border-bottom: 1px solid var(--border-color);">
-                <td style="padding: 1rem 0.85rem; font-weight: 800; color: var(--text-primary);">${s.date}</td>
-                <td style="padding: 1rem 0.85rem; font-weight: 800; color: var(--brand-primary);">${s.time}</td>
-                <td style="padding: 1rem 0.85rem;">
-                  ${s.isBooked 
-                    ? `<span class="badge-tag badge-gold" style="font-size: 0.8rem; padding: 0.35rem 0.75rem;"><i class="fa-solid fa-lock"></i> Slot Filled</span>` 
-                    : `<span class="badge-tag badge-green" style="font-size: 0.8rem; padding: 0.35rem 0.75rem;"><i class="fa-solid fa-circle-check"></i> Available</span>`}
-                </td>
-                <td style="padding: 1rem 0.85rem; color: var(--text-secondary);">
-                  ${s.isBooked ? s.bookedBy : '<span style="color: var(--text-muted);">Open</span>'}
-                </td>
-                <td style="padding: 1rem 0.85rem; text-align: right;">
-                  ${s.isBooked 
-                    ? `<span style="color: var(--text-muted); font-size: 0.85rem; font-weight: 600;">Locked</span>` 
-                    : `<button class="btn-remove-slot" data-idx="${idx}" style="background: transparent; border: none; color: var(--brand-rose); font-weight: 800; font-size: 0.88rem; cursor: pointer; padding: 0.2rem 0.5rem;">Remove</button>`}
-                </td>
-              </tr>
+      <!-- Existing Slots List -->
+      <div class="mentor-card">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.2rem;">
+          <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 800;">Published 1-on-1 Slots</h3>
+          <span class="badge-tag badge-blue" style="font-size: 0.78rem;">${mentor.schedule.length} total entries</span>
+        </div>
+
+        ${mentor.schedule.length > 0 ? `
+          <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+            ${mentor.schedule.map((slot, index) => `
+              <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.9rem 1.1rem; background: var(--bg-input); border-radius: var(--radius-md);">
+                <div style="font-weight: 700; font-size: 0.9rem; display: flex; align-items: center; gap: 0.6rem;">
+                  <i class="fa-regular fa-calendar-check" style="color: var(--brand-primary); font-size: 1.05rem;"></i>
+                  <span>${slot.date} at ${slot.time}</span>
+                  ${slot.isBooked ? '<span class="badge-tag badge-purple" style="margin-left: 0.5rem;">Booked</span>' : '<span class="badge-tag badge-green" style="margin-left: 0.5rem;">Open</span>'}
+                </div>
+                ${!slot.isBooked ? `
+                  <button class="btn-remove-slot" data-index="${index}" style="background: transparent; color: var(--brand-rose); font-size: 0.85rem; font-weight: 700; cursor: pointer; border: none;">
+                    <i class="fa-solid fa-trash-can"></i> Remove
+                  </button>
+                ` : ''}
+              </div>
             `).join('')}
-          </tbody>
-        </table>
+          </div>
+        ` : `
+          <div style="text-align: center; padding: 3rem; color: var(--text-muted);">
+            <i class="fa-regular fa-calendar-xmark" style="font-size: 2.2rem; margin-bottom: 0.8rem;"></i>
+            <div style="font-weight: 800;">No availability slots configured yet.</div>
+            <p style="font-size: 0.84rem; margin-top: 0.3rem;">Click "Manage Availability & Hours" above to assign dates and time slots.</p>
+          </div>
+        `}
       </div>
     </div>
   `;
@@ -1232,19 +1299,22 @@ function renderMentorAvailability(mentor) {
 function renderMentorGroupSessions(mentor) {
   return `
     <div class="content-area" style="width: 100%;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-        <h2 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 800;">Group Masterclasses</h2>
-        <button class="btn-brand-primary" id="btnOpenCreateGroupModal"><i class="fa-solid fa-plus"></i> Create Group Session</button>
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
+        <div>
+          <h2 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 800;">My Group Masterclasses</h2>
+          <p style="font-size: 0.88rem; color: var(--text-secondary);">Host cohort masterclasses for up to 20 associates.</p>
+        </div>
+        <button class="btn-brand-primary" id="btnOpenCreateGroupModal"><i class="fa-solid fa-plus"></i> Schedule Masterclass</button>
       </div>
 
       <div class="cards-grid">
-        ${state.groupSessions.filter(g => g.mentorId === mentor.id || g.mentorName === mentor.name).map(g => `
+        ${state.groupSessions.filter(g => g.mentorId === mentor.id).map(g => `
           <div class="mentor-card">
-            <div style="font-weight: 800; font-size: 1.1rem; margin-bottom: 0.4rem;">${g.title}</div>
-            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">${g.description}</p>
+            <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 800; margin-bottom: 0.4rem;">${g.title}</h3>
+            <p style="font-size: 0.86rem; color: var(--text-secondary); margin-bottom: 1rem;">${g.description}</p>
             <div class="card-tags-flex">
-              <span class="badge-tag badge-blue">${g.date} at ${g.startTime}</span>
-              <span class="badge-tag badge-purple">${g.enrolledMentees.length} / ${g.maxCapacity} Enrolled</span>
+              <span class="badge-tag badge-blue"><i class="fa-regular fa-calendar"></i> ${g.date} at ${g.startTime}</span>
+              <span class="badge-tag badge-purple"><i class="fa-solid fa-users"></i> ${g.enrolledMentees.length} / ${g.maxCapacity} Enrolled</span>
             </div>
           </div>
         `).join('')}
@@ -1254,26 +1324,105 @@ function renderMentorGroupSessions(mentor) {
 }
 
 function renderMentorTasks(mentor) {
+  const filterQuery = state.newTaskData.searchQuery.trim().toLowerCase();
+  const selectedIds = state.newTaskData.selectedAssociateIds;
+
+  const filteredAssociates = state.associates.filter(assoc => {
+    if (!filterQuery) return true;
+    return assoc.name.toLowerCase().includes(filterQuery) ||
+           assoc.title.toLowerCase().includes(filterQuery) ||
+           assoc.email.toLowerCase().includes(filterQuery);
+  });
+
   return `
     <div class="content-area" style="width: 100%;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-        <h2 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 800;">Mentee Action Tasks</h2>
-        <button class="btn-brand-primary" id="btnOpenCreateTaskModal"><i class="fa-solid fa-plus"></i> Assign New Task</button>
+      <div style="margin-bottom: 1.5rem;">
+        <h2 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 800;">Assign Action Tasks to Mentees</h2>
+        <p style="font-size: 0.88rem; color: var(--text-secondary);">Create action tasks with deadlines for associates in your mentorship program.</p>
       </div>
 
-      <div style="display: flex; flex-direction: column; gap: 1rem;">
-        ${state.tasks.filter(t => t.mentorId === mentor.id || t.mentorName === mentor.name).map(t => `
-          <div class="mentor-card">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+      <!-- Assign Task Form Card with Mentee Live Search & Multi-Select -->
+      <div class="mentor-card" style="margin-bottom: 2rem;">
+        <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 800; margin-bottom: 1.25rem;">Create New Task</h3>
+        
+        <form id="formCreateTask">
+          
+          <!-- MENTEE MULTI-SELECT WITH LIVE SEARCH -->
+          <div class="form-group">
+            <label class="form-label" style="display: flex; align-items: center; justify-content: space-between;">
+              <span>Select Mentees / Associates (${selectedIds.length} selected)</span>
+              ${selectedIds.length > 0 ? `
+                <button type="button" id="btnClearSelectedAssociates" style="background: transparent; color: var(--brand-rose); font-size: 0.78rem; font-weight: 700; cursor: pointer;">
+                  Clear Selection
+                </button>
+              ` : ''}
+            </label>
+
+            <!-- Search Filter Bar -->
+            <div style="position: relative; margin-bottom: 0.6rem;">
+              <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 0.9rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.85rem;"></i>
+              <input type="text" id="inputSearchAssociates" class="form-input" placeholder="Type name, title or email to filter mentees..." value="${state.newTaskData.searchQuery}" style="padding-left: 2.3rem; border-radius: 8px;" />
+            </div>
+
+            <!-- Scrollable Mentee List with Checkboxes -->
+            <div class="mentee-selector-list" style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 10px; background: var(--bg-input); padding: 0.5rem;">
+              ${filteredAssociates.length > 0 ? filteredAssociates.map(assoc => {
+                const isChecked = selectedIds.includes(assoc.id);
+                return `
+                  <label class="mentee-select-item ${isChecked ? 'selected' : ''}" style="display: flex; align-items: center; gap: 0.8rem; padding: 0.5rem 0.75rem; border-radius: 6px; cursor: pointer; transition: var(--transition-fast); margin-bottom: 0.2rem;">
+                    <input type="checkbox" class="cb-select-associate" value="${assoc.id}" ${isChecked ? 'checked' : ''} style="width: 18px; height: 18px; accent-color: var(--brand-primary); cursor: pointer;" />
+                    <img src="${assoc.avatar}" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;" />
+                    <div style="flex: 1;">
+                      <div style="font-weight: 700; font-size: 0.86rem; color: var(--text-primary);">${assoc.name}</div>
+                      <div style="font-size: 0.76rem; color: var(--text-secondary);">${assoc.title}</div>
+                    </div>
+                  </label>
+                `;
+              }).join('') : `
+                <div style="padding: 1rem; text-align: center; font-size: 0.84rem; color: var(--text-muted);">
+                  No mentees found matching "${state.newTaskData.searchQuery}".
+                </div>
+              `}
+            </div>
+          </div>
+
+          <!-- TASK DETAILS -->
+          <div class="form-group">
+            <label class="form-label" for="createTaskTitle">Task Title</label>
+            <input type="text" class="form-input" id="createTaskTitle" placeholder="e.g. Submit Research Proposal Draft" required value="${state.newTaskData.title}">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="createTaskDescription">Task Description & Deliverables</label>
+            <textarea class="form-textarea" id="createTaskDescription" rows="3" placeholder="Provide detailed instructions and expected outputs..." required>${state.newTaskData.description}</textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="createTaskDeadline">Completion Deadline</label>
+            <input type="date" class="form-input" id="createTaskDeadline" required value="${state.newTaskData.deadline}">
+          </div>
+
+          <button type="submit" class="btn-brand-primary" style="padding: 0.75rem 1.6rem;">
+            <i class="fa-solid fa-paper-plane"></i> Assign Task ${selectedIds.length > 0 ? `to ${selectedIds.length} Mentee${selectedIds.length === 1 ? '' : 's'}` : ''}
+          </button>
+        </form>
+      </div>
+
+      <!-- Assigned Tasks Table -->
+      <div class="mentor-card">
+        <h3 style="font-family: var(--font-display); font-size: 1.1rem; font-weight: 800; margin-bottom: 1rem;">Previously Assigned Tasks</h3>
+        <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+          ${state.tasks.filter(t => t.mentorId === mentor.id).map(t => `
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.9rem 1.1rem; background: var(--bg-input); border-radius: var(--radius-md);">
               <div>
-                <div style="font-weight: 800; font-size: 1.05rem;">${t.title}</div>
-                <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.25rem;">Assigned to: ${t.associateName} · Due: ${t.deadline}</div>
+                <div style="font-weight: 800; font-size: 0.95rem;">${t.title}</div>
+                <div style="font-size: 0.82rem; color: var(--text-secondary);">${t.description}</div>
+                <div style="font-size: 0.76rem; color: var(--brand-primary); font-weight: 700; margin-top: 0.2rem;">Assigned to: ${t.associateName} · Due: ${t.deadline}</div>
               </div>
               <span class="badge-tag ${t.status === 'Completed' ? 'badge-green' : 'badge-gold'}">${t.status}</span>
             </div>
-            <p style="font-size: 0.86rem; color: var(--text-secondary); margin-top: 0.6rem;">${t.description}</p>
-          </div>
-        `).join('')}
+          `).join('')}
+        </div>
       </div>
     </div>
   `;
@@ -1283,45 +1432,39 @@ function renderMentorTasks(mentor) {
 // ADMIN VIEWS
 // --------------------------------------------------------------------------
 function renderAdminAnalytics() {
+  const totalSessions = state.sessions.length;
+  const acceptedSessions = state.sessions.filter(s => s.status === 'Accepted').length;
+
   return `
     <div class="content-area" style="width: 100%;">
-      <h2 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; margin-bottom: 1.5rem;">Programme Overview Analytics</h2>
+      <h2 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; margin-bottom: 1.5rem;">Programme Overview & Analytics</h2>
 
       <div class="stats-overview-grid">
         <div class="stat-card">
           <div class="stat-card-header">
-            <span class="stat-label">Total Mentees</span>
-            <div class="stat-icon"><i class="fa-solid fa-user-graduate"></i></div>
+            <span class="stat-label">Active Associates</span>
+            <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
           </div>
-          <div class="stat-value">4,120</div>
-          <div class="stat-meta">Active Mastercard Scholars</div>
+          <div class="stat-value">${state.associates.length}</div>
+          <div class="stat-meta">Enrolled in Mastercard Foundation Program</div>
         </div>
 
         <div class="stat-card">
           <div class="stat-card-header">
-            <span class="stat-label">Active Mentors</span>
-            <div class="stat-icon" style="background: var(--badge-green-bg); color: var(--brand-emerald);"><i class="fa-solid fa-user-tie"></i></div>
+            <span class="stat-label">Verified Mentors</span>
+            <div class="stat-icon" style="background: var(--badge-purple-bg); color: var(--brand-violet);"><i class="fa-solid fa-user-tie"></i></div>
           </div>
-          <div class="stat-value">38</div>
-          <div class="stat-meta">Verified Industry Leaders</div>
+          <div class="stat-value">${state.mentors.length}</div>
+          <div class="stat-meta">Across 4 specialist domains</div>
         </div>
 
         <div class="stat-card">
           <div class="stat-card-header">
-            <span class="stat-label">Sessions This Month</span>
-            <div class="stat-icon" style="background: var(--badge-purple-bg); color: var(--brand-violet);"><i class="fa-solid fa-video"></i></div>
+            <span class="stat-label">Total 1-on-1 Sessions</span>
+            <div class="stat-icon" style="background: var(--badge-green-bg); color: var(--brand-emerald);"><i class="fa-solid fa-handshake"></i></div>
           </div>
-          <div class="stat-value">184</div>
-          <div class="stat-meta">+18% vs last month</div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-card-header">
-            <span class="stat-label">Attendance Rate</span>
-            <div class="stat-icon" style="background: var(--badge-gold-bg); color: var(--brand-gold);"><i class="fa-solid fa-chart-line"></i></div>
-          </div>
-          <div class="stat-value">96.4%</div>
-          <div class="stat-meta">Verified Zoho Logs</div>
+          <div class="stat-value">${totalSessions}</div>
+          <div class="stat-meta">${acceptedSessions} completed / accepted</div>
         </div>
       </div>
     </div>
@@ -1331,35 +1474,22 @@ function renderAdminAnalytics() {
 function renderAdminMentorManagement() {
   return `
     <div class="content-area" style="width: 100%;">
-      <h2 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; margin-bottom: 1.5rem;">Mentor Session Limits & Onboarding</h2>
-
-      <div class="mentor-card">
-        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem;">
-          <thead>
-            <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-secondary);">
-              <th style="padding: 0.75rem;">Mentor Name</th>
-              <th style="padding: 0.75rem;">Domain</th>
-              <th style="padding: 0.75rem;">Monthly Session Cap</th>
-              <th style="padding: 0.75rem;">Used This Month</th>
-              <th style="padding: 0.75rem;">Status</th>
-              <th style="padding: 0.75rem;">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${state.mentors.map(m => `
-              <tr style="border-bottom: 1px solid var(--border-color);">
-                <td style="padding: 0.85rem; font-weight: 800;">${m.name}</td>
-                <td style="padding: 0.85rem;">${m.domain}</td>
-                <td style="padding: 0.85rem; font-weight: 800; color: var(--brand-primary);">${m.monthlyCap} sessions</td>
-                <td style="padding: 0.85rem;">${m.sessionsUsedThisMonth} sessions</td>
-                <td style="padding: 0.85rem;"><span class="badge-tag badge-green">${m.status}</span></td>
-                <td style="padding: 0.85rem;">
-                  <button class="btn-brand-primary btn-edit-cap" data-id="${m.id}" style="padding: 0.35rem 0.85rem; font-size: 0.78rem;">Adjust Cap</button>
-                </td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
+      <h2 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; margin-bottom: 1.5rem;">Mentor Capacity & Caps</h2>
+      
+      <div class="cards-grid">
+        ${state.mentors.map(m => `
+          <div class="mentor-card">
+            <div class="card-header-flex">
+              <img src="${m.avatar}" class="mentor-avatar-lg" />
+              <div>
+                <div class="mentor-name">${m.name}</div>
+                <div class="mentor-title">${m.title}</div>
+              </div>
+            </div>
+            <div style="font-size: 0.9rem; font-weight: 700; margin-bottom: 0.5rem;">Monthly Cap: ${m.monthlyCap} 1-on-1 sessions</div>
+            <button class="btn-brand-primary btn-edit-cap" data-id="${m.id}" style="padding: 0.4rem 0.9rem; font-size: 0.8rem;">Edit Session Cap</button>
+          </div>
+        `).join('')}
       </div>
     </div>
   `;
@@ -1368,91 +1498,252 @@ function renderAdminMentorManagement() {
 function renderAdminSessionLogs() {
   return `
     <div class="content-area" style="width: 100%;">
-      <h2 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; margin-bottom: 1.5rem;">Session Audit & Duration Logs</h2>
+      <h2 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; margin-bottom: 1.5rem;">Session Audit Logs</h2>
       
-      <div class="mentor-card">
-        <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
-          <thead>
-            <tr style="border-bottom: 2px solid var(--border-color);">
-              <th style="padding: 0.75rem;">Session ID</th>
-              <th style="padding: 0.75rem;">Mentor</th>
-              <th style="padding: 0.75rem;">Associate</th>
-              <th style="padding: 0.75rem;">Date & Time</th>
-              <th style="padding: 0.75rem;">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${state.sessions.map(s => `
-              <tr style="border-bottom: 1px solid var(--border-color);">
-                <td style="padding: 0.85rem; font-weight: 800;">${s.id}</td>
-                <td style="padding: 0.85rem;">${s.mentorName}</td>
-                <td style="padding: 0.85rem;">${s.associateName}</td>
-                <td style="padding: 0.85rem;">${s.date} (${s.time})</td>
-                <td style="padding: 0.85rem;"><span class="badge-tag badge-blue">${s.status}</span></td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  `;
-}
-
-// --------------------------------------------------------------------------
-// NOTIFICATION DRAWER & MODALS
-// --------------------------------------------------------------------------
-function renderNotificationDrawer() {
-  return `
-    <div class="notification-drawer">
-      <div class="notification-header">
-        <span>Notifications</span>
-        <button id="btnCloseNotifications" style="background: transparent; color: var(--text-muted);"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      ${state.notifications.map(n => `
-        <div class="notification-item ${!n.read ? 'unread' : ''}">
-          <i class="fa-solid fa-circle-info" style="color: var(--brand-primary); margin-top: 0.2rem;"></i>
-          <div>
-            <div style="font-weight: 800; font-size: 0.85rem;">${n.title}</div>
-            <div style="font-size: 0.8rem; color: var(--text-secondary);">${n.message}</div>
-            <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.2rem;">${n.timestamp}</div>
+      <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+        ${state.sessions.map(s => `
+          <div class="mentor-card" style="flex-direction: row; align-items: center; justify-content: space-between;">
+            <div>
+              <div style="font-weight: 800; font-size: 0.95rem;">${s.associateName} ↔ ${s.mentorName}</div>
+              <div style="font-size: 0.82rem; color: var(--text-secondary);">${s.objective}</div>
+            </div>
+            <span class="badge-tag ${s.status === 'Accepted' ? 'badge-green' : 'badge-gold'}">${s.status}</span>
           </div>
-        </div>
-      `).join('')}
+        `).join('')}
+      </div>
     </div>
   `;
 }
 
+// --------------------------------------------------------------------------
+// MODALS
+// --------------------------------------------------------------------------
 function renderModals() {
   if (!state.activeModal) return '';
 
   if (state.activeModal === 'booking' && state.bookingMentor) {
-    const mentor = state.bookingMentor;
+    const m = state.bookingMentor;
     return `
       <div class="modal-overlay">
         <div class="modal-content-card">
           <div class="modal-header-flex">
-            <div class="modal-title">Book 1-on-1 Session with ${mentor.name}</div>
+            <h3 class="modal-title">Book 1-on-1 Session with ${m.name}</h3>
+            <button class="close-modal-btn btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+          
+          <form id="formConfirmBooking">
+            <div class="form-group">
+              <label class="form-label">Available Time Slots</label>
+              <select class="form-select" id="bookingSlotSelect" required>
+                ${m.schedule.filter(s => !s.isBooked).map(s => `
+                  <option value="${s.date}|${s.time}">${s.date} at ${s.time}</option>
+                `).join('')}
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Session Duration</label>
+              <select class="form-select" id="bookingDuration">
+                <option value="45 Mins">45 Mins</option>
+                <option value="1 Hour" selected>1 Hour</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Mentorship Objective / Discussion Topics</label>
+              <textarea class="form-textarea" id="bookingObjective" rows="3" placeholder="What specific areas would you like help with during this session?" required></textarea>
+            </div>
+
+            <button type="submit" class="btn-brand-primary" style="width: 100%; justify-content: center; padding: 0.8rem;"><i class="fa-solid fa-calendar-check"></i> Confirm 1-on-1 Booking</button>
+          </form>
+        </div>
+      </div>
+    `;
+  }
+
+  if (state.activeModal === 'mentor_profile' && state.inspectingMentor) {
+    const m = state.inspectingMentor;
+    return `
+      <div class="modal-overlay">
+        <div class="modal-content-card" style="max-width: 640px;">
+          <div class="modal-header-flex">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+              <img src="${m.avatar}" style="width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 2px solid var(--brand-gold);" />
+              <div>
+                <h3 class="modal-title" style="margin-bottom: 0.15rem;">${m.name}</h3>
+                <div style="font-size: 0.85rem; color: var(--text-secondary);">${m.title} at <strong>${m.organization}</strong></div>
+              </div>
+            </div>
             <button class="close-modal-btn btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
           </div>
 
           <div style="margin-bottom: 1.25rem;">
-            <label class="form-label">Select Available Time Slot</label>
-            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.6rem;">
-              ${mentor.schedule.filter(s => !s.isBooked).map(s => `
-                <button class="btn-brand-secondary slot-pick-btn ${state.bookingData.date === s.date && state.bookingData.time === s.time ? 'active' : ''}" 
-                        data-date="${s.date}" data-time="${s.time}" style="color: var(--text-primary); border: 1px solid var(--border-color);">
-                  ${s.date}<br/>${s.time}
-                </button>
-              `).join('')}
+            <h4 style="font-size: 0.85rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.4rem;">About</h4>
+            <p style="font-size: 0.92rem; color: var(--text-secondary); line-height: 1.6;">${m.bio}</p>
+          </div>
+
+          <div style="margin-bottom: 1.25rem;">
+            <h4 style="font-size: 0.85rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.4rem;">Expertise & Focus Areas</h4>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
+              ${m.expertise.map(e => `<span class="badge-tag badge-blue">${e}</span>`).join('')}
             </div>
           </div>
 
-          <div class="form-group">
-            <label class="form-label">Session Objective / Questions</label>
-            <textarea class="form-textarea" rows="3" id="bookingObjectiveInput" placeholder="Describe what you would like to discuss...">${state.bookingData.objective}</textarea>
+          <div style="display: flex; gap: 0.6rem; margin-bottom: 1.5rem;">
+            ${m.socials.linkedin ? `<a href="${m.socials.linkedin}" target="_blank" class="social-link-badge linkedin"><i class="fa-brands fa-linkedin"></i> LinkedIn</a>` : ''}
+            ${m.socials.github ? `<a href="${m.socials.github}" target="_blank" class="social-link-badge github"><i class="fa-brands fa-github"></i> GitHub</a>` : ''}
+            ${m.socials.twitter ? `<a href="${m.socials.twitter}" target="_blank" class="social-link-badge twitter"><i class="fa-brands fa-x-twitter"></i> Twitter</a>` : ''}
           </div>
 
-          <button class="btn-brand-primary" id="btnConfirmBookingSubmit" style="width: 100%; justify-content: center; padding: 0.8rem;">Confirm Booking</button>
+          <button class="btn-brand-primary btn-book-slot" data-id="${m.id}" style="width: 100%; justify-content: center; padding: 0.75rem;"><i class="fa-solid fa-calendar-plus"></i> Book 1-on-1 Session</button>
+        </div>
+      </div>
+    `;
+  }
+
+  if (state.activeModal === 'group_create') {
+    return `
+      <div class="modal-overlay">
+        <div class="modal-content-card">
+          <div class="modal-header-flex">
+            <h3 class="modal-title">Schedule Group Masterclass</h3>
+            <button class="close-modal-btn btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+
+          <form id="formCreateGroup">
+            <div class="form-group">
+              <label class="form-label">Masterclass Title</label>
+              <input type="text" class="form-input" id="groupTitle" placeholder="e.g. AI System Design & LLM Scaling" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Domain</label>
+              <select class="form-select" id="groupDomain">
+                <option value="Software Engineering & AI">Software Engineering & AI</option>
+                <option value="Fintech & Product">Fintech & Product</option>
+                <option value="Public Health & Social Impact">Public Health & Social Impact</option>
+                <option value="Software Engineering & Data">Software Engineering & Data</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Description & Agenda</label>
+              <textarea class="form-textarea" id="groupDesc" rows="3" placeholder="Overview of key learning points..." required></textarea>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;" class="form-group">
+              <div>
+                <label class="form-label">Date</label>
+                <input type="date" class="form-input" id="groupDate" required value="2026-08-25">
+              </div>
+              <div>
+                <label class="form-label">Start Time</label>
+                <input type="text" class="form-input" id="groupStartTime" required value="04:00 PM">
+              </div>
+              <div>
+                <label class="form-label">End Time</label>
+                <input type="text" class="form-input" id="groupEndTime" required value="05:00 PM">
+              </div>
+            </div>
+
+            <button type="submit" class="btn-brand-primary" style="width: 100%; justify-content: center; padding: 0.8rem;"><i class="fa-solid fa-plus"></i> Create Masterclass</button>
+          </form>
+        </div>
+      </div>
+    `;
+  }
+
+  if (state.activeModal === 'admin_cap' && state.editingCapMentor) {
+    const m = state.editingCapMentor;
+    return `
+      <div class="modal-overlay">
+        <div class="modal-content-card" style="max-width: 440px;">
+          <div class="modal-header-flex">
+            <h3 class="modal-title">Edit Session Cap — ${m.name}</h3>
+            <button class="close-modal-btn btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Monthly Session Cap</label>
+            <input type="number" class="form-input" id="inputNewMentorCap" value="${m.monthlyCap}" min="1" max="50" required>
+          </div>
+
+          <button type="button" class="btn-brand-primary" id="btnSaveCapSubmit" style="width: 100%; justify-content: center; padding: 0.75rem;"><i class="fa-solid fa-floppy-disk"></i> Save Monthly Cap</button>
+        </div>
+      </div>
+    `;
+  }
+
+  if (state.activeModal === 'edit_mentor_profile') {
+    const activeMentor = state.mentors.find(m => m.id === state.currentUser?.id || m.email === state.currentUser?.email) || state.mentors[state.currentMentorIndex] || state.mentors[0];
+    return `
+      <div class="modal-overlay">
+        <div class="modal-content-card" style="max-width: 600px;">
+          <div class="modal-header-flex">
+            <h3 class="modal-title">Edit Mentor Profile</h3>
+            <button class="close-modal-btn btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+
+          <form id="formEditMentorProfile">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+              <div class="form-group">
+                <label class="form-label">Full Name</label>
+                <input type="text" class="form-input" id="editMentorName" value="${activeMentor.name || ''}" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Job Title</label>
+                <input type="text" class="form-input" id="editMentorTitle" value="${activeMentor.title || ''}" required>
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+              <div class="form-group">
+                <label class="form-label">Organization</label>
+                <input type="text" class="form-input" id="editMentorOrg" value="${activeMentor.organization || ''}" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Specialist Domain</label>
+                <select class="form-select" id="editMentorDomain" required>
+                  <option value="Software Engineering & AI" ${activeMentor.domain === 'Software Engineering & AI' ? 'selected' : ''}>Software Engineering & AI</option>
+                  <option value="Fintech & Product" ${activeMentor.domain === 'Fintech & Product' ? 'selected' : ''}>Fintech & Product</option>
+                  <option value="Public Health & Social Impact" ${activeMentor.domain === 'Public Health & Social Impact' ? 'selected' : ''}>Public Health & Social Impact</option>
+                  <option value="Software Engineering & Data" ${activeMentor.domain === 'Software Engineering & Data' ? 'selected' : ''}>Software Engineering & Data</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Professional Bio</label>
+              <textarea class="form-textarea" id="editMentorBio" rows="3" required>${activeMentor.bio || ''}</textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Expertise / Focus Areas (Comma separated)</label>
+              <input type="text" class="form-input" id="editMentorExpertise" value="${(activeMentor.expertise || []).join(', ')}" placeholder="e.g. Machine Learning, System Architecture, Leadership">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Avatar Image URL</label>
+              <input type="url" class="form-input" id="editMentorAvatar" value="${activeMentor.avatar || ''}" required>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.8rem;" class="form-group">
+              <div>
+                <label class="form-label">LinkedIn URL</label>
+                <input type="url" class="form-input" id="editMentorLinkedin" value="${activeMentor.socials?.linkedin || ''}">
+              </div>
+              <div>
+                <label class="form-label">GitHub URL</label>
+                <input type="url" class="form-input" id="editMentorGithub" value="${activeMentor.socials?.github || ''}">
+              </div>
+              <div>
+                <label class="form-label">Twitter / X URL</label>
+                <input type="url" class="form-input" id="editMentorTwitter" value="${activeMentor.socials?.twitter || ''}">
+              </div>
+            </div>
+
+            <button type="submit" class="btn-brand-primary" style="width: 100%; justify-content: center; padding: 0.8rem;"><i class="fa-solid fa-floppy-disk"></i> Save Profile Changes</button>
+          </form>
         </div>
       </div>
     `;
@@ -1506,10 +1797,10 @@ function renderModals() {
           <div style="margin-bottom: 1.5rem;">
             <h4 style="font-size: 0.78rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; margin-bottom: 0.5rem;">Social & Professional Handles</h4>
             <div style="display: flex; flex-wrap: wrap; gap: 0.6rem;">
-              ${m.socialLinks?.linkedin ? `<a href="${m.socialLinks.linkedin}" target="_blank" class="social-link-badge linkedin"><i class="fa-brands fa-linkedin"></i> LinkedIn</a>` : ''}
-              ${m.socialLinks?.github ? `<a href="${m.socialLinks.github}" target="_blank" class="social-link-badge github"><i class="fa-brands fa-github"></i> GitHub</a>` : ''}
-              ${m.socialLinks?.twitter ? `<a href="${m.socialLinks.twitter}" target="_blank" class="social-link-badge twitter"><i class="fa-brands fa-x-twitter"></i> Twitter / X</a>` : ''}
-              ${!m.socialLinks?.linkedin && !m.socialLinks?.github && !m.socialLinks?.twitter ? `<span style="font-size: 0.84rem; color: var(--text-muted);">No social handles attached.</span>` : ''}
+              ${m.socials?.linkedin ? `<a href="${m.socials.linkedin}" target="_blank" class="social-link-badge linkedin"><i class="fa-brands fa-linkedin"></i> LinkedIn</a>` : ''}
+              ${m.socials?.github ? `<a href="${m.socials.github}" target="_blank" class="social-link-badge github"><i class="fa-brands fa-github"></i> GitHub</a>` : ''}
+              ${m.socials?.twitter ? `<a href="${m.socials.twitter}" target="_blank" class="social-link-badge twitter"><i class="fa-brands fa-x-twitter"></i> Twitter / X</a>` : ''}
+              ${!m.socials?.linkedin && !m.socials?.github && !m.socials?.twitter ? `<span style="font-size: 0.84rem; color: var(--text-muted);">No social handles attached.</span>` : ''}
             </div>
           </div>
 
@@ -1522,229 +1813,159 @@ function renderModals() {
     `;
   }
 
-  if (state.activeModal === 'edit_mentor_profile' && state.editingMentorProfile) {
-    const m = state.editingMentorProfile;
-    return `
-      <div class="modal-overlay">
-        <div class="modal-content-card">
-          <div class="modal-header-flex">
-            <div class="modal-title">Edit Mentor Profile</div>
-            <button class="close-modal-btn btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Full Name</label>
-            <input type="text" class="form-input" id="editMentorName" value="${m.name}" />
-          </div>
-
-          <div class="form-group">
-            <label class="form-label"><i class="fa-solid fa-image"></i> Profile Picture URL</label>
-            <input type="url" class="form-input" id="editMentorAvatar" value="${m.avatar}" placeholder="/assets/mentor_samuel.jpg or https://..." />
-          </div>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-            <div class="form-group">
-              <label class="form-label">Professional Title</label>
-              <input type="text" class="form-input" id="editMentorTitle" value="${m.title}" />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Organization / Employer</label>
-              <input type="text" class="form-input" id="editMentorOrg" value="${m.organization}" />
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Specialist Domain</label>
-            <select class="form-select" id="editMentorDomain">
-              <option value="Software Engineering & AI" ${m.domain === 'Software Engineering & AI' ? 'selected' : ''}>Software Engineering & AI</option>
-              <option value="Fintech & Product" ${m.domain === 'Fintech & Product' ? 'selected' : ''}>Fintech & Product</option>
-              <option value="Public Health & Social Impact" ${m.domain === 'Public Health & Social Impact' ? 'selected' : ''}>Public Health & Social Impact</option>
-              <option value="Software Engineering & Data" ${m.domain === 'Software Engineering & Data' ? 'selected' : ''}>Software Engineering & Data</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Bio / Background</label>
-            <textarea class="form-textarea" rows="3" id="editMentorBio">${m.bio}</textarea>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Areas of Expertise (Comma Separated)</label>
-            <input type="text" class="form-input" id="editMentorExpertise" value="${(m.expertise || []).join(', ')}" placeholder="e.g. AI / Machine Learning, System Design, Career Guidance" />
-          </div>
-
-          <div style="font-size: 0.85rem; font-weight: 800; text-transform: uppercase; color: var(--brand-primary); margin-bottom: 0.8rem; margin-top: 0.5rem;">Social Media Links & Handles</div>
-
-          <div class="form-group">
-            <label class="form-label"><i class="fa-brands fa-linkedin" style="color: #0A66C2;"></i> LinkedIn URL</label>
-            <input type="url" class="form-input" id="editMentorLinkedIn" value="${m.socialLinks?.linkedin || ''}" placeholder="https://linkedin.com/in/username" />
-          </div>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-            <div class="form-group">
-              <label class="form-label"><i class="fa-brands fa-github"></i> GitHub URL</label>
-              <input type="url" class="form-input" id="editMentorGitHub" value="${m.socialLinks?.github || ''}" placeholder="https://github.com/username" />
-            </div>
-            <div class="form-group">
-              <label class="form-label"><i class="fa-brands fa-x-twitter"></i> Twitter / X URL</label>
-              <input type="url" class="form-input" id="editMentorTwitter" value="${m.socialLinks?.twitter || ''}" placeholder="https://twitter.com/username" />
-            </div>
-          </div>
-
-          <button class="btn-brand-primary" id="btnSaveMentorProfileSubmit" style="width: 100%; justify-content: center; padding: 0.8rem; margin-top: 0.5rem;">Save Profile Changes</button>
-        </div>
-      </div>
-    `;
-  }
-
-  if (state.activeModal === 'group_create') {
-    const activeMentor = state.mentors[state.currentMentorIndex];
-    return `
-      <div class="modal-overlay">
-        <div class="modal-content-card">
-          <div class="modal-header-flex">
-            <div class="modal-title"><i class="fa-solid fa-people-group" style="color: var(--brand-primary);"></i> Create Group Masterclass</div>
-            <button class="close-modal-btn btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Masterclass Title</label>
-            <input type="text" class="form-input" id="createGroupTitle" placeholder="e.g. Navigating AI & Machine Learning Graduate Applications" value="${state.newGroupData.title || ''}" />
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Specialist Domain</label>
-            <select class="form-select" id="createGroupDomain">
-              <option value="Software Engineering & AI" ${state.newGroupData.domain === 'Software Engineering & AI' ? 'selected' : ''}>Software Engineering & AI</option>
-              <option value="Fintech & Product" ${state.newGroupData.domain === 'Fintech & Product' ? 'selected' : ''}>Fintech & Product</option>
-              <option value="Public Health & Social Impact" ${state.newGroupData.domain === 'Public Health & Social Impact' ? 'selected' : ''}>Public Health & Social Impact</option>
-              <option value="Software Engineering & Data" ${state.newGroupData.domain === 'Software Engineering & Data' ? 'selected' : ''}>Software Engineering & Data</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Description & Key Takeaways</label>
-            <textarea class="form-textarea" rows="3" id="createGroupDescription" placeholder="Describe the topics covered and expectations for attendees...">${state.newGroupData.description || ''}</textarea>
-          </div>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-            <div class="form-group">
-              <label class="form-label">Date</label>
-              <input type="date" class="form-input" id="createGroupDate" value="${state.newGroupData.date || '2026-08-25'}" />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Max Capacity (Associates)</label>
-              <input type="number" class="form-input" id="createGroupMaxCapacity" value="${state.newGroupData.maxCapacity || 20}" min="1" max="100" />
-            </div>
-          </div>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-            <div class="form-group">
-              <label class="form-label">Start Time</label>
-              <input type="text" class="form-input" id="createGroupStartTime" value="${state.newGroupData.startTime || '04:00 PM'}" placeholder="e.g. 04:00 PM" />
-            </div>
-            <div class="form-group">
-              <label class="form-label">End Time</label>
-              <input type="text" class="form-input" id="createGroupEndTime" value="${state.newGroupData.endTime || '05:00 PM'}" placeholder="e.g. 05:00 PM" />
-            </div>
-          </div>
-
-          <button class="btn-brand-primary" id="btnSubmitCreateGroup" style="width: 100%; justify-content: center; padding: 0.8rem; margin-top: 0.5rem;">
-            <i class="fa-solid fa-plus"></i> Create & Publish Masterclass
-          </button>
-        </div>
-      </div>
-    `;
-  }
-
-  if (state.activeModal === 'task_create') {
-    const query = (state.newTaskData.searchQuery || '').trim().toLowerCase();
-    const filteredAssociates = state.associates.filter(a =>
-      !query ||
-      a.name.toLowerCase().includes(query) ||
-      a.track.toLowerCase().includes(query) ||
-      a.id.toLowerCase().includes(query)
-    );
-    const selectedIds = state.newTaskData.selectedAssociateIds || [];
-    const isAllSelected = state.associates.length > 0 && selectedIds.length === state.associates.length;
-
+  if (state.activeModal === 'edit_associate_profile') {
+    const activeAssoc = state.associates.find(a => a.id === state.currentUser?.id || a.email === state.currentUser?.email) || state.associates[state.currentAssociateIndex] || state.associates[0];
     return `
       <div class="modal-overlay">
         <div class="modal-content-card" style="max-width: 540px;">
           <div class="modal-header-flex">
-            <div class="modal-title"><i class="fa-solid fa-tasks" style="color: var(--brand-primary);"></i> Assign Mentee Task</div>
+            <h3 class="modal-title">Edit Mentee Profile</h3>
             <button class="close-modal-btn btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
           </div>
 
-          <div class="form-group">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
-              <label class="form-label" style="margin-bottom: 0;">Select Mastercard Foundation Associates (${selectedIds.length} selected)</label>
-              <button type="button" id="btnToggleSelectAllTasks" class="clear-filter-btn" style="font-size: 0.78rem; font-weight: 700; color: var(--brand-primary); background: transparent; border: none; cursor: pointer;">
-                ${isAllSelected ? 'Deselect All' : 'Select All'}
+          <form id="formEditAssociateProfile">
+            <div class="form-group">
+              <label class="form-label">Full Name</label>
+              <input type="text" class="form-input" id="editAssocName" value="${activeAssoc.name || ''}" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Title / Track</label>
+              <input type="text" class="form-input" id="editAssocTitle" value="${activeAssoc.title || ''}" placeholder="e.g. MasterCard Scholar & Tech Fellow" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Email Address</label>
+              <input type="email" class="form-input" id="editAssocEmail" value="${activeAssoc.email || ''}" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Bio & Development Goals</label>
+              <textarea class="form-textarea" id="editAssocBio" rows="3" required>${activeAssoc.bio || ''}</textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Avatar Image URL</label>
+              <input type="url" class="form-input" id="editAssocAvatar" value="${activeAssoc.avatar || ''}" required>
+            </div>
+
+            <button type="submit" class="btn-brand-primary" style="width: 100%; justify-content: center; padding: 0.8rem;"><i class="fa-solid fa-floppy-disk"></i> Save Profile Changes</button>
+          </form>
+        </div>
+    </div>
+  `;
+  }
+
+  if (state.activeModal === 'manage_availability') {
+    const modalData = state.availabilityModal;
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const monthTitle = `${monthNames[modalData.month]} ${modalData.year}`;
+
+    const firstDay = new Date(modalData.year, modalData.month, 1).getDay();
+    const daysInMonth = new Date(modalData.year, modalData.month + 1, 0).getDate();
+
+    const daysGrid = [];
+    for (let i = 0; i < firstDay; i++) {
+      daysGrid.push({ dayNum: null, disabled: true });
+    }
+    for (let day = 1; day <= daysInMonth; day++) {
+      const padMonth = String(modalData.month + 1).padStart(2, '0');
+      const padDay = String(day).padStart(2, '0');
+      const dateStr = `${modalData.year}-${padMonth}-${padDay}`;
+      const isSelected = modalData.selectedDates.includes(dateStr);
+      daysGrid.push({ dayNum: day, dateStr, isSelected, disabled: false });
+    }
+
+    const timeOptions = [
+      "08:00 AM", "08:30 AM", "09:00 AM", "09:30 AM",
+      "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM",
+      "12:00 PM", "12:30 PM", "01:00 PM", "01:30 PM",
+      "02:00 PM", "02:30 PM", "03:00 PM", "03:30 PM",
+      "04:00 PM", "04:30 PM", "05:00 PM", "05:30 PM",
+      "06:00 PM", "06:30 PM", "07:00 PM"
+    ];
+
+    return `
+      <div class="modal-overlay">
+        <div class="calendly-modal-card">
+          <div class="modal-header-flex">
+            <div>
+              <h3 class="modal-title" style="font-size: 1.15rem; font-weight: 800;">Select the date(s) you want to assign specific hours</h3>
+              <p style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 0.2rem;">Click days on the calendar to select multiple dates for your availability.</p>
+            </div>
+            <button class="close-modal-btn btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+
+          <!-- Month Date Picker Widget -->
+          <div class="calendly-picker-container">
+            <div class="calendly-month-header">
+              <span class="calendly-month-title">${monthTitle}</span>
+              <div class="calendly-month-nav">
+                <button type="button" class="calendly-nav-btn" id="btnPrevMonth" title="Previous Month"><i class="fa-solid fa-chevron-left"></i></button>
+                <button type="button" class="calendly-nav-btn" id="btnNextMonth" title="Next Month"><i class="fa-solid fa-chevron-right"></i></button>
+              </div>
+            </div>
+
+            <div class="calendly-weekdays-grid">
+              <div class="calendly-weekday-col">SUN</div>
+              <div class="calendly-weekday-col">MON</div>
+              <div class="calendly-weekday-col">TUE</div>
+              <div class="calendly-weekday-col">WED</div>
+              <div class="calendly-weekday-col">THU</div>
+              <div class="calendly-weekday-col">FRI</div>
+              <div class="calendly-weekday-col">SAT</div>
+            </div>
+
+            <div class="calendly-days-grid">
+              ${daysGrid.map(d => {
+                if (d.disabled) {
+                  return `<button type="button" class="calendly-day-btn disabled" disabled></button>`;
+                }
+                return `
+                  <button type="button" class="calendly-day-btn calendly-day-cell ${d.isSelected ? 'selected' : ''}" data-date="${d.dateStr}">
+                    ${d.dayNum}
+                  </button>
+                `;
+              }).join('')}
+            </div>
+          </div>
+
+          <!-- Time Range Builder Section -->
+          <div class="time-range-section">
+            <div class="time-range-header">
+              <span>What hours are you available?</span>
+              <button type="button" class="btn-add-time-range" id="btnAddTimeRange" title="Add Time Range">
+                <i class="fa-solid fa-plus"></i>
               </button>
             </div>
 
-            <div class="header-search-bar" style="margin-bottom: 0.6rem; border: 1px solid var(--border-color); border-radius: 8px; padding: 0.5rem 0.8rem; background: var(--bg-card);">
-              <i class="fa-solid fa-magnifying-glass" style="color: var(--text-muted); font-size: 0.85rem;"></i>
-              <input type="text" class="header-search-input" id="taskAssociateSearchInput" placeholder="Search mentees by name, track, or ID..." value="${state.newTaskData.searchQuery || ''}" style="font-size: 0.85rem; width: 100%;">
-            </div>
-
-            <div class="task-associate-list" style="max-height: 180px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 10px; padding: 0.5rem 0.8rem; display: flex; flex-direction: column; gap: 0.35rem; background: var(--bg-card);">
-              ${filteredAssociates.length > 0 ? filteredAssociates.map(a => {
-                const checked = selectedIds.includes(a.id);
-                return `
-                  <label style="display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem; padding: 0.4rem 0.6rem; border-radius: 6px; cursor: pointer; transition: background 0.15s; background: ${checked ? 'rgba(37, 99, 235, 0.08)' : 'transparent'};" class="associate-checkbox-item">
-                    <div style="display: flex; align-items: center; gap: 0.6rem;">
-                      <input type="checkbox" class="task-associate-cb" value="${a.id}" ${checked ? 'checked' : ''} style="accent-color: var(--brand-primary); width: 16px; height: 16px; cursor: pointer;" />
-                      <img src="${a.avatar}" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover;" />
-                      <span style="font-weight: 700; color: var(--text-primary);">${a.name}</span>
-                    </div>
-                    <span style="font-size: 0.75rem; color: var(--text-secondary); background: var(--border-color); padding: 0.15rem 0.5rem; border-radius: 4px;">${a.track}</span>
-                  </label>
-                `;
-              }).join('') : `
-                <div style="font-size: 0.82rem; color: var(--text-muted); text-align: center; padding: 1rem;">No matching associates found.</div>
-              `}
+            <div id="timeRangeRowsList" style="display: flex; flex-direction: column; gap: 0.6rem;">
+              ${modalData.timeRanges.map((tr, index) => `
+                <div class="time-range-row">
+                  <select class="time-range-start" data-index="${index}">
+                    ${timeOptions.map(t => `<option value="${t}" ${t === tr.startTime ? 'selected' : ''}>${t}</option>`).join('')}
+                  </select>
+                  <span class="time-range-separator">-</span>
+                  <select class="time-range-end" data-index="${index}">
+                    ${timeOptions.map(t => `<option value="${t}" ${t === tr.endTime ? 'selected' : ''}>${t}</option>`).join('')}
+                  </select>
+                  ${modalData.timeRanges.length > 1 ? `
+                    <button type="button" class="btn-remove-time-range" data-index="${index}" title="Remove Range">
+                      <i class="fa-solid fa-xmark"></i>
+                    </button>
+                  ` : '<div style="width: 24px;"></div>'}
+                </div>
+              `).join('')}
             </div>
           </div>
 
-          <div class="form-group">
-            <label class="form-label">Task Title</label>
-            <input type="text" class="form-input" id="createTaskTitle" placeholder="e.g. Draft Revised Statement of Purpose (SOP)" value="${state.newTaskData.title || ''}" />
+          <!-- Actions Footer -->
+          <div class="calendly-actions-footer">
+            <button type="button" class="btn-brand-secondary btn-close-modal" style="padding: 0.65rem 1.4rem; border: 1px solid var(--border-color);">Cancel</button>
+            <button type="button" class="btn-brand-primary" id="btnApplyAvailability" style="padding: 0.65rem 1.6rem;">
+              Apply (${modalData.selectedDates.length} date${modalData.selectedDates.length === 1 ? '' : 's'})
+            </button>
           </div>
-
-          <div class="form-group">
-            <label class="form-label">Instructions & Deliverables</label>
-            <textarea class="form-textarea" rows="3" id="createTaskDescription" placeholder="Detailed guidance for the associate...">${state.newTaskData.description || ''}</textarea>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Deadline</label>
-            <input type="date" class="form-input" id="createTaskDeadline" value="${state.newTaskData.deadline || '2026-08-22'}" />
-          </div>
-
-          <button class="btn-brand-primary" id="btnSubmitCreateTask" style="width: 100%; justify-content: center; padding: 0.8rem; margin-top: 0.5rem;">
-            <i class="fa-solid fa-paper-plane"></i> Assign Task to ${selectedIds.length} Mentee${selectedIds.length === 1 ? '' : 's'}
-          </button>
-        </div>
-      </div>
-    `;
-  }
-
-  if (state.activeModal === 'admin_cap' && state.editingCapMentor) {
-    const m = state.editingCapMentor;
-    return `
-      <div class="modal-overlay">
-        <div class="modal-content-card">
-          <div class="modal-header-flex">
-            <div class="modal-title">Adjust Monthly Cap — ${m.name}</div>
-            <button class="close-modal-btn btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Monthly Session Limit</label>
-            <input type="number" class="form-input" id="inputNewMentorCap" value="${m.monthlyCap}" />
-          </div>
-          <button class="btn-brand-primary" id="btnSaveCapSubmit" style="width: 100%; justify-content: center;">Save Limit</button>
         </div>
       </div>
     `;
@@ -1753,553 +1974,428 @@ function renderModals() {
   return '';
 }
 
+function renderNotificationDrawer() {
+  return `
+    <div class="notification-drawer">
+      <div class="notification-header">
+        <span>Notifications (${state.notifications.filter(n => !n.read).length})</span>
+        <button id="btnMarkAllRead" style="font-size: 0.75rem; color: var(--brand-primary); font-weight: 700; background: transparent;">Mark all read</button>
+      </div>
+
+      ${state.notifications.map(n => `
+        <div class="notification-item ${n.read ? '' : 'unread'}">
+          <i class="fa-solid fa-bell" style="color: var(--brand-primary); font-size: 1rem; margin-top: 0.2rem;"></i>
+          <div>
+            <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary);">${n.message}</div>
+            <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.2rem;">${n.time}</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
 // --------------------------------------------------------------------------
 // EVENT BINDINGS
 // --------------------------------------------------------------------------
 function bindEvents() {
-  // Theme Toggle Button
+  // Theme Toggle
   document.querySelectorAll('#btnToggleTheme').forEach(btn => {
-    btn.addEventListener('click', toggleTheme);
+    btn.onclick = toggleTheme;
   });
+
+  // Client-Side Router Links (Landing Navigation)
+  document.getElementById('btnNavBrandHome')?.addEventListener('click', () => navigateTo('/'));
+  document.getElementById('navLinkHome')?.addEventListener('click', () => navigateTo('/'));
+  document.getElementById('navLinkMentors')?.addEventListener('click', () => scrollToSection('section-mentors'));
+  document.getElementById('navLinkHowItWorks')?.addEventListener('click', () => scrollToSection('section-how-it-works'));
+  document.getElementById('navLinkValue')?.addEventListener('click', () => scrollToSection('section-value'));
+  document.getElementById('footerLinkHome')?.addEventListener('click', () => navigateTo('/'));
+  document.getElementById('footerLinkMentors')?.addEventListener('click', () => scrollToSection('section-mentors'));
+
+  // Nav Login Buttons
+  document.getElementById('btnNavLogin')?.addEventListener('click', () => navigateTo('/login'));
+  document.getElementById('btnHeroLogin')?.addEventListener('click', () => navigateTo('/login'));
+  document.getElementById('btnFinalCtaLogin')?.addEventListener('click', () => navigateTo('/login'));
+  document.getElementById('footerLinkLogin')?.addEventListener('click', () => navigateTo('/login'));
+  document.getElementById('btnHeroFindMentors')?.addEventListener('click', () => scrollToSection('section-mentors'));
+
+  // Dedicated Login Page Controls
+  document.getElementById('btnBackToHome')?.addEventListener('click', () => navigateTo('/'));
+  document.getElementById('btnBackToHomeBrand')?.addEventListener('click', () => navigateTo('/'));
+
+  // Toggle Password Eye Icon
+  document.getElementById('btnTogglePassword')?.addEventListener('click', () => {
+    state.loginForm.showPassword = !state.loginForm.showPassword;
+    render();
+  });
+
+  // Quick Demo Credentials Buttons
+  document.querySelectorAll('.demo-cred-btn').forEach(btn => {
+    btn.onclick = () => {
+      state.loginForm.selectedRole = btn.dataset.role;
+      state.loginForm.email = btn.dataset.email;
+      state.loginForm.password = 'password123';
+      state.loginForm.errorMessage = null;
+      render();
+    };
+  });
+
+  // Login Form Submission
+  const loginFormNode = document.getElementById('loginAuthForm');
+  if (loginFormNode) {
+    loginFormNode.onsubmit = async (e) => {
+      e.preventDefault();
+      const roleSelect = document.getElementById('loginRole');
+      const emailInput = document.getElementById('loginEmail');
+      const passwordInput = document.getElementById('loginPassword');
+
+      state.loginForm.selectedRole = roleSelect.value;
+      state.loginForm.email = emailInput.value.trim();
+      state.loginForm.password = passwordInput.value;
+
+      if (!state.loginForm.selectedRole) {
+        state.loginForm.errorMessage = 'Please select a profile type to log in.';
+        render();
+        return;
+      }
+
+      state.loginForm.isSubmitting = true;
+      state.loginForm.errorMessage = null;
+      render();
+
+      try {
+        const user = await apiService.loginUser(
+          state.loginForm.email,
+          state.loginForm.password,
+          state.loginForm.selectedRole
+        );
+
+        state.loginForm.isSubmitting = false;
+        state.currentUser = user;
+        showToast(`Welcome back, ${user.name}!`, 'fa-circle-check');
+        navigateTo(`/${user.role}`);
+      } catch (err) {
+        state.loginForm.isSubmitting = false;
+        state.loginForm.errorMessage = err.message || 'Invalid login credentials. Please check your details.';
+        render();
+      }
+    };
+  }
 
   // Logout Button
-  document.getElementById('btnLogout')?.addEventListener('click', () => {
-    apiService.logout();
-    state.currentUser = null;
-    showToast('Logged out successfully.', 'fa-circle-check');
-    navigateTo('/');
+  const btnLogoutNode = document.getElementById('btnLogout');
+  if (btnLogoutNode) {
+    btnLogoutNode.onclick = () => {
+      try {
+        if (typeof apiService.logoutUser === 'function') {
+          apiService.logoutUser();
+        } else if (typeof apiService.logout === 'function') {
+          apiService.logout();
+        } else {
+          localStorage.removeItem('mently_user');
+          localStorage.removeItem('mently_auth_token');
+        }
+      } catch (err) {
+        console.warn('Logout warning:', err);
+        localStorage.removeItem('mently_user');
+        localStorage.removeItem('mently_auth_token');
+      }
+      state.currentUser = null;
+      showToast('Logged out successfully.', 'fa-right-from-bracket');
+      navigateTo('/login');
+    };
+  }
+
+  // Domain Filter Buttons on Landing Page
+  document.querySelectorAll('.domain-pill-btn').forEach(btn => {
+    btn.onclick = () => {
+      state.landingDomainFilter = btn.dataset.domain;
+      render();
+    };
   });
 
-  // Public Landing Page Handlers
-  if (state.currentPath === '/') {
-    document.getElementById('btnNavBrandHome')?.addEventListener('click', () => navigateTo('/'));
-    document.getElementById('navLinkHome')?.addEventListener('click', () => {
-      document.getElementById('section-hero')?.scrollIntoView({ behavior: 'smooth' });
-    });
-    document.getElementById('navLinkMentors')?.addEventListener('click', () => {
-      document.getElementById('section-mentors')?.scrollIntoView({ behavior: 'smooth' });
-    });
-    document.getElementById('navLinkHowItWorks')?.addEventListener('click', () => {
-      document.getElementById('section-how-it-works')?.scrollIntoView({ behavior: 'smooth' });
-    });
-    document.getElementById('navLinkValue')?.addEventListener('click', () => {
-      document.getElementById('section-value')?.scrollIntoView({ behavior: 'smooth' });
-    });
-
-    document.getElementById('btnNavLogin')?.addEventListener('click', () => navigateTo('/login'));
-    document.getElementById('btnHeroLogin')?.addEventListener('click', () => navigateTo('/login'));
-    document.getElementById('btnFinalCtaLogin')?.addEventListener('click', () => navigateTo('/login'));
-    document.getElementById('footerLinkLogin')?.addEventListener('click', () => navigateTo('/login'));
-
-    document.getElementById('footerLinkHome')?.addEventListener('click', () => navigateTo('/'));
-    document.getElementById('footerLinkMentors')?.addEventListener('click', () => {
-      document.getElementById('section-mentors')?.scrollIntoView({ behavior: 'smooth' });
-    });
-
-    document.getElementById('btnHeroFindMentors')?.addEventListener('click', () => {
-      document.getElementById('section-mentors')?.scrollIntoView({ behavior: 'smooth' });
-    });
-
-    // Domain Pill Filters on Landing Page
-    document.querySelectorAll('.domain-pill-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        state.landingDomainFilter = btn.dataset.domain;
+  // Landing Mentor Profile Inspector & Quick Booking
+  document.querySelectorAll('.btn-inspect-profile').forEach(btn => {
+    btn.onclick = (e) => {
+      const id = e.currentTarget.dataset.id;
+      const mentor = state.mentors.find(m => m.id === id);
+      if (mentor) {
+        state.inspectingMentor = mentor;
+        state.activeModal = 'mentor_profile';
         render();
-      });
-    });
+      }
+    };
+  });
 
-    // Booking Button on Landing Page Card (Prompts Login if unauthenticated)
-    document.querySelectorAll('.btn-landing-book').forEach(btn => {
-      btn.addEventListener('click', () => {
-        if (!state.currentUser) {
-          showToast('Please sign in to book a mentorship session.', 'fa-circle-info');
-          navigateTo('/login');
-        }
-      });
-    });
-  }
-
-  // Login Page Handlers
-  if (state.currentPath === '/login') {
-    document.getElementById('btnBackToHome')?.addEventListener('click', () => navigateTo('/'));
-    document.getElementById('btnBackToHomeBrand')?.addEventListener('click', () => navigateTo('/'));
-
-    // Toggle Password Visibility
-    document.getElementById('btnTogglePassword')?.addEventListener('click', () => {
-      state.loginForm.showPassword = !state.loginForm.showPassword;
-      const passInput = document.getElementById('loginPassword');
-      if (passInput) passInput.type = state.loginForm.showPassword ? 'text' : 'password';
-      const eyeIcon = document.getElementById('passwordEyeIcon');
-      if (eyeIcon) eyeIcon.className = `fa-regular ${state.loginForm.showPassword ? 'fa-eye-slash' : 'fa-eye'}`;
-    });
-
-    // Password & Email input handlers
-    const loginEmailInput = document.getElementById('loginEmail');
-    if (loginEmailInput) {
-      loginEmailInput.addEventListener('input', (e) => state.loginForm.email = e.target.value);
-    }
-    const loginPassInput = document.getElementById('loginPassword');
-    if (loginPassInput) {
-      loginPassInput.addEventListener('input', (e) => state.loginForm.password = e.target.value);
-    }
-    const loginRoleSelect = document.getElementById('loginRole');
-    if (loginRoleSelect) {
-      loginRoleSelect.addEventListener('change', (e) => state.loginForm.selectedRole = e.target.value);
-    }
-
-    // Demo Credentials Fill
-    document.querySelectorAll('.demo-cred-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        state.loginForm.selectedRole = btn.dataset.role;
-        state.loginForm.email = btn.dataset.email;
-        state.loginForm.password = 'password123';
-        state.loginForm.errorMessage = null;
-        render();
-      });
-    });
-
-    document.getElementById('btnForgotPassword')?.addEventListener('click', (e) => {
-      e.preventDefault();
-      showToast('Password reset instructions have been sent to your email.', 'fa-envelope');
-    });
-
-    // Toggle between Login & Register mode
-    document.getElementById('btnToggleRegister')?.addEventListener('click', () => {
-      state.loginMode = 'register';
-      state.loginForm.errorMessage = null;
-      render();
-    });
-    document.getElementById('btnToggleLogin')?.addEventListener('click', () => {
-      state.loginMode = 'login';
-      state.loginForm.errorMessage = null;
-      render();
-    });
-    document.getElementById('regRole')?.addEventListener('change', (e) => {
-      state.registerForm.role = e.target.value;
-      render();
-    });
-
-    // Registration Form Submit Handler
-    const regFormEl = document.getElementById('registerAuthForm');
-    if (regFormEl) {
-      regFormEl.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const role = document.getElementById('regRole')?.value || 'associate';
-        const name = document.getElementById('regName')?.value;
-        const email = document.getElementById('regEmail')?.value;
-        const password = document.getElementById('regPassword')?.value;
-        const institutionOrOrg = document.getElementById('regInstitution')?.value;
-        const trackOrDomain = document.getElementById('regTrack')?.value;
-        const bio = document.getElementById('regBio')?.value;
-
-        try {
-          state.loginForm.isSubmitting = true;
-          state.loginForm.errorMessage = null;
-          render();
-
-          const authResult = await apiService.register({
-            selectedRole: role,
-            name,
-            email,
-            password,
-            institutionOrOrg,
-            title: role === 'associate' ? 'Mastercard Foundation Scholar' : 'Executive Mentor',
-            trackOrDomain,
-            bio
-          });
-
-          state.currentUser = authResult.user;
-          state.currentRole = authResult.user.role;
-          state.loginForm.isSubmitting = false;
-
-          showToast(`Account created! Welcome to the portal, ${authResult.user.name}!`, 'fa-user-check');
-          navigateTo(`/${authResult.user.role}`);
-        } catch (err) {
-          state.loginForm.isSubmitting = false;
-          state.loginForm.errorMessage = err.message || 'Registration failed. Please try again.';
-          render();
-        }
-      });
-    }
-
-    // Login Form Submit Handler
-    const loginFormEl = document.getElementById('loginAuthForm');
-    if (loginFormEl) {
-      loginFormEl.addEventListener('submit', async (e) => {
-        e.preventDefault();
-
-        const role = state.loginForm.selectedRole || document.getElementById('loginRole')?.value;
-        const email = state.loginForm.email || document.getElementById('loginEmail')?.value;
-        const password = state.loginForm.password || document.getElementById('loginPassword')?.value;
-
-        if (!role) {
-          state.loginForm.errorMessage = 'Please select how you want to log in.';
-          render();
-          return;
-        }
-        if (!email || !email.includes('@')) {
-          state.loginForm.errorMessage = 'Please enter a valid email address.';
-          render();
-          return;
-        }
-        if (!password) {
-          state.loginForm.errorMessage = 'Please enter your password.';
-          render();
-          return;
-        }
-
-        try {
-          state.loginForm.isSubmitting = true;
-          state.loginForm.errorMessage = null;
-          render();
-
-          const authResult = await apiService.login({
-            selectedRole: role,
-            email,
-            password
-          });
-
-          const user = authResult?.user || (authResult?.role ? authResult : null);
-          if (!user) throw new Error("Authentication response was invalid. Please try again.");
-
-          state.currentUser = user;
-          state.currentRole = user.role;
-          state.loginForm.isSubmitting = false;
-
-          showToast(`Welcome back, ${user.name}!`);
-          navigateTo(`/${user.role}`);
-        } catch (err) {
-          state.loginForm.isSubmitting = false;
-          state.loginForm.errorMessage = err.message || 'The email or password you entered is incorrect.';
-          render();
-        }
-      });
-    }
-  }
-
-  // Dashboard Workspace Handlers (For Authenticated Users)
-  if (['/associate', '/mentor', '/admin'].includes(state.currentPath)) {
-    // Search Bar
-    const searchInput = document.getElementById('headerSearchInput');
-    if (searchInput) {
-      searchInput.addEventListener('input', (e) => {
-        const val = e.target.value;
-        const cursorPos = e.target.selectionStart;
-        state.searchQuery = val;
-
-        const role = state.currentUser ? state.currentUser.role : state.currentRole;
-        if (role === 'associate' && state.associateTab !== 'mentors' && val.trim() !== '') {
-          state.associateTab = 'mentors';
-        }
-
-        render();
-
-        const newInput = document.getElementById('headerSearchInput');
-        if (newInput) {
-          newInput.focus();
-          newInput.setSelectionRange(cursorPos, cursorPos);
-        }
-      });
-    }
-
-    // Navigation Tabs
-    document.querySelectorAll('.subnav-link').forEach(link => {
-      link.addEventListener('click', () => {
-        const tab = link.dataset.tab;
-        const role = state.currentUser ? state.currentUser.role : state.currentRole;
-        if (role === 'associate') state.associateTab = tab;
-        else if (role === 'mentor') state.mentorTab = tab;
-        else if (role === 'admin') state.adminTab = tab;
-        render();
-      });
-    });
-
-    // Hero CTAs inside Associate Dashboard
-    document.getElementById('btnHeroFindMentors')?.addEventListener('click', () => { state.associateTab = 'mentors'; render(); });
-    document.getElementById('btnHeroGroupSessions')?.addEventListener('click', () => { state.associateTab = 'group_sessions'; render(); });
-
-    // Notifications
-    document.getElementById('btnToggleNotifications')?.addEventListener('click', () => {
-      state.isNotificationOpen = !state.isNotificationOpen;
-      render();
-    });
-    document.getElementById('btnCloseNotifications')?.addEventListener('click', () => {
-      state.isNotificationOpen = false;
-      render();
-    });
-
-    // Domain Filter Checkboxes
-    document.querySelectorAll('.domain-filter-cb').forEach(cb => {
-      cb.addEventListener('change', () => {
-        const val = cb.value;
-        if (cb.checked) state.selectedDomains.push(val);
-        else state.selectedDomains = state.selectedDomains.filter(d => d !== val);
-        render();
-      });
-    });
-
-    document.getElementById('btnClearFilters')?.addEventListener('click', () => {
-      state.selectedDomains = [];
-      state.searchQuery = '';
-      render();
-    });
-
-    // View Mentor Profile Modal
-    document.querySelectorAll('.btn-inspect-profile').forEach(btn => {
-      btn.onclick = (e) => {
-        const id = e.currentTarget.dataset.id;
-        const m = state.mentors.find(x => x.id === id);
-        if (m) {
-          state.inspectingMentor = m;
-          state.activeModal = 'mentor_profile';
-          render();
-        }
-      };
-    });
-
-    // Book 1-on-1 Slot Modal
-    document.querySelectorAll('.btn-book-slot, .btn-landing-book').forEach(btn => {
-      btn.onclick = (e) => {
-        const id = e.currentTarget.dataset.id;
-        const m = state.mentors.find(x => x.id === id);
-        if (m) {
-          state.bookingMentor = m;
-          state.activeModal = 'booking';
-          const availableSlot = m.schedule ? m.schedule.find(s => !s.isBooked) : null;
-          if (availableSlot) {
-            state.bookingData.date = availableSlot.date;
-            state.bookingData.time = availableSlot.time;
-          }
-          render();
-        }
-      };
-    });
-
-    // Slot Picker Buttons in Modal
-    document.querySelectorAll('.slot-pick-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        state.bookingData.date = btn.dataset.date;
-        state.bookingData.time = btn.dataset.time;
-        render();
-      });
-    });
-
-    // Confirm Booking Submit
-    document.getElementById('btnConfirmBookingSubmit')?.addEventListener('click', async () => {
-      const activeAssoc = state.associates[state.currentAssociateIndex];
-      const objInput = document.getElementById('bookingObjectiveInput');
-      const objective = objInput ? objInput.value : state.bookingData.objective;
-
-      if (!state.bookingData.date || !state.bookingData.time) {
-        showToast('Please select a date and time slot.', 'fa-circle-exclamation');
+  document.querySelectorAll('.btn-landing-book').forEach(btn => {
+    btn.onclick = (e) => {
+      if (!state.currentUser) {
+        showToast('Please login to book a 1-on-1 session.', 'fa-circle-exclamation');
+        state.loginForm.selectedRole = 'associate';
+        navigateTo('/login');
         return;
       }
-
-      await apiService.createBookingSession({
-        associateId: activeAssoc.id,
-        associateName: activeAssoc.name,
-        mentorId: state.bookingMentor.id,
-        mentorName: state.bookingMentor.name,
-        mentorDomain: state.bookingMentor.domain,
-        date: state.bookingData.date,
-        time: state.bookingData.time,
-        duration: '1 Hour',
-        objective: objective || 'Strategic career guidance session.',
-        consentToRecord: true
-      });
-
-      state.activeModal = null;
-      showToast('Session booked successfully!');
-      await initAppData();
-    });
-
-    // Join Group Session
-    document.querySelectorAll('.btn-join-group').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const activeAssoc = state.associates[state.currentAssociateIndex];
-        await apiService.joinGroupSession(btn.dataset.id, activeAssoc.name);
-        showToast('Enrolled in Group Masterclass!');
-        await initAppData();
-      });
-    });
-
-    // Complete Task
-    document.querySelectorAll('.btn-complete-task').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        await apiService.updateTaskStatus(btn.dataset.id, 'Completed');
-        showToast('Task marked as completed!');
-        await initAppData();
-      });
-    });
-
-    // Mentor Add Availability Slot
-    document.getElementById('btnAddSlotSubmit')?.addEventListener('click', async () => {
-      const activeMentor = state.mentors[state.currentMentorIndex];
-      const dateInput = document.getElementById('inputSlotDate');
-      const timeInput = document.getElementById('inputSlotTime');
-
-      if (dateInput && timeInput && dateInput.value && timeInput.value) {
-        await apiService.addMentorSlot(activeMentor.id, {
-          date: dateInput.value,
-          time: timeInput.value
-        });
-        showToast('Availability slot added!');
-        await initAppData();
-      }
-    });
-
-    // Mentor Remove Slot
-    document.querySelectorAll('.btn-remove-slot').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const activeMentor = state.mentors[state.currentMentorIndex];
-        await apiService.removeMentorSlot(activeMentor.id, parseInt(btn.dataset.idx, 10));
-        showToast('Slot removed!');
-        await initAppData();
-      });
-    });
-
-    // Mentor Accept Session
-    document.querySelectorAll('.btn-accept-session').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        await apiService.acceptBookingSession(btn.dataset.id);
-        showToast('Session accepted & Zoho meeting link created!');
-        await initAppData();
-      });
-    });
-
-    // Mentor Edit Profile
-    document.getElementById('btnEditMyProfile')?.addEventListener('click', () => {
-      const activeMentor = state.mentors[state.currentMentorIndex];
-      state.editingMentorProfile = activeMentor;
-      state.activeModal = 'edit_mentor_profile';
-      render();
-    });
-
-    document.getElementById('btnSaveMentorProfileSubmit')?.addEventListener('click', async () => {
-      const activeMentor = state.mentors[state.currentMentorIndex];
-      const name = document.getElementById('editMentorName')?.value || activeMentor.name;
-      const avatar = document.getElementById('editMentorAvatar')?.value || activeMentor.avatar;
-      const title = document.getElementById('editMentorTitle')?.value || activeMentor.title;
-      const organization = document.getElementById('editMentorOrg')?.value || activeMentor.organization;
-      const domain = document.getElementById('editMentorDomain')?.value || activeMentor.domain;
-      const bio = document.getElementById('editMentorBio')?.value || activeMentor.bio;
-      const expRaw = document.getElementById('editMentorExpertise')?.value || '';
-      const expertise = expRaw.split(',').map(s => s.trim()).filter(Boolean);
-
-      const linkedin = document.getElementById('editMentorLinkedIn')?.value || '';
-      const github = document.getElementById('editMentorGitHub')?.value || '';
-      const twitter = document.getElementById('editMentorTwitter')?.value || '';
-
-      await apiService.updateMentorProfile(activeMentor.id, {
-        name,
-        avatar,
-        title,
-        organization,
-        domain,
-        bio,
-        expertise,
-        socialLinks: { linkedin, github, twitter }
-      });
-
-      state.activeModal = null;
-      showToast('Mentor profile updated successfully!');
-      await initAppData();
-    });
-
-    // Create Group Masterclass Modal
-    document.getElementById('btnOpenCreateGroupModal')?.addEventListener('click', () => {
-      state.activeModal = 'group_create';
-      render();
-    });
-
-    document.getElementById('btnSubmitCreateGroup')?.addEventListener('click', async () => {
-      const activeMentor = state.mentors[state.currentMentorIndex];
-      const title = document.getElementById('createGroupTitle')?.value;
-      const domain = document.getElementById('createGroupDomain')?.value;
-      const description = document.getElementById('createGroupDescription')?.value;
-      const date = document.getElementById('createGroupDate')?.value;
-      const startTime = document.getElementById('createGroupStartTime')?.value;
-      const endTime = document.getElementById('createGroupEndTime')?.value;
-      const maxCapacity = parseInt(document.getElementById('createGroupMaxCapacity')?.value || 20, 10);
-
-      if (!title || !description || !date) {
-        showToast('Please fill out all required fields for the group session.', 'fa-circle-exclamation');
-        return;
-      }
-
-      await apiService.createGroupSession({
-        mentorId: activeMentor.id,
-        mentorName: activeMentor.name,
-        mentorTitle: activeMentor.title,
-        mentorAvatar: activeMentor.avatar,
-        title,
-        domain,
-        description,
-        date,
-        startTime: startTime || '04:00 PM',
-        endTime: endTime || '05:00 PM',
-        duration: '60 mins',
-        maxCapacity
-      });
-
-      state.activeModal = null;
-      showToast('Group Masterclass created and published successfully!');
-      await initAppData();
-    });
-
-    // Assign Mentee Task Modal
-    document.getElementById('btnOpenCreateTaskModal')?.addEventListener('click', () => {
-      state.newTaskData.selectedAssociateIds = state.associates.length > 0 ? [state.associates[0].id] : [];
-      state.newTaskData.searchQuery = '';
-      state.activeModal = 'task_create';
-      render();
-    });
-
-    const taskSearchInput = document.getElementById('taskAssociateSearchInput');
-    if (taskSearchInput) {
-      taskSearchInput.addEventListener('input', (e) => {
-        const val = e.target.value;
-        const cursorPos = e.target.selectionStart;
-        state.newTaskData.searchQuery = val;
+      const id = e.currentTarget.dataset.id;
+      const mentor = state.mentors.find(m => m.id === id);
+      if (mentor) {
+        state.bookingMentor = mentor;
+        state.activeModal = 'booking';
         render();
-        const newInput = document.getElementById('taskAssociateSearchInput');
-        if (newInput) {
-          newInput.focus();
-          newInput.setSelectionRange(cursorPos, cursorPos);
-        }
-      });
-    }
+      }
+    };
+  });
 
-    document.querySelectorAll('.task-associate-cb').forEach(cb => {
-      cb.addEventListener('change', () => {
-        const val = cb.value;
-        let selected = state.newTaskData.selectedAssociateIds || [];
-        if (cb.checked) {
-          if (!selected.includes(val)) selected.push(val);
-        } else {
-          selected = selected.filter(id => id !== val);
-        }
-        state.newTaskData.selectedAssociateIds = selected;
-        render();
-      });
-    });
+  // Search Input in Header
+  const searchInput = document.getElementById('headerSearchInput');
+  if (searchInput) {
+    searchInput.oninput = (e) => {
+      state.searchQuery = e.target.value;
+      render();
+    };
+  }
 
-    document.getElementById('btnToggleSelectAllTasks')?.addEventListener('click', () => {
-      const selected = state.newTaskData.selectedAssociateIds || [];
-      if (selected.length === state.associates.length) {
-        state.newTaskData.selectedAssociateIds = [];
+  // Navigation Vertical Sidebar Links & Mobile Drawer
+  document.querySelectorAll('.nav-sidebar-link[data-tab]').forEach(tab => {
+    tab.onclick = () => {
+      const role = state.currentUser ? state.currentUser.role : state.currentRole;
+      if (role === 'associate') state.associateTab = tab.dataset.tab;
+      else if (role === 'mentor') state.mentorTab = tab.dataset.tab;
+      else if (role === 'admin') state.adminTab = tab.dataset.tab;
+      state.isMobileNavOpen = false;
+      render();
+    };
+  });
+
+  // Mobile Nav Drawer Toggle
+  document.getElementById('btnMobileNavToggle')?.addEventListener('click', () => {
+    state.isMobileNavOpen = !state.isMobileNavOpen;
+    render();
+  });
+
+  document.getElementById('sidebarBackdrop')?.addEventListener('click', () => {
+    state.isMobileNavOpen = false;
+    render();
+  });
+
+  document.getElementById('btnSidebarHelp')?.addEventListener('click', () => {
+    showToast('Help & Support: Contact support@mcf-portal.org for assistance.', 'fa-circle-question');
+  });
+
+  // Domain Checkboxes in Mentee Discovery Sidebar
+  document.querySelectorAll('.domain-filter-cb').forEach(cb => {
+    cb.onchange = () => {
+      const domain = cb.value;
+      if (cb.checked) {
+        if (!state.selectedDomains.includes(domain)) state.selectedDomains.push(domain);
       } else {
-        state.newTaskData.selectedAssociateIds = state.associates.map(a => a.id);
+        state.selectedDomains = state.selectedDomains.filter(d => d !== domain);
       }
       render();
-    });
+    };
+  });
 
-    document.getElementById('btnSubmitCreateTask')?.addEventListener('click', async () => {
-      const activeMentor = state.mentors[state.currentMentorIndex];
-      const selectedIds = state.newTaskData.selectedAssociateIds || [];
+  document.getElementById('btnClearFilters')?.addEventListener('click', () => {
+    state.selectedDomains = [];
+    state.searchQuery = '';
+    render();
+  });
+
+  // View Mentor Profile Modal
+  document.querySelectorAll('.btn-inspect-profile').forEach(btn => {
+    btn.onclick = (e) => {
+      const id = e.currentTarget.dataset.id;
+      const m = state.mentors.find(x => x.id === id);
+      if (m) {
+        state.inspectingMentor = m;
+        state.activeModal = 'mentor_profile';
+        render();
+      }
+    };
+  });
+
+  // Open Schedule Masterclass Modal
+  document.getElementById('btnOpenCreateGroupModal')?.addEventListener('click', () => {
+    state.activeModal = 'group_create';
+    render();
+  });
+
+  // Create Group Masterclass Form Submit
+  const formCreateGroup = document.getElementById('formCreateGroup');
+  if (formCreateGroup) {
+    formCreateGroup.onsubmit = async (e) => {
+      e.preventDefault();
+      const activeMentor = state.mentors.find(m => m.id === state.currentUser?.id || m.email === state.currentUser?.email) || state.mentors[state.currentMentorIndex] || state.mentors[0];
+
+      const topic = document.getElementById('groupTopic')?.value.trim();
+      const category = document.getElementById('groupCategory')?.value;
+      const date = document.getElementById('groupDate')?.value;
+      const time = document.getElementById('groupTime')?.value;
+      const capacity = parseInt(document.getElementById('groupCapacity')?.value || '20', 10);
+      const meetingUrl = document.getElementById('groupMeetingUrl')?.value.trim();
+
+      try {
+        await apiService.createGroupSession({
+          mentorId: activeMentor.id,
+          mentorName: activeMentor.name,
+          topic,
+          category,
+          date,
+          time,
+          capacity,
+          meetingUrl
+        });
+
+        state.activeModal = null;
+        showToast('Group Masterclass scheduled successfully!', 'fa-circle-check');
+        await initAppData();
+      } catch (err) {
+        showToast(`Failed to schedule masterclass: ${err.message}`, 'fa-triangle-exclamation');
+      }
+    };
+  }
+
+  // Book 1-on-1 Button
+  document.querySelectorAll('.btn-book-slot').forEach(btn => {
+    btn.onclick = (e) => {
+      const id = e.currentTarget.dataset.id;
+      const mentor = state.mentors.find(m => m.id === id);
+      if (mentor) {
+        state.bookingMentor = mentor;
+        state.activeModal = 'booking';
+        render();
+      }
+    };
+  });
+
+  // Confirm Booking Form Submit
+  const formBooking = document.getElementById('formConfirmBooking');
+  if (formBooking) {
+    formBooking.onsubmit = async (e) => {
+      e.preventDefault();
+      const slotVal = document.getElementById('bookingSlotSelect').value;
+      const [date, time] = slotVal.split('|');
+      const duration = document.getElementById('bookingDuration').value;
+      const objective = document.getElementById('bookingObjective').value;
+      const activeAssoc = state.associates[state.currentAssociateIndex];
+
+      try {
+        await apiService.createSessionBooking({
+          associateId: activeAssoc.id,
+          associateName: activeAssoc.name,
+          mentorId: state.bookingMentor.id,
+          mentorName: state.bookingMentor.name,
+          date,
+          time,
+          duration,
+          objective
+        });
+
+        state.activeModal = null;
+        showToast(`1-on-1 booking request sent to ${state.bookingMentor.name}!`, 'fa-circle-check');
+        initAppData();
+      } catch (err) {
+        showToast(`Booking failed: ${err.message}`, 'fa-triangle-exclamation');
+      }
+    };
+  }
+
+  // Join Group Masterclass Button
+  document.querySelectorAll('.btn-join-group').forEach(btn => {
+    btn.onclick = async (e) => {
+      const id = e.currentTarget.dataset.id;
+      const activeAssoc = state.associates[state.currentAssociateIndex];
+      try {
+        await apiService.enrollInGroupSession(id, activeAssoc.name);
+        showToast('Enrolled in masterclass!', 'fa-circle-check');
+        initAppData();
+      } catch (err) {
+        showToast(`Enrollment failed: ${err.message}`, 'fa-triangle-exclamation');
+      }
+    };
+  });
+
+  // Complete Mentee Task Button
+  document.querySelectorAll('.btn-complete-task').forEach(btn => {
+    btn.onclick = async (e) => {
+      const id = e.currentTarget.dataset.id;
+      try {
+        await apiService.updateTaskStatus(id, 'Completed');
+        showToast('Task marked as completed!', 'fa-circle-check');
+        initAppData();
+      } catch (err) {
+        showToast(`Error updating task: ${err.message}`, 'fa-triangle-exclamation');
+      }
+    };
+  });
+
+  // Accept / Decline Mentor Session Requests
+  document.querySelectorAll('.btn-accept-session').forEach(btn => {
+    btn.onclick = async (e) => {
+      const id = e.currentTarget.dataset.id;
+      try {
+        await apiService.updateSessionStatus(id, 'Accepted');
+        showToast('Session request accepted.', 'fa-circle-check');
+        initAppData();
+      } catch (err) {
+        showToast(`Error updating session: ${err.message}`, 'fa-triangle-exclamation');
+      }
+    };
+  });
+
+  document.querySelectorAll('.btn-decline-session').forEach(btn => {
+    btn.onclick = async (e) => {
+      const id = e.currentTarget.dataset.id;
+      try {
+        await apiService.updateSessionStatus(id, 'Declined');
+        showToast('Session request declined.', 'fa-circle-info');
+        initAppData();
+      } catch (err) {
+        showToast(`Error updating session: ${err.message}`, 'fa-triangle-exclamation');
+      }
+    };
+  });
+
+  // Live Mentee Search Input for Task Assignment
+  const inputSearchAssoc = document.getElementById('inputSearchAssociates');
+  if (inputSearchAssoc) {
+    inputSearchAssoc.oninput = (e) => {
+      state.newTaskData.searchQuery = e.target.value;
+      render();
+    };
+  }
+
+  // Multi-Select Mentee Checkboxes
+  document.querySelectorAll('.cb-select-associate').forEach(cb => {
+    cb.onchange = (e) => {
+      const id = e.target.value;
+      if (e.target.checked) {
+        if (!state.newTaskData.selectedAssociateIds.includes(id)) {
+          state.newTaskData.selectedAssociateIds.push(id);
+        }
+      } else {
+        state.newTaskData.selectedAssociateIds = state.newTaskData.selectedAssociateIds.filter(x => x !== id);
+      }
+      render();
+    };
+  });
+
+  // Clear Selected Mentees Button
+  document.getElementById('btnClearSelectedAssociates')?.addEventListener('click', () => {
+    state.newTaskData.selectedAssociateIds = [];
+    render();
+  });
+
+  // Create Mentor Task Form Submit (Multi-Select Support)
+  const formTask = document.getElementById('formCreateTask');
+  if (formTask) {
+    formTask.onsubmit = async (e) => {
+      e.preventDefault();
+      const selectedIds = state.newTaskData.selectedAssociateIds;
       const title = document.getElementById('createTaskTitle')?.value;
       const description = document.getElementById('createTaskDescription')?.value;
       const deadline = document.getElementById('createTaskDeadline')?.value;
+      const activeMentor = state.mentors[state.currentMentorIndex];
 
       if (selectedIds.length === 0) {
         showToast('Please select at least one associate for this task.', 'fa-circle-exclamation');
@@ -2330,37 +2426,266 @@ function bindEvents() {
       state.newTaskData.searchQuery = '';
       showToast(`Task successfully assigned to ${selectedAssociates.length} mentee${selectedAssociates.length === 1 ? '' : 's'}!`);
       await initAppData();
-    });
+    };
+  }
 
-    // Admin Edit Mentor Cap
-    document.querySelectorAll('.btn-edit-cap').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const m = state.mentors.find(x => x.id === btn.dataset.id);
-        state.editingCapMentor = m;
-        state.activeModal = 'admin_cap';
-        render();
-      });
-    });
+  // Open Profile Edit Modal (Mentors and Mentees / Associates)
+  document.querySelectorAll('#btnEditProfile, #btnEditUserProfile').forEach(btn => {
+    btn.onclick = () => {
+      const user = state.currentUser;
+      const role = user ? user.role : state.currentRole;
+      if (role === 'mentor') {
+        state.activeModal = 'edit_mentor_profile';
+      } else {
+        state.activeModal = 'edit_associate_profile';
+      }
+      render();
+    };
+  });
 
-    document.getElementById('btnSaveCapSubmit')?.addEventListener('click', async () => {
-      const capInput = document.getElementById('inputNewMentorCap');
-      if (capInput && state.editingCapMentor) {
-        await apiService.updateMentorMonthlyCap(state.editingCapMentor.id, capInput.value);
+  // Submit Mentor Profile Edit
+  const formEditMentor = document.getElementById('formEditMentorProfile');
+  if (formEditMentor) {
+    formEditMentor.onsubmit = async (e) => {
+      e.preventDefault();
+      const activeMentor = state.mentors.find(m => m.id === state.currentUser?.id || m.email === state.currentUser?.email) || state.mentors[state.currentMentorIndex] || state.mentors[0];
+
+      const name = document.getElementById('editMentorName')?.value.trim();
+      const title = document.getElementById('editMentorTitle')?.value.trim();
+      const organization = document.getElementById('editMentorOrg')?.value.trim();
+      const domain = document.getElementById('editMentorDomain')?.value;
+      const bio = document.getElementById('editMentorBio')?.value.trim();
+      const expertiseStr = document.getElementById('editMentorExpertise')?.value.trim();
+      const avatar = document.getElementById('editMentorAvatar')?.value.trim();
+      const linkedin = document.getElementById('editMentorLinkedin')?.value.trim();
+      const github = document.getElementById('editMentorGithub')?.value.trim();
+      const twitter = document.getElementById('editMentorTwitter')?.value.trim();
+
+      const expertise = expertiseStr ? expertiseStr.split(',').map(s => s.trim()).filter(Boolean) : activeMentor.expertise;
+
+      const profileData = {
+        name: name || activeMentor.name,
+        title: title || activeMentor.title,
+        organization: organization || activeMentor.organization,
+        domain: domain || activeMentor.domain,
+        bio: bio || activeMentor.bio,
+        expertise,
+        avatar: avatar || activeMentor.avatar,
+        socials: { linkedin, github, twitter }
+      };
+
+      try {
+        const updated = await apiService.updateMentorProfile(activeMentor.id, profileData);
+        if (state.currentUser) {
+          state.currentUser = { ...state.currentUser, ...profileData };
+          localStorage.setItem('mently_user', JSON.stringify(state.currentUser));
+        }
         state.activeModal = null;
-        showToast('Monthly session cap updated!');
+        showToast('Mentor profile updated successfully!', 'fa-circle-check');
         await initAppData();
+      } catch (err) {
+        showToast(`Failed to update profile: ${err.message}`, 'fa-triangle-exclamation');
+      }
+    };
+  }
+
+  // Submit Associate / Mentee Profile Edit
+  const formEditAssoc = document.getElementById('formEditAssociateProfile');
+  if (formEditAssoc) {
+    formEditAssoc.onsubmit = async (e) => {
+      e.preventDefault();
+      const activeAssoc = state.associates.find(a => a.id === state.currentUser?.id || a.email === state.currentUser?.email) || state.associates[state.currentAssociateIndex] || state.associates[0];
+
+      const name = document.getElementById('editAssocName')?.value.trim();
+      const title = document.getElementById('editAssocTitle')?.value.trim();
+      const email = document.getElementById('editAssocEmail')?.value.trim();
+      const bio = document.getElementById('editAssocBio')?.value.trim();
+      const avatar = document.getElementById('editAssocAvatar')?.value.trim();
+
+      const profileData = {
+        name: name || activeAssoc.name,
+        title: title || activeAssoc.title,
+        email: email || activeAssoc.email,
+        bio: bio || activeAssoc.bio,
+        avatar: avatar || activeAssoc.avatar
+      };
+
+      try {
+        const updated = await apiService.updateAssociateProfile(activeAssoc.id, profileData);
+        if (state.currentUser) {
+          state.currentUser = { ...state.currentUser, ...profileData };
+          localStorage.setItem('mently_user', JSON.stringify(state.currentUser));
+        }
+        state.activeModal = null;
+        showToast('Profile updated successfully!', 'fa-circle-check');
+        await initAppData();
+      } catch (err) {
+        showToast(`Failed to update profile: ${err.message}`, 'fa-triangle-exclamation');
+      }
+    };
+  }
+
+  // Open Calendly-Style Availability Modal
+  document.getElementById('btnOpenAvailabilityModal')?.addEventListener('click', () => {
+    state.activeModal = 'manage_availability';
+    render();
+  });
+
+  // Previous / Next Month Navigation
+  document.getElementById('btnPrevMonth')?.addEventListener('click', () => {
+    if (state.availabilityModal.month === 0) {
+      state.availabilityModal.month = 11;
+      state.availabilityModal.year -= 1;
+    } else {
+      state.availabilityModal.month -= 1;
+    }
+    render();
+  });
+
+  document.getElementById('btnNextMonth')?.addEventListener('click', () => {
+    if (state.availabilityModal.month === 11) {
+      state.availabilityModal.month = 0;
+      state.availabilityModal.year += 1;
+    } else {
+      state.availabilityModal.month += 1;
+    }
+    render();
+  });
+
+  // Toggle Day Selection on Calendar Picker
+  document.querySelectorAll('.calendly-day-cell').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const dateStr = e.currentTarget.dataset.date;
+      if (!dateStr) return;
+      const idx = state.availabilityModal.selectedDates.indexOf(dateStr);
+      if (idx > -1) {
+        state.availabilityModal.selectedDates.splice(idx, 1);
+      } else {
+        state.availabilityModal.selectedDates.push(dateStr);
+      }
+      render();
+    });
+  });
+
+  // Add Time Range Row
+  document.getElementById('btnAddTimeRange')?.addEventListener('click', () => {
+    state.availabilityModal.timeRanges.push({
+      id: Date.now(),
+      startTime: '09:00 AM',
+      endTime: '10:00 AM'
+    });
+    render();
+  });
+
+  // Remove Time Range Row
+  document.querySelectorAll('.btn-remove-time-range').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const idx = parseInt(e.currentTarget.dataset.index, 10);
+      if (!isNaN(idx) && state.availabilityModal.timeRanges.length > 1) {
+        state.availabilityModal.timeRanges.splice(idx, 1);
+        render();
       }
     });
+  });
 
-    // Close Modal Buttons
-    document.querySelectorAll('.btn-close-modal').forEach(btn => {
-      btn.addEventListener('click', () => {
-        state.activeModal = null;
-        render();
+  // Select Time Changes
+  document.querySelectorAll('.time-range-start').forEach(sel => {
+    sel.addEventListener('change', (e) => {
+      const idx = parseInt(e.target.dataset.index, 10);
+      if (!isNaN(idx) && state.availabilityModal.timeRanges[idx]) {
+        state.availabilityModal.timeRanges[idx].startTime = e.target.value;
+      }
+    });
+  });
+
+  document.querySelectorAll('.time-range-end').forEach(sel => {
+    sel.addEventListener('change', (e) => {
+      const idx = parseInt(e.target.dataset.index, 10);
+      if (!isNaN(idx) && state.availabilityModal.timeRanges[idx]) {
+        state.availabilityModal.timeRanges[idx].endTime = e.target.value;
+      }
+    });
+  });
+
+  // Apply Availability Slots
+  document.getElementById('btnApplyAvailability')?.addEventListener('click', async () => {
+    const activeMentor = state.mentors.find(m => m.id === state.currentUser?.id || m.email === state.currentUser?.email) || state.mentors[state.currentMentorIndex] || state.mentors[0];
+    const { selectedDates, timeRanges } = state.availabilityModal;
+
+    if (selectedDates.length === 0) {
+      showToast('Please select at least one date on the calendar.', 'fa-triangle-exclamation');
+      return;
+    }
+
+    if (timeRanges.length === 0) {
+      showToast('Please add at least one time range.', 'fa-triangle-exclamation');
+      return;
+    }
+
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+    const newSlots = [];
+    selectedDates.forEach(dateStr => {
+      const [y, m, d] = dateStr.split('-').map(Number);
+      const formattedDate = `${monthNames[m - 1]} ${d}, ${y}`;
+      timeRanges.forEach(tr => {
+        const timeStr = `${tr.startTime} - ${tr.endTime}`;
+        newSlots.push({ date: formattedDate, time: timeStr });
       });
     });
-  }
+
+    try {
+      await Promise.all(newSlots.map(slot => apiService.addMentorSlot(activeMentor.id, slot)));
+      state.activeModal = null;
+      showToast(`Successfully added ${newSlots.length} availability slot${newSlots.length === 1 ? '' : 's'} across ${selectedDates.length} date${selectedDates.length === 1 ? '' : 's'}!`, 'fa-circle-check');
+      await initAppData();
+    } catch (err) {
+      showToast(`Error adding slots: ${err.message}`, 'fa-triangle-exclamation');
+    }
+  });
+
+  // Admin Edit Mentor Cap
+  document.querySelectorAll('.btn-edit-cap').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const m = state.mentors.find(x => x.id === btn.dataset.id);
+      state.editingCapMentor = m;
+      state.activeModal = 'admin_cap';
+      render();
+    });
+  });
+
+  document.getElementById('btnSaveCapSubmit')?.addEventListener('click', async () => {
+    const capInput = document.getElementById('inputNewMentorCap');
+    if (capInput && state.editingCapMentor) {
+      await apiService.updateMentorMonthlyCap(state.editingCapMentor.id, capInput.value);
+      state.activeModal = null;
+      showToast('Monthly session cap updated!');
+      await initAppData();
+    }
+  });
+
+  // Close Modal Buttons
+  document.querySelectorAll('.btn-close-modal').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.activeModal = null;
+      render();
+    });
+  });
 }
 
-// Initial Kickoff
+// Smooth Scroll Helper
+function scrollToSection(sectionId) {
+  if (state.currentPath !== '/') {
+    navigateTo('/');
+    setTimeout(() => {
+      const el = document.getElementById(sectionId);
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+    return;
+  }
+  const el = document.getElementById(sectionId);
+  if (el) el.scrollIntoView({ behavior: 'smooth' });
+}
+
+// Kickstart Application Initialization
 initAppData();
