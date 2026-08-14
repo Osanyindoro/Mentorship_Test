@@ -496,7 +496,7 @@ function renderLandingMentorCard(m) {
   return `
     <div class="mentor-card">
       <div class="card-header-flex">
-        <img src="${m.avatar}" class="mentor-avatar-lg" />
+        <img src="${m.avatar && m.avatar.startsWith('data:') ? m.avatar : (m.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80')}" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(m.name)}&background=2e1065&color=ffffff';" class="mentor-avatar-lg" />
         <div>
           <div class="mentor-name">${m.name}</div>
           <div class="mentor-title">${m.title}</div>
@@ -1064,7 +1064,7 @@ function renderMentorCard(mentor) {
   return `
     <div class="mentor-card">
       <div class="card-header-flex">
-        <img src="${mentor.avatar}" class="mentor-avatar-lg" />
+        <img src="${mentor.avatar && mentor.avatar.startsWith('data:') ? mentor.avatar : (mentor.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80')}" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(mentor.name)}&background=2e1065&color=ffffff';" class="mentor-avatar-lg" />
         <div>
           <div class="mentor-name">${mentor.name}</div>
           <div class="mentor-title">${mentor.title}</div>
@@ -1633,7 +1633,7 @@ function renderModals() {
             <button class="close-modal-btn btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
           </div>
           <div class="card-header-flex">
-            <img src="${m.avatar}" class="mentor-avatar-lg" />
+            <img src="${m.avatar && m.avatar.startsWith('data:') ? m.avatar : (m.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80')}" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(m.name)}&background=2e1065&color=ffffff';" class="mentor-avatar-lg" />
             <div>
               <div style="font-weight: 800; font-size: 1.1rem;">${m.title}</div>
               <div class="mentor-org">${m.organization}</div>

@@ -9,7 +9,7 @@ const associates = [
     title: "Mastercard Foundation Scholar & Tech Fellow",
     track: "Software Engineering & Data Science",
     bio: "Passionate about building AI tools for healthcare in Africa.",
-    avatar: "/assets/assoc_amina.jpg",
+    avatar: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&w=600&q=80",
     skills: ["Python", "Machine Learning", "Data Analysis"],
     careerGoal: "Lead healthcare AI research in Africa."
   },
@@ -21,7 +21,7 @@ const associates = [
     title: "MSc Information Technology Scholar",
     track: "Fintech & Product",
     bio: "Focused on scaling financial access across West Africa.",
-    avatar: "/assets/assoc_kofi.jpg",
+    avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=600&q=80",
     skills: ["Product Management", "Financial Modeling"],
     careerGoal: "Build fintech platforms for underserved markets."
   }
@@ -36,7 +36,7 @@ const mentors = [
     organization: "DeepMind / CMU Africa Faculty",
     domain: "Software Engineering & AI",
     bio: "15+ years experience in Artificial Intelligence and NLP for African languages.",
-    avatar: "/assets/mentor_samuel.jpg",
+    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80",
     rating: 4.9,
     totalSessions: 42,
     expertise: ["AI / Machine Learning", "PhD Advice", "Tech Career Roadmap"],
@@ -53,7 +53,7 @@ const mentors = [
     organization: "Paystack / Flutterwave Mentor Network",
     domain: "Fintech & Product",
     bio: "Product strategist who scaled payments infrastructure across 6 African countries.",
-    avatar: "/assets/mentor_nia.jpg",
+    avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=600&q=80",
     rating: 5.0,
     totalSessions: 38,
     expertise: ["Product Strategy", "Fintech Leadership", "Interview Prep"],
@@ -150,7 +150,7 @@ export default function handler(req, res) {
         title: "Mastercard Foundation Scholar & Tech Fellow",
         track: "Software Engineering & Data Science",
         bio: "Passionate about building AI tools for healthcare in Africa.",
-        avatar: "/assets/assoc_amina.jpg"
+        avatar: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&w=600&q=80"
       }
     });
   }
@@ -172,7 +172,7 @@ export default function handler(req, res) {
       track: trackOrDomain || 'Software Engineering & AI',
       domain: trackOrDomain || 'Software Engineering & AI',
       bio: bio || 'Active Mastercard Foundation portal member.',
-      avatar: avatar && avatar.trim() !== '' ? avatar : (selectedRole === 'associate' ? '/assets/assoc_amina.jpg' : '/assets/mentor_samuel.jpg')
+      avatar: avatar && avatar.trim() !== '' ? avatar : (selectedRole === 'associate' ? 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&w=600&q=80' : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80')
     };
 
     if (selectedRole === 'mentor') {
