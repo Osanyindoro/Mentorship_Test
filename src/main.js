@@ -914,53 +914,100 @@ function renderRoleView(associate, mentor) {
 // MENTEE VIEWS
 // --------------------------------------------------------------------------
 function renderMenteeHome(associate) {
-  const nextSession = state.sessions.find(s => s.status === 'Accepted');
+  const upcomingSessions = state.sessions.filter(s => s.status === 'Accepted');
+  const pastSessions = state.sessions.filter(s => s.status === 'Completed' || s.associateId === associate.id || s.associateName === associate.name);
+  const engagedMentorIds = [...new Set(pastSessions.map(s => s.mentorId))];
+  const engagedMentors = state.mentors.filter(m => engagedMentorIds.includes(m.id));
+
   return `
     <div style="width: 100%;">
-      <!-- Hero Banner -->
-      <div class="mently-hero-banner">
-        <div class="hero-pill-badge"><i class="fa-solid fa-star"></i> Mastercard Foundation Associate Program</div>
-        <h1 class="hero-title">Your growth starts with the right conversation.</h1>
-        <p class="hero-subtitle">Connect with experienced industry leaders, book 1-on-1 strategic sessions, and participate in peer masterclasses to accelerate your career.</p>
-        <div class="hero-actions">
-          <button class="btn-brand-primary" id="btnHeroFindMentors"><i class="fa-solid fa-magnifying-glass"></i> Find a Mentor</button>
-          <button class="btn-brand-secondary" id="btnHeroGroupSessions"><i class="fa-solid fa-users"></i> Explore Masterclasses</button>
-        </div>
-      </div>
-
-      <!-- Welcome Card -->
-      <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
-        <div class="mentor-card">
-          <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
-            <img src="${associate.avatar}" style="width: 54px; height: 54px; border-radius: 50%; object-fit: cover; border: 2px solid var(--brand-primary);" />
-            <div>
-              <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 800;">Welcome back, ${associate.name} 👋</h3>
-              <p style="font-size: 0.85rem; color: var(--text-secondary);">${associate.title}</p>
-            </div>
+      <!-- Hero Banner: Your Growth Journey Starts Here -->
+      <div class="mently-hero-banner" style="background: linear-gradient(135deg, #1b0a3a 0%, #2e1065 100%); border-radius: 18px; padding: 2.25rem; color: #fff; margin-bottom: 2rem; box-shadow: 0 10px 30px rgba(46, 16, 101, 0.25); position: relative; overflow: hidden;">
+        <div style="position: relative; z-index: 2;">
+          <div class="hero-pill-badge" style="background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); color: #ffd700; border: 1px solid rgba(255,215,0,0.3); font-weight: 800; font-size: 0.82rem; padding: 0.35rem 0.85rem; border-radius: 20px; display: inline-flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+            <i class="fa-solid fa-rocket"></i> Mastercard Foundation Associate Program
           </div>
-          <p style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.5;">${associate.bio}</p>
-        </div>
-
-        <!-- Next Session Quick Card -->
-        <div class="mentor-card" style="border-left: 4px solid var(--brand-primary);">
-          <div style="font-size: 0.78rem; font-weight: 800; text-transform: uppercase; color: var(--brand-primary); margin-bottom: 0.5rem;">Upcoming Session</div>
-          ${nextSession ? `
-            <div style="font-weight: 800; font-size: 1rem; margin-bottom: 0.2rem;">${nextSession.mentorName}</div>
-            <div style="font-size: 0.84rem; color: var(--text-secondary); margin-bottom: 0.8rem;">
-              <i class="fa-regular fa-calendar"></i> ${nextSession.date} · ${nextSession.time}
-            </div>
-            <a href="${nextSession.meetingLink}" target="_blank" class="btn-brand-primary" style="padding: 0.45rem 1rem; font-size: 0.8rem;"><i class="fa-solid fa-video"></i> Join Zoho Meet</a>
-          ` : `
-            <p style="font-size: 0.86rem; color: var(--text-muted); margin-bottom: 1rem;">No accepted sessions right now.</p>
-            <button class="btn-brand-primary" id="btnQuickBook" style="padding: 0.45rem 1rem; font-size: 0.8rem;">Book 1-on-1</button>
-          `}
+          <h1 class="hero-title" style="font-family: var(--font-display); font-size: 2.2rem; font-weight: 800; color: #ffffff; margin-bottom: 0.75rem; line-height: 1.2;">Your growth journey starts here.</h1>
+          <p class="hero-subtitle" style="font-size: 1rem; color: rgba(255,255,255,0.85); max-width: 680px; margin-bottom: 1.5rem; line-height: 1.6;">Connect with verified executive mentors, book 1-on-1 career guidance sessions, and supercharge your leadership skills.</p>
+          <div class="hero-actions">
+            <button class="btn-brand-primary" id="btnHeroExploreMentors" style="padding: 0.75rem 1.75rem; font-weight: 800; font-size: 0.95rem; border-radius: 10px; background: #6b21a8; color: white; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 0.6rem; box-shadow: 0 4px 14px rgba(107,33,168,0.4);">
+              <i class="fa-solid fa-compass"></i> Explore Mentors
+            </button>
+          </div>
         </div>
       </div>
 
-      <!-- Featured Mentors Section -->
-      <h2 style="font-family: var(--font-display); font-size: 1.35rem; font-weight: 800; margin-bottom: 1.25rem;">Featured Mentors</h2>
-      <div class="cards-grid">
-        ${state.mentors.slice(0, 3).map(m => renderMentorCard(m)).join('')}
+      <!-- How the Mentorship Portal Works -->
+      <div style="margin-bottom: 2.5rem;">
+        <h2 style="font-family: var(--font-display); font-size: 1.35rem; font-weight: 800; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
+          <i class="fa-solid fa-circle-info" style="color: var(--brand-primary);"></i> How the Mentorship Portal Works
+        </h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem;">
+          <div class="mentor-card" style="border-left: 4px solid #6b21a8; padding: 1.25rem;">
+            <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(107,33,168,0.1); color: #6b21a8; font-weight: 800; display: flex; align-items: center; justify-content: center; margin-bottom: 0.75rem;">1</div>
+            <h4 style="font-weight: 800; font-size: 1rem; margin-bottom: 0.4rem;">Explore & Match</h4>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">Search verified mentors by domain expertise, company, and career specialization.</p>
+          </div>
+          <div class="mentor-card" style="border-left: 4px solid #059669; padding: 1.25rem;">
+            <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(5,150,105,0.1); color: #059669; font-weight: 800; display: flex; align-items: center; justify-content: center; margin-bottom: 0.75rem;">2</div>
+            <h4 style="font-weight: 800; font-size: 1rem; margin-bottom: 0.4rem;">Schedule 1-on-1</h4>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">Select an open calendar slot and submit your mentorship discussion goals.</p>
+          </div>
+          <div class="mentor-card" style="border-left: 4px solid #d97706; padding: 1.25rem;">
+            <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(217,119,6,0.1); color: #d97706; font-weight: 800; display: flex; align-items: center; justify-content: center; margin-bottom: 0.75rem;">3</div>
+            <h4 style="font-weight: 800; font-size: 1rem; margin-bottom: 0.4rem;">Connect & Grow</h4>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">Join live Zoho meeting sessions, complete assigned action tasks, and track your progress.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upcoming Sessions Section -->
+      <div style="margin-bottom: 2.5rem;">
+        <h2 style="font-family: var(--font-display); font-size: 1.35rem; font-weight: 800; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
+          <i class="fa-solid fa-calendar-check" style="color: var(--brand-emerald);"></i> Upcoming Sessions
+        </h2>
+        ${upcomingSessions.length > 0 ? `
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            ${upcomingSessions.map(s => `
+              <div class="mentor-card" style="border-left: 4px solid var(--brand-emerald); padding: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                  <div>
+                    <span class="badge-tag badge-green" style="margin-bottom: 0.5rem; display: inline-block;">Confirmed 1-on-1 Session</span>
+                    <h3 style="font-weight: 800; font-size: 1.15rem;">Session with ${s.mentorName}</h3>
+                    <p style="font-size: 0.88rem; color: var(--text-secondary);">${s.mentorDomain}</p>
+                  </div>
+                  <a href="${s.meetingLink}" target="_blank" class="btn-brand-primary" style="padding: 0.6rem 1.25rem; font-size: 0.88rem;"><i class="fa-solid fa-video"></i> Join Zoho Meeting</a>
+                </div>
+                <div style="font-size: 0.86rem; color: var(--text-secondary); background: var(--bg-hover); padding: 0.75rem 1rem; border-radius: 8px;">
+                  <i class="fa-regular fa-clock"></i> <strong>Scheduled:</strong> ${s.date} at ${s.time} (${s.duration})<br/>
+                  <i class="fa-solid fa-bullseye"></i> <strong>Objective:</strong> ${s.objective}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        ` : `
+          <div class="mentor-card" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+            <i class="fa-regular fa-calendar-xmark" style="font-size: 2rem; margin-bottom: 0.5rem;"></i>
+            <div style="font-weight: 700; font-size: 0.95rem;">No upcoming sessions scheduled.</div>
+            <button class="btn-brand-primary" id="btnHomeBookSession" style="margin-top: 0.8rem; padding: 0.5rem 1.2rem; font-size: 0.85rem;"><i class="fa-solid fa-plus"></i> Book a Mentor Session</button>
+          </div>
+        `}
+      </div>
+
+      <!-- Mentors Previously Engaged Section -->
+      <div style="margin-bottom: 2.5rem;">
+        <h2 style="font-family: var(--font-display); font-size: 1.35rem; font-weight: 800; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
+          <i class="fa-solid fa-user-clock" style="color: var(--brand-violet);"></i> Mentors Previously Engaged
+        </h2>
+        ${engagedMentors.length > 0 ? `
+          <div class="cards-grid">
+            ${engagedMentors.map(m => renderMentorCard(m)).join('')}
+          </div>
+        ` : `
+          <div class="cards-grid">
+            ${state.mentors.slice(0, 2).map(m => renderMentorCard(m)).join('')}
+          </div>
+        `}
       </div>
     </div>
   `;
@@ -1171,6 +1218,78 @@ function renderMenteeSessionsList() {
           </div>
         `).join('')}
       </div>
+    </div>
+  `;
+}
+
+function renderMenteeProfile(associate) {
+  return `
+    <div class="content-area" style="width: 100%; max-width: 800px; margin: 0 auto;">
+      <h2 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+        <i class="fa-solid fa-user-gear" style="color: var(--brand-primary);"></i> My Associate Profile & Settings
+      </h2>
+
+      <form id="formEditMenteeProfile" class="mentor-card" style="padding: 2rem;">
+        <!-- PROFILE PHOTO EDIT SECTION -->
+        <div style="display: flex; align-items: center; gap: 1.5rem; padding-bottom: 1.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color);">
+          <img src="${associate.avatar || '/assets/assoc_amina.jpg'}" id="profileAvatarPreview" style="width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 3px solid var(--brand-primary); box-shadow: var(--shadow-sm);" />
+          <div>
+            <h4 style="font-weight: 800; font-size: 1.05rem; margin-bottom: 0.25rem;">Profile Headshot Photo</h4>
+            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.75rem;">JPG or PNG format. Compressed automatically.</p>
+            <label for="profileAvatarInput" class="btn-brand-primary" style="padding: 0.45rem 1rem; font-size: 0.82rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem;">
+              <i class="fa-solid fa-upload"></i> Upload New Picture
+            </label>
+            <input type="file" id="profileAvatarInput" accept="image/jpeg,image/png,image/webp" style="display: none;" />
+          </div>
+        </div>
+
+        <!-- FULL NAME -->
+        <div class="form-group">
+          <label class="form-label">Full Name</label>
+          <input type="text" class="form-input" id="editProfileName" value="${associate.name}" required style="border-radius: 10px; padding: 0.7rem 1rem;" />
+        </div>
+
+        <!-- EMAIL ADDRESS -->
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input type="email" class="form-input" id="editProfileEmail" value="${associate.email}" required style="border-radius: 10px; padding: 0.7rem 1rem;" />
+        </div>
+
+        <!-- HOST ORGANIZATION -->
+        <div class="form-group">
+          <label class="form-label">Host Organization</label>
+          <input type="text" class="form-input" id="editProfileOrg" value="${associate.institution || associate.organization || 'Jobberman'}" required style="border-radius: 10px; padding: 0.7rem 1rem;" />
+        </div>
+
+        <!-- SCHOLAR TITLE -->
+        <div class="form-group">
+          <label class="form-label">Scholar Title</label>
+          <input type="text" class="form-input" id="editProfileTitle" value="${associate.title}" required style="border-radius: 10px; padding: 0.7rem 1rem;" />
+        </div>
+
+        <!-- PROGRAM TRACK -->
+        <div class="form-group">
+          <label class="form-label">Program Track</label>
+          <select class="form-select" id="editProfileTrack" style="border-radius: 10px; padding: 0.7rem 1rem;">
+            <option value="Software Engineering & AI" ${associate.track === 'Software Engineering & AI' ? 'selected' : ''}>Software Engineering & AI</option>
+            <option value="Fintech & Product" ${associate.track === 'Fintech & Product' ? 'selected' : ''}>Fintech & Product</option>
+            <option value="Public Health & Social Impact" ${associate.track === 'Public Health & Social Impact' ? 'selected' : ''}>Public Health & Social Impact</option>
+            <option value="Software Engineering & Data" ${associate.track === 'Software Engineering & Data' ? 'selected' : ''}>Software Engineering & Data</option>
+          </select>
+        </div>
+
+        <!-- BIO -->
+        <div class="form-group">
+          <label class="form-label">Bio & Career Goals</label>
+          <textarea class="form-input" id="editProfileBio" rows="4" style="border-radius: 10px; padding: 0.7rem 1rem; resize: vertical;">${associate.bio}</textarea>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;">
+          <button type="submit" class="btn-brand-primary" style="padding: 0.65rem 1.5rem; font-weight: 800; font-size: 0.9rem;">
+            <i class="fa-solid fa-floppy-disk"></i> Save Profile Changes
+          </button>
+        </div>
+      </form>
     </div>
   `;
 }
@@ -2151,7 +2270,50 @@ function bindEvents() {
 
     // Hero CTAs inside Associate Dashboard
     document.getElementById('btnHeroFindMentors')?.addEventListener('click', () => { state.associateTab = 'mentors'; render(); });
+    document.getElementById('btnHeroExploreMentors')?.addEventListener('click', () => { state.associateTab = 'mentors'; render(); });
+    document.getElementById('btnHomeBookSession')?.addEventListener('click', () => { state.associateTab = 'mentors'; render(); });
     document.getElementById('btnHeroGroupSessions')?.addEventListener('click', () => { state.associateTab = 'group_sessions'; render(); });
+
+    // Associate Profile Photo File Upload Listener
+    const profileAvatarInput = document.getElementById('profileAvatarInput');
+    if (profileAvatarInput) {
+      profileAvatarInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          compressImageFile(file, (compressedDataUrl) => {
+            if (state.currentUser) state.currentUser.avatar = compressedDataUrl;
+            const preview = document.getElementById('profileAvatarPreview');
+            if (preview) preview.src = compressedDataUrl;
+            showToast('New profile photo selected!', 'fa-image');
+          });
+        }
+      });
+    }
+
+    // Associate Profile Save Submit Handler
+    document.getElementById('formEditMenteeProfile')?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = document.getElementById('editProfileName')?.value;
+      const email = document.getElementById('editProfileEmail')?.value;
+      const institution = document.getElementById('editProfileOrg')?.value;
+      const title = document.getElementById('editProfileTitle')?.value;
+      const track = document.getElementById('editProfileTrack')?.value;
+      const bio = document.getElementById('editProfileBio')?.value;
+
+      if (state.currentUser) {
+        state.currentUser.name = name || state.currentUser.name;
+        state.currentUser.email = email || state.currentUser.email;
+        state.currentUser.institution = institution || state.currentUser.institution;
+        state.currentUser.organization = institution || state.currentUser.organization;
+        state.currentUser.title = title || state.currentUser.title;
+        state.currentUser.track = track || state.currentUser.track;
+        state.currentUser.bio = bio || state.currentUser.bio;
+        localStorage.setItem('mently_user', JSON.stringify(state.currentUser));
+      }
+
+      showToast('Profile updated successfully!', 'fa-circle-check');
+      render();
+    });
 
     // Notifications
     document.getElementById('btnToggleNotifications')?.addEventListener('click', () => {
