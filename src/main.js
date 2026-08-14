@@ -55,10 +55,12 @@ const state = {
     name: '',
     email: '',
     password: '',
-    institutionOrOrg: '',
+    institutionOrOrg: 'Jobberman',
+    isCustomHostOrg: false,
     title: '',
     trackOrDomain: 'Software Engineering & AI',
-    bio: ''
+    bio: '',
+    avatar: null
   },
 
   // Modal State
@@ -622,8 +624,8 @@ function renderLoginPage() {
                 <div class="form-group">
                   <label class="form-label" for="regRole">Account Type</label>
                   <select class="form-select" id="regRole" required style="border-radius: 10px; padding: 0.7rem 1rem;">
-                    <option value="associate" ${state.registerForm.role === 'associate' ? 'selected' : ''}>Candidate / Associate Scholar</option>
-                    <option value="mentor" ${state.registerForm.role === 'mentor' ? 'selected' : ''}>Mentor / Employer</option>
+                    <option value="associate" ${state.registerForm.role === 'associate' ? 'selected' : ''}>Associate</option>
+                    <option value="mentor" ${state.registerForm.role === 'mentor' ? 'selected' : ''}>Mentor</option>
                   </select>
                 </div>
 
@@ -645,10 +647,23 @@ function renderLoginPage() {
                   <input type="password" class="form-input" id="regPassword" placeholder="Create a secure password" value="${state.registerForm.password}" required style="border-radius: 10px; padding: 0.7rem 1rem;" />
                 </div>
 
-                <!-- FIELD 5: INSTITUTION OR ORGANIZATION -->
+                <!-- FIELD 5: HOST ORGANIZATION -->
                 <div class="form-group">
-                  <label class="form-label" for="regInstitution">${state.registerForm.role === 'mentor' ? 'Company / Organization' : 'Partner Institution'}</label>
-                  <input type="text" class="form-input" id="regInstitution" placeholder="${state.registerForm.role === 'mentor' ? 'e.g. Google / Paystack / Jobberman Partner' : 'e.g. Ashesi University / Carnegie Mellon Africa'}" value="${state.registerForm.institutionOrOrg}" style="border-radius: 10px; padding: 0.7rem 1rem;" />
+                  <label class="form-label" for="regHostOrgSelect">Host Organization</label>
+                  <select class="form-select" id="regHostOrgSelect" style="border-radius: 10px; padding: 0.7rem 1rem;">
+                    <option value="Jobberman" ${state.registerForm.institutionOrOrg === 'Jobberman' ? 'selected' : ''}>Jobberman</option>
+                    <option value="Paystack" ${state.registerForm.institutionOrOrg === 'Paystack' ? 'selected' : ''}>Paystack</option>
+                    <option value="Flutterwave" ${state.registerForm.institutionOrOrg === 'Flutterwave' ? 'selected' : ''}>Flutterwave</option>
+                    <option value="Google Africa" ${state.registerForm.institutionOrOrg === 'Google Africa' ? 'selected' : ''}>Google Africa</option>
+                    <option value="Microsoft Africa Development Center" ${state.registerForm.institutionOrOrg === 'Microsoft Africa Development Center' ? 'selected' : ''}>Microsoft Africa Development Center</option>
+                    <option value="KPMG Africa" ${state.registerForm.institutionOrOrg === 'KPMG Africa' ? 'selected' : ''}>KPMG Africa</option>
+                    <option value="Andela" ${state.registerForm.institutionOrOrg === 'Andela' ? 'selected' : ''}>Andela</option>
+                    <option value="Ashesi University / CMU Africa" ${state.registerForm.institutionOrOrg === 'Ashesi University / CMU Africa' ? 'selected' : ''}>Ashesi University / CMU Africa</option>
+                    <option value="Other" ${state.registerForm.isCustomHostOrg ? 'selected' : ''}>Other (Type Custom Organization)</option>
+                  </select>
+                  ${state.registerForm.isCustomHostOrg ? `
+                    <input type="text" class="form-input" id="regHostOrgCustom" placeholder="Enter Host Organization name (e.g. Jobberman)" value="${state.registerForm.institutionOrOrg === 'Other' ? '' : state.registerForm.institutionOrOrg}" style="margin-top: 0.5rem; border-radius: 10px; padding: 0.7rem 1rem;" />
+                  ` : ''}
                 </div>
 
                 <!-- FIELD 6: TRACK / DOMAIN -->
@@ -1968,6 +1983,23 @@ function bindEvents() {
       render();
     });
 
+    // Host Organization Select & Custom Input Handlers
+    document.getElementById('regHostOrgSelect')?.addEventListener('change', (e) => {
+      const val = e.target.value;
+      if (val === 'Other') {
+        state.registerForm.isCustomHostOrg = true;
+        state.registerForm.institutionOrOrg = '';
+      } else {
+        state.registerForm.isCustomHostOrg = false;
+        state.registerForm.institutionOrOrg = val;
+      }
+      render();
+    });
+
+    document.getElementById('regHostOrgCustom')?.addEventListener('input', (e) => {
+      state.registerForm.institutionOrOrg = e.target.value;
+    });
+
     // Sign Up Profile Photo File Upload Listener (Canvas Compressed to ~25KB max)
     const regAvatarInput = document.getElementById('regAvatarInput');
     if (regAvatarInput) {
@@ -1993,7 +2025,7 @@ function bindEvents() {
         const name = document.getElementById('regName')?.value;
         const email = document.getElementById('regEmail')?.value;
         const password = document.getElementById('regPassword')?.value;
-        const institutionOrOrg = document.getElementById('regInstitution')?.value;
+        const institutionOrOrg = state.registerForm.institutionOrOrg || document.getElementById('regHostOrgCustom')?.value || document.getElementById('regHostOrgSelect')?.value || 'Jobberman';
         const trackOrDomain = document.getElementById('regTrack')?.value;
         const bio = document.getElementById('regBio')?.value;
 
