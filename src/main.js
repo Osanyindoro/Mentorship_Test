@@ -666,15 +666,10 @@ function renderLoginPage() {
                   ` : ''}
                 </div>
 
-                <!-- FIELD 6: TRACK / DOMAIN -->
+                <!-- FIELD 6: JOB TITLE -->
                 <div class="form-group">
-                  <label class="form-label" for="regTrack">${state.registerForm.role === 'mentor' ? 'Domain Expertise' : 'Program Track'}</label>
-                  <select class="form-select" id="regTrack" style="border-radius: 10px; padding: 0.7rem 1rem;">
-                    <option value="Software Engineering & AI">Software Engineering & AI</option>
-                    <option value="Fintech & Product">Fintech & Product</option>
-                    <option value="Public Health & Social Impact">Public Health & Social Impact</option>
-                    <option value="Software Engineering & Data">Software Engineering & Data</option>
-                  </select>
+                  <label class="form-label" for="regJobTitle">Job Title</label>
+                  <input type="text" class="form-input" id="regJobTitle" placeholder="e.g. Software Engineer / Data Analyst / Product Lead" value="${state.registerForm.title || ''}" required style="border-radius: 10px; padding: 0.7rem 1rem;" />
                 </div>
 
                 <!-- FIELD 7: BIO -->
@@ -2142,10 +2137,7 @@ function bindEvents() {
         e.preventDefault();
         const role = document.getElementById('regRole')?.value || 'associate';
         const name = document.getElementById('regName')?.value;
-        const email = document.getElementById('regEmail')?.value;
-        const password = document.getElementById('regPassword')?.value;
-        const institutionOrOrg = state.registerForm.institutionOrOrg || document.getElementById('regHostOrgCustom')?.value || document.getElementById('regHostOrgSelect')?.value || 'Jobberman';
-        const trackOrDomain = document.getElementById('regTrack')?.value;
+        const title = document.getElementById('regJobTitle')?.value || (role === 'associate' ? 'Mastercard Foundation Scholar' : 'Executive Mentor');
         const bio = document.getElementById('regBio')?.value;
 
         try {
@@ -2159,8 +2151,8 @@ function bindEvents() {
             email,
             password,
             institutionOrOrg,
-            title: role === 'associate' ? 'Mastercard Foundation Scholar' : 'Executive Mentor',
-            trackOrDomain,
+            title,
+            trackOrDomain: title,
             bio,
             avatar: state.registerForm.avatar
           });
