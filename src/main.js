@@ -730,16 +730,6 @@ function renderLoginPage() {
                   Don't have an account yet? <a id="btnToggleRegister" style="color: var(--brand-primary); font-weight: 800; cursor: pointer;">Sign Up / Register</a>
                 </div>
               </form>
-
-              <!-- Quick Demo Credentials Helper -->
-              <div class="demo-credentials-box">
-                <div style="font-weight: 800; color: var(--text-secondary);">Need test credentials? Click to fill:</div>
-                <div class="demo-cred-buttons">
-                  <button type="button" class="demo-cred-btn" data-role="associate" data-email="amina.kwame@ashesi.edu.gh">Associate</button>
-                  <button type="button" class="demo-cred-btn" data-role="mentor" data-email="samuel.osei@mcf-mentors.org">Mentor</button>
-                  <button type="button" class="demo-cred-btn" data-role="admin" data-email="admin@mcf-portal.org">Admin</button>
-                </div>
-              </div>
             `}
 
           </div>
@@ -1227,7 +1217,7 @@ function renderMenteeProfile(associate) {
       <form id="formEditMenteeProfile" class="mentor-card" style="padding: 2rem;">
         <!-- PROFILE PHOTO EDIT SECTION -->
         <div style="display: flex; align-items: center; gap: 1.5rem; padding-bottom: 1.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color);">
-          <img src="${associate.avatar || '/assets/assoc_amina.jpg'}" id="profileAvatarPreview" style="width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 3px solid var(--brand-primary); box-shadow: var(--shadow-sm);" />
+          <img src="${associate.avatar && associate.avatar.startsWith('data:') ? associate.avatar : (associate.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80')}" id="profileAvatarPreview" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(associate.name)}&background=2e1065&color=ffffff';" style="width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 3px solid var(--brand-primary); box-shadow: var(--shadow-sm);" />
           <div>
             <h4 style="font-weight: 800; font-size: 1.05rem; margin-bottom: 0.25rem;">Profile Headshot Photo</h4>
             <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.75rem;">JPG or PNG format. Compressed automatically.</p>
@@ -1256,21 +1246,10 @@ function renderMenteeProfile(associate) {
           <input type="text" class="form-input" id="editProfileOrg" value="${associate.institution || associate.organization || 'Jobberman'}" required style="border-radius: 10px; padding: 0.7rem 1rem;" />
         </div>
 
-        <!-- SCHOLAR TITLE -->
+        <!-- JOB TITLE -->
         <div class="form-group">
-          <label class="form-label">Scholar Title</label>
-          <input type="text" class="form-input" id="editProfileTitle" value="${associate.title}" required style="border-radius: 10px; padding: 0.7rem 1rem;" />
-        </div>
-
-        <!-- PROGRAM TRACK -->
-        <div class="form-group">
-          <label class="form-label">Program Track</label>
-          <select class="form-select" id="editProfileTrack" style="border-radius: 10px; padding: 0.7rem 1rem;">
-            <option value="Software Engineering & AI" ${associate.track === 'Software Engineering & AI' ? 'selected' : ''}>Software Engineering & AI</option>
-            <option value="Fintech & Product" ${associate.track === 'Fintech & Product' ? 'selected' : ''}>Fintech & Product</option>
-            <option value="Public Health & Social Impact" ${associate.track === 'Public Health & Social Impact' ? 'selected' : ''}>Public Health & Social Impact</option>
-            <option value="Software Engineering & Data" ${associate.track === 'Software Engineering & Data' ? 'selected' : ''}>Software Engineering & Data</option>
-          </select>
+          <label class="form-label">Job Title</label>
+          <input type="text" class="form-input" id="editProfileTitle" placeholder="e.g. Software Engineer / Data Analyst / Product Lead" value="${associate.title || ''}" required style="border-radius: 10px; padding: 0.7rem 1rem;" />
         </div>
 
         <!-- BIO -->
