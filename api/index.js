@@ -1,5 +1,32 @@
 // Native Vercel Serverless Function (ES Module compatible - Zero Dependencies)
 
+const associates = [
+  {
+    id: "MCF-2026-089",
+    name: "Amina Kwame",
+    email: "amina.kwame@ashesi.edu.gh",
+    institution: "Ashesi University / Carnegie Mellon Africa",
+    title: "Mastercard Foundation Scholar & Tech Fellow",
+    track: "Software Engineering & Data Science",
+    bio: "Passionate about building AI tools for healthcare in Africa.",
+    avatar: "/assets/assoc_amina.jpg",
+    skills: ["Python", "Machine Learning", "Data Analysis"],
+    careerGoal: "Lead healthcare AI research in Africa."
+  },
+  {
+    id: "MCF-2026-104",
+    name: "Kofi Mensah",
+    email: "kofi.mensah@cmu.edu",
+    institution: "Carnegie Mellon University Africa",
+    title: "MSc Information Technology Scholar",
+    track: "Fintech & Product",
+    bio: "Focused on scaling financial access across West Africa.",
+    avatar: "/assets/assoc_kofi.jpg",
+    skills: ["Product Management", "Financial Modeling"],
+    careerGoal: "Build fintech platforms for underserved markets."
+  }
+];
+
 const mentors = [
   {
     id: "MEN-101",
@@ -51,6 +78,44 @@ const sessions = [
     consentToRecord: true,
     status: "Accepted",
     meetingLink: "https://meet.zoho.com/mcf-mentorship-ses-8801"
+  }
+];
+
+const groupSessions = [
+  {
+    id: "GSES-301",
+    mentorId: "MEN-101",
+    mentorName: "Dr. Samuel Osei",
+    title: "AI Research Masterclass: Publishing in Top Conferences",
+    description: "Learn how to structure your research, choose target venues, and write compelling conference papers.",
+    domain: "Software Engineering & AI",
+    date: "2026-08-25",
+    time: "04:00 PM - 05:00 PM",
+    duration: "60 mins",
+    maxCapacity: 20,
+    enrolledCount: 14,
+    meetingLink: "https://meet.zoho.com/mcf-gses-301"
+  }
+];
+
+const tasks = [
+  {
+    id: "TASK-501",
+    title: "Submit Statement of Purpose Draft",
+    description: "Share the updated SOP draft focusing on healthcare AI applications.",
+    deadline: "2026-08-20",
+    status: "In Progress",
+    assignedTo: "Amina Kwame"
+  }
+];
+
+const notifications = [
+  {
+    id: "NOTIF-1",
+    title: "Session Confirmed",
+    message: "Your mentorship session with Dr. Samuel Osei has been confirmed for Aug 18.",
+    timestamp: "10 mins ago",
+    read: false
   }
 ];
 
@@ -120,12 +185,18 @@ export default function handler(req, res) {
           { id: Date.now(), date: '2026-08-22', time: '10:00 AM', isBooked: false, bookedBy: null }
         ]
       });
+    } else {
+      associates.unshift(userObj);
     }
 
     return res.status(201).json({
       token: `mcf_live_token_${Date.now()}`,
       user: userObj
     });
+  }
+
+  if (url.includes('/associates')) {
+    return res.status(200).json(associates);
   }
 
   if (url.includes('/mentors')) {
@@ -136,13 +207,29 @@ export default function handler(req, res) {
     return res.status(200).json(sessions);
   }
 
+  if (url.includes('/group-sessions') || url.includes('/group_sessions')) {
+    return res.status(200).json(groupSessions);
+  }
+
+  if (url.includes('/tasks')) {
+    return res.status(200).json(tasks);
+  }
+
+  if (url.includes('/notifications')) {
+    return res.status(200).json(notifications);
+  }
+
   return res.status(200).json({
     service: 'Jobberman x Mastercard Foundation Mentorship Live REST API',
     status: 'online',
     endpoints: [
       { name: 'Health Check', path: '/v1/health', method: 'GET' },
+      { name: 'Associates Catalog', path: '/v1/associates', method: 'GET' },
       { name: 'Mentors Catalog', path: '/v1/mentors', method: 'GET' },
       { name: 'Sessions History', path: '/v1/sessions', method: 'GET' },
+      { name: 'Group Sessions', path: '/v1/group-sessions', method: 'GET' },
+      { name: 'Tasks List', path: '/v1/tasks', method: 'GET' },
+      { name: 'Notifications', path: '/v1/notifications', method: 'GET' },
       { name: 'User Login', path: '/v1/auth/login', method: 'POST' },
       { name: 'User Register', path: '/v1/auth/register', method: 'POST' }
     ]

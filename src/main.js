@@ -206,7 +206,7 @@ async function initAppData() {
   try {
     state.isLoadingData = true;
     render();
-    const [associates, mentors, sessions, groupSessions, tasks, notifications] = await Promise.all([
+    const [assocRes, mentRes, sessRes, groupRes, taskRes, notifRes] = await Promise.allSettled([
       apiService.getAssociates(),
       apiService.getMentors(),
       apiService.getSessions(),
@@ -215,14 +215,14 @@ async function initAppData() {
       apiService.getNotifications()
     ]);
 
-    state.associates = associates || [];
-    state.mentors = mentors || [];
-    state.sessions = sessions || [];
-    state.groupSessions = groupSessions || [];
-    state.tasks = tasks || [];
-    state.notifications = notifications || [];
+    state.associates = assocRes.status === 'fulfilled' && assocRes.value ? assocRes.value : [];
+    state.mentors = mentRes.status === 'fulfilled' && mentRes.value ? mentRes.value : [];
+    state.sessions = sessRes.status === 'fulfilled' && sessRes.value ? sessRes.value : [];
+    state.groupSessions = groupRes.status === 'fulfilled' && groupRes.value ? groupRes.value : [];
+    state.tasks = taskRes.status === 'fulfilled' && taskRes.value ? taskRes.value : [];
+    state.notifications = notifRes.status === 'fulfilled' && notifRes.value ? notifRes.value : [];
   } catch (err) {
-    console.error('Data load failure:', err);
+    console.warn('Data load warning:', err);
   } finally {
     state.isLoadingData = false;
     enforceRouteGuards();
