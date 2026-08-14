@@ -9,7 +9,7 @@ import {
 } from '../data/mockData.js';
 
 const env = (typeof import.meta !== 'undefined' && import.meta && import.meta.env) ? import.meta.env : {};
-const API_BASE_URL = env.VITE_API_BASE_URL || 'https://api-mentorship.jobberman.com/v1';
+const API_BASE_URL = env.VITE_API_BASE_URL || '/v1';
 const USE_MOCK = env.VITE_ENABLE_MOCK_DATA === 'false' || env.VITE_ENABLE_MOCK_DATA === false ? false : true;
 
 console.log(`[Mently API Service] Configured Base URL: ${API_BASE_URL} (Mock Mode: ${USE_MOCK})`);
@@ -23,17 +23,27 @@ async function request(endpoint, options = {}) {
     ...options.headers
   };
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 3000);
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`API Error [${response.status}]: ${errorText || response.statusText}`);
+  try {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...options,
+      headers,
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`API Error [${response.status}]: ${errorText || response.statusText}`);
+    }
+
+    return response.json();
+  } catch (err) {
+    clearTimeout(timeoutId);
+    throw err;
   }
-
-  return response.json();
 }
 
 export const apiService = {
