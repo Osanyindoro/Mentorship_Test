@@ -205,10 +205,36 @@ export const apiService = {
     if (supabase) {
       try {
         const { data, error } = await supabase.from('users').select('*').eq('role', 'associate');
-        if (data && data.length > 0 && !error) return data;
+        if (data && data.length > 0 && !error) {
+          return data.map(u => ({
+            ...u,
+            careerGoal: u.career_goal || u.careerGoal || '',
+            skills: u.skills || [],
+            socialLinks: u.social_links || u.socialLinks || {}
+          }));
+        }
 
         // Auto-seed default associates into Supabase if empty
-        const defaultAssocs = getStoredAssociates();
+        const defaultAssocs = getStoredAssociates().map(u => ({
+          id: u.id,
+          role: 'associate',
+          name: u.name,
+          email: u.email,
+          password: u.password || 'password123',
+          phone: u.phone || '+233 24 555 0192',
+          institution: u.institution || 'Ashesi University / Carnegie Mellon Africa',
+          organization: u.institution || 'Jobberman Partner Network',
+          cohort: u.cohort || '2024-2026 Cohort',
+          title: u.title || 'Scholar',
+          track: u.track || 'Software Engineering & Data Science',
+          domain: u.track || 'Software Engineering & Data Science',
+          bio: u.bio || '',
+          avatar: u.avatar,
+          skills: u.skills || ["Python", "Machine Learning", "System Design"],
+          career_goal: u.careerGoal || "Lead AI Research & Development in Africa.",
+          schedule: u.schedule || []
+        }));
+
         try {
           await supabase.from('users').insert(defaultAssocs);
         } catch (e) {
@@ -227,10 +253,36 @@ export const apiService = {
     if (supabase) {
       try {
         const { data, error } = await supabase.from('users').select('*').eq('role', 'mentor');
-        if (data && data.length > 0 && !error) return data;
+        if (data && data.length > 0 && !error) {
+          return data.map(u => ({
+            ...u,
+            rating: u.rating || 5.0,
+            totalSessions: u.totalSessions || 42,
+            expertise: u.expertise || ["AI / Machine Learning", "Career Guidance"],
+            socialLinks: u.social_links || u.socialLinks || { linkedin: "https://linkedin.com" }
+          }));
+        }
 
         // Auto-seed default mentors into Supabase if empty
-        const defaultMentors = getStoredMentors();
+        const defaultMentors = getStoredMentors().map(u => ({
+          id: u.id,
+          role: 'mentor',
+          name: u.name,
+          email: u.email,
+          password: u.password || 'password123',
+          phone: u.phone || '+234 80 918 2736',
+          institution: u.organization || 'DeepMind / CMU Africa Faculty',
+          organization: u.organization || 'DeepMind / CMU Africa Faculty',
+          title: u.title || 'Executive Mentor',
+          track: u.domain || 'Software Engineering & AI',
+          domain: u.domain || 'Software Engineering & AI',
+          bio: u.bio || '',
+          avatar: u.avatar,
+          expertise: u.expertise || ["AI / Machine Learning", "PhD Advice"],
+          social_links: u.socialLinks || { linkedin: "https://linkedin.com/in/samuelosei" },
+          schedule: u.schedule || []
+        }));
+
         try {
           await supabase.from('users').insert(defaultMentors);
         } catch (e) {
