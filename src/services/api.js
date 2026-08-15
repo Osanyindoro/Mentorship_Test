@@ -16,6 +16,22 @@ const USE_MOCK = false; // Primary Supabase DB mode enabled
 console.log(`[Mently API Service] Supabase Connected: https://wbzkaealhtsawfqvzccq.supabase.co`);
 
 export const apiService = {
+  getCurrentUser() {
+    const userStr = localStorage.getItem('mently_user');
+    if (!userStr) return null;
+    try {
+      return JSON.parse(userStr);
+    } catch (e) {
+      return null;
+    }
+  },
+
+  logout() {
+    localStorage.removeItem('mently_auth_token');
+    localStorage.removeItem('mently_user');
+    window.location.href = '/login';
+  },
+
   // Authentication API Layer
   async login({ selectedRole, email, password }) {
     if (!selectedRole) {
