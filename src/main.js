@@ -1670,14 +1670,22 @@ function renderModals() {
             <button class="close-modal-btn btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
           </div>
 
-          <div class="form-group">
-            <label class="form-label">Full Name</label>
-            <input type="text" class="form-input" id="editMentorName" value="${m.name}" />
+          <!-- MENTOR PHOTO UPLOAD SECTION -->
+          <div style="display: flex; align-items: center; gap: 1.25rem; padding-bottom: 1.25rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color);">
+            <img src="${m.avatar && m.avatar.startsWith('data:') ? m.avatar : (m.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80')}" id="editMentorAvatarPreview" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(m.name)}&background=2e1065&color=ffffff';" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid var(--brand-primary);" />
+            <div>
+              <h4 style="font-weight: 800; font-size: 1rem; margin-bottom: 0.2rem;">Executive Headshot Photo</h4>
+              <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.5rem;">JPG or PNG photo (Max 5MB)</p>
+              <label for="editMentorAvatarInput" class="btn-brand-primary" style="padding: 0.4rem 0.9rem; font-size: 0.8rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem;">
+                <i class="fa-solid fa-upload"></i> Upload New Picture
+              </label>
+              <input type="file" id="editMentorAvatarInput" accept="image/jpeg,image/png,image/webp" style="display: none;" />
+            </div>
           </div>
 
           <div class="form-group">
-            <label class="form-label"><i class="fa-solid fa-image"></i> Profile Picture URL</label>
-            <input type="url" class="form-input" id="editMentorAvatar" value="${m.avatar}" placeholder="/assets/mentor_samuel.jpg or https://..." />
+            <label class="form-label">Full Name</label>
+            <input type="text" class="form-input" id="editMentorName" value="${m.name}" />
           </div>
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
@@ -2116,6 +2124,9 @@ function bindEvents() {
         e.preventDefault();
         const role = document.getElementById('regRole')?.value || 'associate';
         const name = document.getElementById('regName')?.value;
+        const email = document.getElementById('regEmail')?.value;
+        const password = document.getElementById('regPassword')?.value;
+        const institutionOrOrg = state.registerForm.institutionOrOrg || document.getElementById('regHostOrgCustom')?.value || document.getElementById('regHostOrgSelect')?.value || 'Jobberman';
         const title = document.getElementById('regJobTitle')?.value || (role === 'associate' ? 'Mastercard Foundation Scholar' : 'Executive Mentor');
         const bio = document.getElementById('regBio')?.value;
 
@@ -2396,46 +2407,95 @@ function bindEvents() {
 
     // Mentor Add Availability Slot
     document.getElementById('btnAddSlotSubmit')?.addEventListener('click', async () => {
-      const activeMentor = state.mentors[state.currentMentorIndex];
+      const activeMentor = (state.currentUser && state.currentUser.role === 'mentor') 
+        ? state.currentUser 
+        : (state.mentors[state.currentMentorIndex] || state.mentors[0]);
+
       const dateInput = document.getElementById('inputSlotDate');
       const timeInput = document.getElementById('inputSlotTime');
 
       if (dateInput && timeInput && dateInput.value && timeInput.value) {
-        await apiService.addMentorSlot(activeMentor.id, {
-          date: dateInput.value,
-          time: timeInput.value
-        });
-        showToast('Availability slot added!');
-        await initAppData();
+        const newSlot = { date: dateInput.value, time: timeInput.value, isBooked: false, bookedBy: null };
+
+        if (!activeMentor.schedule) activeMentor.schedule = [];
+        activeMentor.schedule.push(newSlot);
+
+        const matchInState = state.mentors.find(m => m.id === activeMentor.id || m.email === activeMentor.email);
+        if (matchInState) {
+          if (!matchInState.schedule) matchInState.schedule = [];
+          matchInState.schedule.push(newSlot);
+        }
+
+        if (state.currentUser && state.currentUser.role === 'mentor') {
+          localStorage.setItem('mently_user', JSON.stringify(state.currentUser));
+        }
+
+        await apiService.addMentorSlot(activeMentor.id, { date: dateInput.value, time: timeInput.value });
+        showToast('Open time slot added to your schedule!', 'fa-circle-check');
+        render();
       }
     });
 
     // Mentor Remove Slot
     document.querySelectorAll('.btn-remove-slot').forEach(btn => {
       btn.addEventListener('click', async () => {
-        const activeMentor = state.mentors[state.currentMentorIndex];
-        await apiService.removeMentorSlot(activeMentor.id, parseInt(btn.dataset.idx, 10));
-        showToast('Slot removed!');
-        await initAppData();
+        const activeMentor = (state.currentUser && state.currentUser.role === 'mentor') 
+          ? state.currentUser 
+          : (state.mentors[state.currentMentorIndex] || state.mentors[0]);
+        const idx = parseInt(btn.dataset.idx, 10);
+
+        if (activeMentor.schedule && activeMentor.schedule[idx]) {
+          activeMentor.schedule.splice(idx, 1);
+          const matchInState = state.mentors.find(m => m.id === activeMentor.id || m.email === activeMentor.email);
+          if (matchInState && matchInState.schedule) {
+            matchInState.schedule.splice(idx, 1);
+          }
+          if (state.currentUser && state.currentUser.role === 'mentor') {
+            localStorage.setItem('mently_user', JSON.stringify(state.currentUser));
+          }
+          await apiService.removeMentorSlot(activeMentor.id, idx);
+          showToast('Slot removed!', 'fa-trash');
+          render();
+        }
       });
     });
 
-    // Mentor Accept Session
+    // Mentor Accept Session (Triggers Email & iCal Calendar Invites)
     document.querySelectorAll('.btn-accept-session').forEach(btn => {
       btn.addEventListener('click', async () => {
+        const session = state.sessions.find(s => s.id === btn.dataset.id);
         await apiService.acceptBookingSession(btn.dataset.id);
-        showToast('Session accepted & Zoho meeting link created!');
+
+        const assocEmail = session ? session.associateName : 'Associate';
+        showToast(`📧 Session Accepted! Confirmation email & calendar invite sent to ${assocEmail}!`, 'fa-envelope-circle-check');
         await initAppData();
       });
     });
 
     // Mentor Edit Profile
     document.getElementById('btnEditMyProfile')?.addEventListener('click', () => {
-      const activeMentor = state.mentors[state.currentMentorIndex];
+      const activeMentor = (state.currentUser && state.currentUser.role === 'mentor') ? state.currentUser : state.mentors[state.currentMentorIndex];
       state.editingMentorProfile = activeMentor;
       state.activeModal = 'edit_mentor_profile';
       render();
     });
+
+    // Mentor Avatar Photo Upload Handler
+    const editMentorAvatarInput = document.getElementById('editMentorAvatarInput');
+    if (editMentorAvatarInput) {
+      editMentorAvatarInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          compressImageFile(file, (compressedDataUrl) => {
+            if (state.editingMentorProfile) state.editingMentorProfile.avatar = compressedDataUrl;
+            if (state.currentUser) state.currentUser.avatar = compressedDataUrl;
+            const preview = document.getElementById('editMentorAvatarPreview');
+            if (preview) preview.src = compressedDataUrl;
+            showToast('New executive headshot photo selected!', 'fa-image');
+          });
+        }
+      });
+    }
 
     document.getElementById('btnSaveMentorProfileSubmit')?.addEventListener('click', async () => {
       const activeMentor = state.mentors[state.currentMentorIndex];
