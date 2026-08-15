@@ -1105,7 +1105,7 @@ function renderGroupSessionsList() {
           return `
             <div class="mentor-card">
               <div class="card-header-flex">
-                <img src="${g.mentorAvatar}" class="mentor-avatar-lg" />
+                <img src="${g.mentorAvatar && g.mentorAvatar.startsWith('data:') ? g.mentorAvatar : (g.mentorAvatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80')}" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(g.mentorName)}&background=2e1065&color=ffffff';" class="mentor-avatar-lg" />
                 <div>
                   <div class="mentor-name">${g.title}</div>
                   <div class="mentor-title">Led by ${g.mentorName} (${g.mentorTitle})</div>
@@ -1513,7 +1513,10 @@ function renderAdminMentorManagement() {
           <tbody>
             ${state.mentors.map(m => `
               <tr style="border-bottom: 1px solid var(--border-color);">
-                <td style="padding: 0.85rem; font-weight: 800;">${m.name}</td>
+                <td style="padding: 0.85rem; font-weight: 800; display: flex; align-items: center; gap: 0.75rem;">
+                  <img src="${m.avatar && m.avatar.startsWith('data:') ? m.avatar : (m.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80')}" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(m.name)}&background=2e1065&color=ffffff';" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;" />
+                  <span>${m.name}</span>
+                </td>
                 <td style="padding: 0.85rem;">${m.domain}</td>
                 <td style="padding: 0.85rem; font-weight: 800; color: var(--brand-primary);">${m.monthlyCap} sessions</td>
                 <td style="padding: 0.85rem;">${m.sessionsUsedThisMonth} sessions</td>
