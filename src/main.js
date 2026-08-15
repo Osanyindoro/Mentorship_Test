@@ -609,7 +609,7 @@ function renderLoginPage() {
                 <div class="form-group" style="text-align: center; margin-bottom: 1.25rem;">
                   <label class="form-label">Profile Photo</label>
                   <div class="avatar-upload-container">
-                    <img src="${state.registerForm.avatar || '/assets/assoc_amina.jpg'}" id="regAvatarPreview" class="avatar-upload-preview" />
+                    <img src="${state.registerForm.avatar && state.registerForm.avatar.startsWith('data:') ? state.registerForm.avatar : (state.registerForm.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80')}" id="regAvatarPreview" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80';" class="avatar-upload-preview" />
                     <div style="text-align: left;">
                       <label for="regAvatarInput" class="btn-brand-primary" style="padding: 0.4rem 0.85rem; font-size: 0.8rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem;">
                         <i class="fa-solid fa-upload"></i> Upload Headshot
