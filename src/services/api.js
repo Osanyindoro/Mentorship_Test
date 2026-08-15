@@ -200,12 +200,21 @@ export const apiService = {
     return { token, user: userObj };
   },
 
-  async fetchAssociates() {
+  async getAssociates() {
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
         const { data, error } = await supabase.from('users').select('*').eq('role', 'associate');
         if (data && data.length > 0 && !error) return data;
+
+        // Auto-seed default associates into Supabase if empty
+        const defaultAssocs = getStoredAssociates();
+        try {
+          await supabase.from('users').insert(defaultAssocs);
+        } catch (e) {
+          console.warn('[Supabase Seed Associates]', e.message);
+        }
+        return defaultAssocs;
       } catch (err) {
         console.warn('[Supabase Associates Fetch]', err.message);
       }
@@ -213,17 +222,50 @@ export const apiService = {
     return getStoredAssociates();
   },
 
-  async fetchMentors() {
+  async getMentors() {
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
         const { data, error } = await supabase.from('users').select('*').eq('role', 'mentor');
         if (data && data.length > 0 && !error) return data;
+
+        // Auto-seed default mentors into Supabase if empty
+        const defaultMentors = getStoredMentors();
+        try {
+          await supabase.from('users').insert(defaultMentors);
+        } catch (e) {
+          console.warn('[Supabase Seed Mentors]', e.message);
+        }
+        return defaultMentors;
       } catch (err) {
         console.warn('[Supabase Mentors Fetch]', err.message);
       }
     }
     return getStoredMentors();
+  },
+
+  async getSessions() {
+    return this.fetchSessions();
+  },
+
+  async getGroupSessions() {
+    return getStoredGroupSessions();
+  },
+
+  async getTasks() {
+    return getStoredTasks();
+  },
+
+  async getNotifications() {
+    return getStoredNotifications();
+  },
+
+  async fetchAssociates() {
+    return this.getAssociates();
+  },
+
+  async fetchMentors() {
+    return this.getMentors();
   },
 
   async fetchSessions() {
@@ -237,18 +279,6 @@ export const apiService = {
       }
     }
     return getStoredSessions();
-  },
-
-  async fetchGroupSessions() {
-    return getStoredGroupSessions();
-  },
-
-  async fetchTasks() {
-    return getStoredTasks();
-  },
-
-  async fetchNotifications() {
-    return getStoredNotifications();
   },
 
   async updateMentorMonthlyCap(mentorId, newCap) {
