@@ -275,11 +275,18 @@ function renderPublicLandingPage() {
     <div style="min-height: 100vh; display: flex; flex-direction: column;">
       <!-- Public Header -->
       <header class="mently-header" style="justify-content: space-between;">
-        <div class="brand-wrapper" style="cursor: pointer;" id="btnNavBrandHome">
-          <div class="brand-logo-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+        <div class="brand-wrapper" style="cursor: pointer; display: flex; align-items: center; gap: 0.85rem;" id="btnNavBrandHome">
+          <div class="brand-logo-icon" style="background: linear-gradient(135deg, #2e1065 0%, #6b21a8 100%); width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #ffd700; box-shadow: 0 4px 12px rgba(46,16,101,0.2);">
+            <i class="fa-solid fa-graduation-cap" style="font-size: 1.25rem;"></i>
+          </div>
           <div class="brand-text">
-            <span class="brand-name" style="font-size: 1.1rem; line-height: 1.2;">Mastercard Foundation Associate Program</span>
-            <span class="brand-tagline">ASSOCIATE MENTORSHIP PORTAL</span>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span class="brand-name" style="font-weight: 800; font-size: 1.05rem; color: var(--text-primary); font-family: var(--font-display);">Mastercard Foundation Associate Program</span>
+              <span style="background: rgba(255, 153, 0, 0.15); color: #d97706; border: 1px solid rgba(217, 119, 6, 0.3); font-weight: 800; font-size: 0.72rem; padding: 0.15rem 0.55rem; border-radius: 20px; font-family: var(--font-sans); display: inline-flex; align-items: center; gap: 0.3rem;">
+                <i class="fa-solid fa-briefcase"></i> Jobberman
+              </span>
+            </div>
+            <span class="brand-tagline" style="font-size: 0.72rem; font-weight: 800; color: var(--brand-violet); letter-spacing: 0.05em; text-transform: uppercase;">ASSOCIATE MENTORSHIP PORTAL</span>
           </div>
         </div>
 
@@ -755,11 +762,18 @@ function renderAuthenticatedDashboard() {
   return `
     <!-- Top Header -->
     <header class="mently-header">
-      <div class="brand-wrapper">
-        <div class="brand-logo-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+      <div class="brand-wrapper" style="display: flex; align-items: center; gap: 0.85rem;">
+        <div class="brand-logo-icon" style="background: linear-gradient(135deg, #2e1065 0%, #6b21a8 100%); width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #ffd700; box-shadow: 0 4px 12px rgba(46,16,101,0.2);">
+          <i class="fa-solid fa-graduation-cap" style="font-size: 1.25rem;"></i>
+        </div>
         <div class="brand-text">
-          <span class="brand-name" style="font-size: 1.1rem; line-height: 1.2;">Mastercard Foundation Associate Program</span>
-          <span class="brand-tagline">ASSOCIATE MENTORSHIP PORTAL</span>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span class="brand-name" style="font-weight: 800; font-size: 1.05rem; color: var(--text-primary); font-family: var(--font-display);">Mastercard Foundation Associate Program</span>
+            <span style="background: rgba(255, 153, 0, 0.15); color: #d97706; border: 1px solid rgba(217, 119, 6, 0.3); font-weight: 800; font-size: 0.72rem; padding: 0.15rem 0.55rem; border-radius: 20px; font-family: var(--font-sans); display: inline-flex; align-items: center; gap: 0.3rem;">
+              <i class="fa-solid fa-briefcase"></i> Jobberman
+            </span>
+          </div>
+          <span class="brand-tagline" style="font-size: 0.72rem; font-weight: 800; color: var(--brand-violet); letter-spacing: 0.05em; text-transform: uppercase;">ASSOCIATE MENTORSHIP PORTAL</span>
         </div>
       </div>
 
@@ -2004,12 +2018,32 @@ function bindEvents() {
       });
     });
 
-    // Booking Button on Landing Page Card (Prompts Login if unauthenticated)
+    // Inspect Profile Button on Landing Page Card (Enforces Privacy for Unauthenticated Visitors)
+    document.querySelectorAll('.btn-inspect-profile').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (!state.currentUser) {
+          showToast('🔒 Mentor profiles are reserved for Scholars. Please sign in to view full bios!', 'fa-lock');
+          navigateTo('/login');
+        } else {
+          const m = state.mentors.find(x => x.id === btn.dataset.id);
+          state.inspectingMentor = m;
+          state.activeModal = 'mentor_profile';
+          render();
+        }
+      });
+    });
+
+    // Booking Button on Landing Page Card (Enforces Privacy for Unauthenticated Visitors)
     document.querySelectorAll('.btn-landing-book').forEach(btn => {
       btn.addEventListener('click', () => {
         if (!state.currentUser) {
-          showToast('Please sign in to book a mentorship session.', 'fa-circle-info');
+          showToast('🔒 1-on-1 Mentorship booking is reserved for Scholars. Please sign in with your account!', 'fa-lock');
           navigateTo('/login');
+        } else {
+          const m = state.mentors.find(x => x.id === btn.dataset.id);
+          state.bookingMentor = m;
+          state.activeModal = 'booking';
+          render();
         }
       });
     });
