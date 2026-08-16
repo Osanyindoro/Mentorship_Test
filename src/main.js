@@ -693,7 +693,19 @@ function renderLoginPage() {
                   <input type="text" class="form-input" id="regJobTitle" placeholder="e.g. Software Engineer / Data Analyst / Product Lead" value="${state.registerForm.title || ''}" required style="border-radius: 10px; padding: 0.7rem 1rem;" />
                 </div>
 
-                <!-- FIELD 7: BIO -->
+                <!-- FIELD 7: GENDER -->
+                <div class="form-group">
+                  <label class="form-label" for="regGender">Gender</label>
+                  <select class="form-select" id="regGender" style="border-radius: 10px; padding: 0.7rem 1rem;">
+                    <option value="" ${!state.registerForm.gender ? 'selected' : ''}>-- Select Gender --</option>
+                    <option value="Male" ${state.registerForm.gender === 'Male' ? 'selected' : ''}>Male</option>
+                    <option value="Female" ${state.registerForm.gender === 'Female' ? 'selected' : ''}>Female</option>
+                    <option value="Non-binary" ${state.registerForm.gender === 'Non-binary' ? 'selected' : ''}>Non-binary / Gender Diverse</option>
+                    <option value="Prefer not to say" ${state.registerForm.gender === 'Prefer not to say' ? 'selected' : ''}>Prefer not to say</option>
+                  </select>
+                </div>
+
+                <!-- FIELD 8: BIO -->
                 <div class="form-group">
                   <label class="form-label" for="regBio">Biography & Background Summary</label>
                   <textarea class="form-textarea" id="regBio" rows="2" placeholder="Briefly describe your career focus and goals..." style="border-radius: 10px; padding: 0.7rem 1rem;">${state.registerForm.bio}</textarea>
@@ -1272,6 +1284,18 @@ function renderMenteeProfile(associate) {
         <div class="form-group">
           <label class="form-label">Job Title</label>
           <input type="text" class="form-input" id="editProfileTitle" placeholder="e.g. Software Engineer / Data Analyst / Product Lead" value="${associate.title || ''}" required style="border-radius: 10px; padding: 0.7rem 1rem;" />
+        </div>
+
+        <!-- GENDER -->
+        <div class="form-group">
+          <label class="form-label">Gender</label>
+          <select class="form-input" id="editProfileGender" style="border-radius: 10px; padding: 0.7rem 1rem;">
+            <option value="" ${!associate.gender ? 'selected' : ''}>-- Select Gender --</option>
+            <option value="Male" ${associate.gender === 'Male' ? 'selected' : ''}>Male</option>
+            <option value="Female" ${associate.gender === 'Female' ? 'selected' : ''}>Female</option>
+            <option value="Non-binary" ${associate.gender === 'Non-binary' ? 'selected' : ''}>Non-binary / Gender Diverse</option>
+            <option value="Prefer not to say" ${associate.gender === 'Prefer not to say' ? 'selected' : ''}>Prefer not to say</option>
+          </select>
         </div>
 
         <!-- BIO -->
@@ -2085,6 +2109,17 @@ function renderModals() {
           </div>
 
           <div class="form-group">
+            <label class="form-label">Gender</label>
+            <select class="form-select" id="editMentorGender">
+              <option value="" ${!m.gender ? 'selected' : ''}>-- Select Gender --</option>
+              <option value="Male" ${m.gender === 'Male' ? 'selected' : ''}>Male</option>
+              <option value="Female" ${m.gender === 'Female' ? 'selected' : ''}>Female</option>
+              <option value="Non-binary" ${m.gender === 'Non-binary' ? 'selected' : ''}>Non-binary / Gender Diverse</option>
+              <option value="Prefer not to say" ${m.gender === 'Prefer not to say' ? 'selected' : ''}>Prefer not to say</option>
+            </select>
+          </div>
+
+          <div class="form-group">
             <label class="form-label">Bio / Background</label>
             <textarea class="form-textarea" rows="3" id="editMentorBio">${m.bio}</textarea>
           </div>
@@ -2521,6 +2556,7 @@ function bindEvents() {
         const name = document.getElementById('regName')?.value;
         const email = document.getElementById('regEmail')?.value;
         const password = document.getElementById('regPassword')?.value;
+        const gender = document.getElementById('regGender')?.value || '';
         const institutionOrOrg = state.registerForm.institutionOrOrg || document.getElementById('regHostOrgCustom')?.value || document.getElementById('regHostOrgSelect')?.value || 'Jobberman';
         const title = document.getElementById('regJobTitle')?.value || (role === 'associate' ? 'Mastercard Foundation Scholar' : 'Executive Mentor');
         const bio = document.getElementById('regBio')?.value;
@@ -2535,6 +2571,7 @@ function bindEvents() {
             name,
             email,
             password,
+            gender,
             institutionOrOrg,
             title,
             trackOrDomain: title,
@@ -2676,6 +2713,7 @@ function bindEvents() {
       const title = document.getElementById('editProfileTitle')?.value;
       const track = document.getElementById('editProfileTrack')?.value;
       const bio = document.getElementById('editProfileBio')?.value;
+      const gender = document.getElementById('editProfileGender')?.value;
 
       if (state.currentUser) {
         state.currentUser.name = name || state.currentUser.name;
@@ -2685,7 +2723,10 @@ function bindEvents() {
         state.currentUser.title = title || state.currentUser.title;
         state.currentUser.track = track || state.currentUser.track;
         state.currentUser.bio = bio || state.currentUser.bio;
+        if (gender) state.currentUser.gender = gender;
         localStorage.setItem('mently_user', JSON.stringify(state.currentUser));
+        // Also persist to Supabase if available
+        apiService.updateAssociateProfile && apiService.updateAssociateProfile(state.currentUser.id, { name, email, institution, title, track, bio, gender }).catch(() => {});
       }
 
       showToast('Profile updated successfully!', 'fa-circle-check');
@@ -2907,6 +2948,8 @@ function bindEvents() {
       const github = document.getElementById('editMentorGitHub')?.value || '';
       const twitter = document.getElementById('editMentorTwitter')?.value || '';
 
+      const gender = document.getElementById('editMentorGender')?.value || activeMentor.gender || '';
+
       await apiService.updateMentorProfile(activeMentor.id, {
         name,
         avatar,
@@ -2914,6 +2957,7 @@ function bindEvents() {
         organization,
         domain,
         bio,
+        gender,
         expertise,
         socialLinks: { linkedin, github, twitter }
       });

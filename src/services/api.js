@@ -154,7 +154,7 @@ export const apiService = {
     return responsePayload;
   },
 
-  async register({ selectedRole, name, email, password, institutionOrOrg, title, trackOrDomain, bio, avatar }) {
+  async register({ selectedRole, name, email, password, gender, institutionOrOrg, title, trackOrDomain, bio, avatar }) {
     if (!name || !name.trim()) throw new Error("Please provide your full name.");
     const cleanEmail = (email || '').trim().toLowerCase();
     if (!cleanEmail || !cleanEmail.includes('@')) throw new Error("Please enter a valid email address.");
@@ -168,6 +168,7 @@ export const apiService = {
       name: name.trim(),
       email: cleanEmail,
       password: password,
+      gender: gender || '',
       institution: institutionOrOrg || 'Jobberman Partner Network',
       organization: institutionOrOrg || 'Jobberman Partner Network',
       title: title || (selectedRole === 'associate' ? 'Mastercard Foundation Scholar' : 'Executive Mentor'),
