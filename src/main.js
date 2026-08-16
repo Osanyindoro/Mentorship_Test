@@ -27,7 +27,10 @@ const state = {
   adminTab: 'analytics',              // 'analytics' | 'mentors' | 'sessions'
   adminActiveTable: 'mentees',         // 'mentees' | 'mentors' | 'sessions' | 'attendance'
   adminMenteeSearchQuery: '',
-  adminMonthFilter: 'august_2026',    // 'all_time' | 'august_2026' | 'july_2026' | 'june_2026' | 'q2_2026'
+  adminMonthFilter: 'august_2026',    // legacy fallback
+  adminDateFrom: '2026-08-01',       // Dynamic Start Date (YYYY-MM-DD)
+  adminDateTo: '2026-08-31',         // Dynamic End Date (YYYY-MM-DD)
+  adminDatePreset: 'this_month',      // 'custom' | 'today' | 'this_week' | 'this_month' | 'last_30' | 'all_time'
   adminRowsPerPage: 25,               // 10 | 25 | 50 | 100 | 200 | 500
 
   currentAssociateIndex: 0,
@@ -1466,50 +1469,68 @@ function renderMentorTasks(mentor) {
 // --------------------------------------------------------------------------
 function renderAdminAnalytics() {
   const activeTable = state.adminActiveTable || 'mentees';
-  const monthLabel = state.adminMonthFilter === 'july_2026' ? 'July 2026' : state.adminMonthFilter === 'june_2026' ? 'June 2026' : state.adminMonthFilter === 'q2_2026' ? 'Q2 2026' : state.adminMonthFilter === 'all_time' ? 'All-Time' : 'August 2026';
-  const menteesCount = state.adminMonthFilter === 'july_2026' ? '3,890' : state.adminMonthFilter === 'june_2026' ? '3,450' : '4,120';
-  const sessionsCount = state.adminMonthFilter === 'july_2026' ? '156' : state.adminMonthFilter === 'june_2026' ? '142' : '184';
+  const fromDate = state.adminDateFrom || '2026-08-01';
+  const toDate = state.adminDateTo || '2026-08-31';
 
   return `
     <div class="content-area" style="width: 100%;">
-      <!-- TOP CONTROL BAR: MONTH FILTER, ROWS SELECTOR, CSV EXPORT -->
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; background: var(--bg-hover); padding: 1.25rem; border-radius: 14px; border: 1px solid var(--border-color);">
-        <div>
-          <h2 style="font-family: var(--font-display); font-size: 1.4rem; font-weight: 800; margin-bottom: 0.2rem;">Programme Overview Analytics</h2>
-          <p style="font-size: 0.85rem; color: var(--text-secondary);">Real-time monitoring, monthly time-series analytics & CSV export controls.</p>
+      <!-- DYNAMIC CALENDAR DATE RANGE CONTROL BAR -->
+      <div style="background: var(--bg-hover); padding: 1.25rem; border-radius: 16px; border: 1px solid var(--border-color); margin-bottom: 1.75rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
+          <div>
+            <h2 style="font-family: var(--font-display); font-size: 1.4rem; font-weight: 800; margin-bottom: 0.25rem;">Programme Overview Analytics</h2>
+            <p style="font-size: 0.85rem; color: var(--text-secondary);">Select custom <strong>From</strong> & <strong>To</strong> dates on the calendar to dynamically filter all metrics, session logs, and exports.</p>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+            <!-- SHOW ROWS SELECTOR -->
+            <div style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.84rem; font-weight: 700;">
+              <span>Show:</span>
+              <select id="selectAdminRowsPerPage" style="padding: 0.45rem 0.65rem; border-radius: 8px; border: 1px solid var(--border-color); font-size: 0.84rem; font-weight: 700; cursor: pointer; background: var(--bg-surface); color: var(--text-primary);">
+                <option value="10" ${state.adminRowsPerPage == 10 ? 'selected' : ''}>10 / page</option>
+                <option value="25" ${state.adminRowsPerPage == 25 ? 'selected' : ''}>25 / page</option>
+                <option value="50" ${state.adminRowsPerPage == 50 ? 'selected' : ''}>50 / page</option>
+                <option value="100" ${state.adminRowsPerPage == 100 ? 'selected' : ''}>100 / page</option>
+                <option value="200" ${state.adminRowsPerPage == 200 ? 'selected' : ''}>200 / page</option>
+                <option value="500" ${state.adminRowsPerPage == 500 ? 'selected' : ''}>500 / page</option>
+              </select>
+            </div>
+
+            <!-- EXPORT CSV BUTTON -->
+            <button id="btnExportAdminCSV" class="btn-brand-primary" style="padding: 0.5rem 1.15rem; font-size: 0.84rem; font-weight: 800; display: inline-flex; align-items: center; gap: 0.5rem; background: #059669; color: white;">
+              <i class="fa-solid fa-file-csv"></i> Export Table (CSV)
+            </button>
+          </div>
         </div>
 
-        <div style="display: flex; align-items: center; gap: 0.85rem; flex-wrap: wrap;">
-          <!-- MONTH / TIME RANGE SELECTOR -->
-          <div style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; font-weight: 700;">
-            <i class="fa-regular fa-calendar-days" style="color: var(--brand-primary);"></i>
-            <span>Period:</span>
-            <select id="selectAdminMonthFilter" style="padding: 0.45rem 0.85rem; border-radius: 8px; border: 1px solid var(--border-color); font-size: 0.85rem; font-weight: 700; cursor: pointer; background: var(--bg-surface); color: var(--text-primary);">
-              <option value="august_2026" ${state.adminMonthFilter === 'august_2026' ? 'selected' : ''}>August 2026 (Current Month)</option>
-              <option value="july_2026" ${state.adminMonthFilter === 'july_2026' ? 'selected' : ''}>July 2026</option>
-              <option value="june_2026" ${state.adminMonthFilter === 'june_2026' ? 'selected' : ''}>June 2026</option>
-              <option value="q2_2026" ${state.adminMonthFilter === 'q2_2026' ? 'selected' : ''}>Q2 2026 (Apr - Jun)</option>
-              <option value="all_time" ${state.adminMonthFilter === 'all_time' ? 'selected' : ''}>All-Time Overview</option>
-            </select>
+        <!-- DYNAMIC CALENDAR DATE RANGE PICKERS & PRESET PILLS -->
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; background: var(--bg-surface); padding: 0.85rem 1.1rem; border-radius: 12px; border: 1px solid var(--border-color);">
+          <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.86rem; font-weight: 800;">
+              <i class="fa-regular fa-calendar-days" style="color: var(--brand-primary); font-size: 1.1rem;"></i>
+              <span>Calendar Filter:</span>
+            </div>
+
+            <!-- FROM DATE PICKER -->
+            <div style="display: flex; align-items: center; gap: 0.4rem;">
+              <label for="inputAdminDateFrom" style="font-size: 0.82rem; font-weight: 700; color: var(--text-secondary);">From:</label>
+              <input type="date" id="inputAdminDateFrom" value="${fromDate}" style="padding: 0.4rem 0.75rem; border-radius: 8px; border: 1px solid var(--border-color); font-size: 0.85rem; font-weight: 700; font-family: var(--font-sans); background: var(--bg-hover); color: var(--text-primary); cursor: pointer;" />
+            </div>
+
+            <!-- TO DATE PICKER -->
+            <div style="display: flex; align-items: center; gap: 0.4rem;">
+              <label for="inputAdminDateTo" style="font-size: 0.82rem; font-weight: 700; color: var(--text-secondary);">To:</label>
+              <input type="date" id="inputAdminDateTo" value="${toDate}" style="padding: 0.4rem 0.75rem; border-radius: 8px; border: 1px solid var(--border-color); font-size: 0.85rem; font-weight: 700; font-family: var(--font-sans); background: var(--bg-hover); color: var(--text-primary); cursor: pointer;" />
+            </div>
           </div>
 
-          <!-- ROWS PER PAGE SELECTOR -->
-          <div style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; font-weight: 700;">
-            <span>Show:</span>
-            <select id="selectAdminRowsPerPage" style="padding: 0.45rem 0.65rem; border-radius: 8px; border: 1px solid var(--border-color); font-size: 0.85rem; font-weight: 700; cursor: pointer; background: var(--bg-surface); color: var(--text-primary);">
-              <option value="10" ${state.adminRowsPerPage == 10 ? 'selected' : ''}>10 / page</option>
-              <option value="25" ${state.adminRowsPerPage == 25 ? 'selected' : ''}>25 / page</option>
-              <option value="50" ${state.adminRowsPerPage == 50 ? 'selected' : ''}>50 / page</option>
-              <option value="100" ${state.adminRowsPerPage == 100 ? 'selected' : ''}>100 / page</option>
-              <option value="200" ${state.adminRowsPerPage == 200 ? 'selected' : ''}>200 / page</option>
-              <option value="500" ${state.adminRowsPerPage == 500 ? 'selected' : ''}>500 / page</option>
-            </select>
+          <!-- QUICK PRESET PILLS -->
+          <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
+            <button class="btn-admin-date-preset ${state.adminDatePreset === 'this_month' ? 'active-preset' : ''}" data-preset="this_month" style="padding: 0.35rem 0.75rem; font-size: 0.78rem; font-weight: 800; border-radius: 20px; border: 1px solid var(--border-color); cursor: pointer; ${state.adminDatePreset === 'this_month' ? 'background: var(--brand-primary); color: white;' : 'background: var(--bg-hover); color: var(--text-secondary);'}">This Month</button>
+            <button class="btn-admin-date-preset ${state.adminDatePreset === 'last_30' ? 'active-preset' : ''}" data-preset="last_30" style="padding: 0.35rem 0.75rem; font-size: 0.78rem; font-weight: 800; border-radius: 20px; border: 1px solid var(--border-color); cursor: pointer; ${state.adminDatePreset === 'last_30' ? 'background: var(--brand-primary); color: white;' : 'background: var(--bg-hover); color: var(--text-secondary);'}">Last 30 Days</button>
+            <button class="btn-admin-date-preset ${state.adminDatePreset === 'this_week' ? 'active-preset' : ''}" data-preset="this_week" style="padding: 0.35rem 0.75rem; font-size: 0.78rem; font-weight: 800; border-radius: 20px; border: 1px solid var(--border-color); cursor: pointer; ${state.adminDatePreset === 'this_week' ? 'background: var(--brand-primary); color: white;' : 'background: var(--bg-hover); color: var(--text-secondary);'}">This Week</button>
+            <button class="btn-admin-date-preset ${state.adminDatePreset === 'all_time' ? 'active-preset' : ''}" data-preset="all_time" style="padding: 0.35rem 0.75rem; font-size: 0.78rem; font-weight: 800; border-radius: 20px; border: 1px solid var(--border-color); cursor: pointer; ${state.adminDatePreset === 'all_time' ? 'background: var(--brand-primary); color: white;' : 'background: var(--bg-hover); color: var(--text-secondary);'}">All-Time</button>
           </div>
-
-          <!-- EXPORT TABLE BUTTON -->
-          <button id="btnExportAdminCSV" class="btn-brand-primary" style="padding: 0.5rem 1.1rem; font-size: 0.84rem; font-weight: 800; display: inline-flex; align-items: center; gap: 0.5rem; background: #059669; color: white;">
-            <i class="fa-solid fa-file-csv"></i> Export Table (CSV)
-          </button>
         </div>
       </div>
 
@@ -2943,10 +2964,42 @@ function bindEvents() {
       });
     });
 
-    // Admin Month Filter Change Handler
-    document.getElementById('selectAdminMonthFilter')?.addEventListener('change', (e) => {
-      state.adminMonthFilter = e.target.value;
+    // Dynamic Calendar From Date Listener
+    document.getElementById('inputAdminDateFrom')?.addEventListener('change', (e) => {
+      state.adminDateFrom = e.target.value;
+      state.adminDatePreset = 'custom';
       render();
+    });
+
+    // Dynamic Calendar To Date Listener
+    document.getElementById('inputAdminDateTo')?.addEventListener('change', (e) => {
+      state.adminDateTo = e.target.value;
+      state.adminDatePreset = 'custom';
+      render();
+    });
+
+    // Quick Date Preset Pills Handler
+    document.querySelectorAll('.btn-admin-date-preset').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const preset = btn.dataset.preset;
+        state.adminDatePreset = preset;
+        const todayStr = '2026-08-16';
+
+        if (preset === 'this_month') {
+          state.adminDateFrom = '2026-08-01';
+          state.adminDateTo = '2026-08-31';
+        } else if (preset === 'last_30') {
+          state.adminDateFrom = '2026-07-17';
+          state.adminDateTo = '2026-08-16';
+        } else if (preset === 'this_week') {
+          state.adminDateFrom = '2026-08-10';
+          state.adminDateTo = '2026-08-16';
+        } else if (preset === 'all_time') {
+          state.adminDateFrom = '2026-01-01';
+          state.adminDateTo = '2026-12-31';
+        }
+        render();
+      });
     });
 
     // Admin Rows Per Page Select Handler
