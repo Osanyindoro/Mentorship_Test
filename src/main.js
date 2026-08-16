@@ -436,7 +436,7 @@ function renderPublicLandingPage() {
               <div class="hero-stats-badge">
                 <i class="fa-solid fa-users-viewfinder" style="font-size: 1.4rem; color: var(--brand-primary);"></i>
                 <div>
-                  <div style="font-weight: 900; font-size: 1rem; color: var(--text-primary);">4,120+ Scholars</div>
+                  <div style="font-weight: 900; font-size: 1rem; color: var(--text-primary);">4,120+ Associates</div>
                   <div style="font-size: 0.75rem; color: var(--text-secondary);">Empowered Across Africa</div>
                 </div>
               </div>
@@ -448,7 +448,7 @@ function renderPublicLandingPage() {
         <section class="public-section" id="section-mentors">
           <div class="public-section-header">
             <h2 class="public-section-title">Find the right mentor for your journey</h2>
-            <p class="public-section-sub">Explore mentors across different specialist domains, professional backgrounds and areas of expertise.</p>
+            <p class="public-section-sub">Empowering associates with world-class mentorship, technical guidance, and leadership acceleration.</p>
           </div>
 
           <!-- Filter Pills -->
@@ -657,9 +657,9 @@ function renderLoginPage() {
             <div style="display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(255, 255, 255, 0.15); padding: 0.35rem 0.9rem; border-radius: 50px; font-size: 0.78rem; font-weight: 800; margin-bottom: 1.5rem;">
               <i class="fa-solid fa-shield-halved"></i> Secure Access Portal
             </div>
-            <h1 class="login-banner-title">Empowering Scholars<br/>Across Africa</h1>
+            <h1 class="login-banner-title">Empowering Associates<br/>Across Africa</h1>
             <p style="font-size: 1rem; opacity: 0.9; line-height: 1.6; max-width: 440px;">
-              Join thousands of scholars connecting with global leaders in AI, Fintech, Public Health, and Cloud Architecture.
+              Join thousands of associates connecting with global leaders in AI, Fintech, Public Health, and Cloud Architecture.
             </p>
 
             <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 2rem; font-size: 0.9rem; font-weight: 700;">
@@ -1741,13 +1741,13 @@ function renderAdminSelectedTable(activeTable) {
       <div class="mentor-card" style="padding: 1.5rem;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem;">
           <div>
-            <h3 style="font-weight: 800; font-size: 1.15rem;"><i class="fa-solid fa-user-graduate" style="color: var(--brand-primary);"></i> Active Mastercard Scholars & Mentees Roster</h3>
-            <p style="font-size: 0.84rem; color: var(--text-secondary);">Verified Associate scholars enrolled in the mentorship programme.</p>
+            <h3 style="font-weight: 800; font-size: 1.15rem;"><i class="fa-solid fa-user-graduate" style="color: var(--brand-primary);"></i> Active Mastercard Associates Roster</h3>
+            <p style="font-size: 0.84rem; color: var(--text-secondary);">Verified Associates enrolled in the mentorship programme.</p>
           </div>
           <div style="display: flex; align-items: center; gap: 0.75rem;">
             <div style="position: relative;">
               <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
-              <input type="text" id="inputAdminMenteeSearch" placeholder="Search mentees, org, email..." value="${state.adminMenteeSearchQuery}" style="padding: 0.5rem 1rem 0.5rem 2.2rem; border-radius: 8px; border: 1px solid var(--border-color); font-size: 0.85rem; width: 260px;" />
+              <input type="text" id="inputAdminMenteeSearch" placeholder="Search associates, org, email..." value="${state.adminMenteeSearchQuery}" style="padding: 0.5rem 1rem 0.5rem 2.2rem; border-radius: 8px; border: 1px solid var(--border-color); font-size: 0.85rem; width: 260px;" />
             </div>
           </div>
         </div>
@@ -1756,7 +1756,7 @@ function renderAdminSelectedTable(activeTable) {
           <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem;">
             <thead>
               <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-secondary);">
-                <th style="padding: 0.75rem;">Scholar Name</th>
+                <th style="padding: 0.75rem;">Associate Name</th>
                 <th style="padding: 0.75rem;">Email Address</th>
                 <th style="padding: 0.75rem;">Host Organization</th>
                 <th style="padding: 0.75rem;">Job Title / Specialization</th>
@@ -1806,13 +1806,13 @@ function renderAdminSelectedTable(activeTable) {
             <thead>
               <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-secondary);">
                 <th style="padding: 0.75rem;">Session ID</th>
-                <th style="padding: 0.75rem;">Scholar</th>
+                <th style="padding: 0.75rem;">Associate</th>
                 <th style="padding: 0.75rem;">Mentor</th>
                 <th style="padding: 0.75rem;">Scheduled Time</th>
                 <th style="padding: 0.75rem;">Zoho Join Log</th>
                 <th style="padding: 0.75rem;">Duration</th>
                 <th style="padding: 0.75rem;">Attendance Status</th>
-                <th style="padding: 0.75rem;">Scholar Score</th>
+                <th style="padding: 0.75rem;">Feedback Score</th>
               </tr>
             </thead>
             <tbody>
@@ -1843,13 +1843,11 @@ function exportAdminTableToCSV(activeTable) {
   let rows = [];
 
   if (activeTable === 'mentees') {
-    rows.push(['Scholar Name', 'Email Address', 'Host Organization', 'Job Title / Specialization', 'Cohort', 'Status']);
+    rows.push(['Associate Name', 'Email Address', 'Host Organization', 'Job Title / Specialization', 'Cohort', 'Status']);
     const mockList = [
-      ['Amina Kwame', 'amina.kwame@ashesi.edu.gh', 'Jobberman / Ashesi', 'Software Engineering & Data Science', '2024-2026', 'Verified Active'],
-      ['Kofi Mensah', 'kofi.mensah@ala.org', 'Jobberman / U-Toronto', 'Fintech & Financial Inclusion Analyst', '2025-2026', 'Verified Active'],
-      ['Zainab Hassan', 'zainab.hassan@uct.ac.za', 'African CDC / UCT', 'Public Health Research Associate', '2024-2026', 'Verified Active'],
-      ['Emmanuel Chukwu', 'emmanuel.chukwu@unilag.edu.ng', 'Paystack / UNILAG', 'Backend Systems Engineer', '2025-2026', 'Verified Active'],
-      ['Fatoumata Diallo', 'fatoumata.diallo@cmu.edu', 'CMU Africa / Google', 'AI & Natural Language Processing Fellow', '2024-2026', 'Verified Active']
+      ['Bolaji Akinjole', 'bakinjole@jobberman.com', 'Jobberman Nigeria', 'M&E Specialist', '2024-2026', 'Verified Active'],
+      ['Victor Osanyindoro', 'vosanyindoro@jobberman.com', 'Jobberman Nigeria', 'MERL Officer', '2024-2026', 'Verified Active'],
+      ['Oluwasegun Ogunnusi', 'oogunnusi@jobberman.com', 'Jobberman Nigeria', 'Data Analyst', '2024-2026', 'Verified Active']
     ];
     const source = (state.associates && state.associates.length > 0) 
       ? state.associates.map(a => [a.name, a.email, a.institution || a.org || 'Jobberman', a.title || a.track || 'Software Engineering', a.cohort || '2024-2026', 'Verified Active'])
@@ -1866,7 +1864,7 @@ function exportAdminTableToCSV(activeTable) {
       rows.push([s.id, s.mentorName, s.associateName, `${s.date} ${s.time}`, s.status]);
     });
   } else if (activeTable === 'attendance') {
-    rows.push(['Session ID', 'Associate Name', 'Mentor Name', 'Scheduled Time', 'Zoho Join Timestamp', 'Duration', 'Verification Status', 'Scholar Score']);
+    rows.push(['Session ID', 'Associate Name', 'Mentor Name', 'Scheduled Time', 'Zoho Join Timestamp', 'Duration', 'Verification Status', 'Feedback Score']);
     state.sessions.forEach(s => {
       rows.push([s.id, s.associateName, s.mentorName, `${s.date} ${s.time}`, `${s.time} (On Time)`, '60 Mins', 'Verified (Zoho)', '5.0 / 5.0']);
     });
@@ -1956,7 +1954,7 @@ function renderAdminSessionLogs() {
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem;">
         <div>
           <h3 style="font-weight: 800; font-size: 1.15rem; font-family: var(--font-display);"><i class="fa-solid fa-video" style="color: var(--brand-violet);"></i> Executive Session Audit Logs</h3>
-          <p style="font-size: 0.84rem; color: var(--text-secondary);">Filter and inspect 1-on-1 mentorship session logs by executive mentor, scholar, or keyword.</p>
+          <p style="font-size: 0.84rem; color: var(--text-secondary);">Filter and inspect 1-on-1 mentorship session logs by executive mentor, associate, or keyword.</p>
         </div>
 
         <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
@@ -1974,7 +1972,7 @@ function renderAdminSessionLogs() {
 
           <!-- SEARCH INPUT -->
           <div style="position: relative;">
-            <input type="text" id="inputAdminSessionSearch" value="${state.adminSessionSearchQuery || ''}" placeholder="Search mentor or scholar..." style="padding: 0.45rem 0.85rem 0.45rem 2rem; border-radius: 8px; border: 1px solid var(--border-color); font-size: 0.84rem; background: var(--bg-hover); color: var(--text-primary); width: 210px;" />
+            <input type="text" id="inputAdminSessionSearch" value="${state.adminSessionSearchQuery || ''}" placeholder="Search mentor or associate..." style="padding: 0.45rem 0.85rem 0.45rem 2rem; border-radius: 8px; border: 1px solid var(--border-color); font-size: 0.84rem; background: var(--bg-hover); color: var(--text-primary); width: 210px;" />
             <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 0.7rem; top: 50%; transform: translateY(-50%); font-size: 0.75rem; color: var(--text-muted);"></i>
           </div>
 
@@ -2009,7 +2007,7 @@ function renderAdminSessionLogs() {
             <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-secondary);">
               <th style="padding: 0.75rem;">Session ID</th>
               <th style="padding: 0.75rem;">Mentor Name</th>
-              <th style="padding: 0.75rem;">Scholar / Associate</th>
+              <th style="padding: 0.75rem;">Associate</th>
               <th style="padding: 0.75rem;">Date & Time</th>
               <th style="padding: 0.75rem;">Duration</th>
               <th style="padding: 0.75rem;">Status</th>
