@@ -31,6 +31,8 @@ const state = {
   adminDateFrom: '2026-08-01',       // Dynamic Start Date (YYYY-MM-DD)
   adminDateTo: '2026-08-31',         // Dynamic End Date (YYYY-MM-DD)
   adminDatePreset: 'this_month',      // 'custom' | 'today' | 'this_week' | 'this_month' | 'last_30' | 'all_time'
+  adminSessionMentorFilter: 'ALL',   // 'ALL' or mentor ID/name
+  adminSessionSearchQuery: '',
   adminRowsPerPage: 25,               // 10 | 25 | 50 | 100 | 200 | 500
 
   currentAssociateIndex: 0,
@@ -1816,29 +1818,117 @@ function renderAdminMentorManagement() {
 }
 
 function renderAdminSessionLogs() {
+  const selectedMentorIdOrName = state.adminSessionMentorFilter || 'ALL';
+  const searchQuery = (state.adminSessionSearchQuery || '').toLowerCase().trim();
+
+  // Filter sessions
+  let filteredSessions = state.sessions || [];
+
+  if (selectedMentorIdOrName !== 'ALL') {
+    filteredSessions = filteredSessions.filter(s => 
+      s.mentorId === selectedMentorIdOrName || 
+      (s.mentorName && s.mentorName.toLowerCase() === selectedMentorIdOrName.toLowerCase())
+    );
+  }
+
+  if (searchQuery) {
+    filteredSessions = filteredSessions.filter(s =>
+      (s.mentorName && s.mentorName.toLowerCase().includes(searchQuery)) ||
+      (s.associateName && s.associateName.toLowerCase().includes(searchQuery)) ||
+      (s.id && s.id.toLowerCase().includes(searchQuery)) ||
+      (s.notes && s.notes.toLowerCase().includes(searchQuery))
+    );
+  }
+
+  // Selected Mentor Info Object (if specific mentor selected)
+  const selectedMentor = selectedMentorIdOrName !== 'ALL'
+    ? state.mentors.find(m => m.id === selectedMentorIdOrName || m.name.toLowerCase() === selectedMentorIdOrName.toLowerCase())
+    : null;
+
   return `
-    <div class="content-area" style="width: 100%;">
-      <h2 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; margin-bottom: 1.5rem;">Session Audit & Duration Logs</h2>
-      
-      <div class="mentor-card">
-        <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
+    <div class="mentor-card" style="padding: 1.5rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <h3 style="font-weight: 800; font-size: 1.15rem; font-family: var(--font-display);"><i class="fa-solid fa-video" style="color: var(--brand-violet);"></i> Executive Session Audit Logs</h3>
+          <p style="font-size: 0.84rem; color: var(--text-secondary);">Filter and inspect 1-on-1 mentorship session logs by executive mentor, scholar, or keyword.</p>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+          <!-- FILTER BY MENTOR DROPDOWN -->
+          <div style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.84rem; font-weight: 700;">
+            <i class="fa-solid fa-filter" style="color: var(--brand-primary);"></i>
+            <span>Filter by Mentor:</span>
+            <select id="selectAdminSessionMentor" style="padding: 0.45rem 0.85rem; border-radius: 8px; border: 1px solid var(--border-color); font-size: 0.84rem; font-weight: 700; cursor: pointer; background: var(--bg-surface); color: var(--text-primary); max-width: 240px;">
+              <option value="ALL" ${selectedMentorIdOrName === 'ALL' ? 'selected' : ''}>-- All Executive Mentors (${state.mentors.length}) --</option>
+              ${state.mentors.map(m => `
+                <option value="${m.id}" ${selectedMentorIdOrName === m.id || selectedMentorIdOrName.toLowerCase() === m.name.toLowerCase() ? 'selected' : ''}>${m.name} (${m.domain || 'Executive'})</option>
+              `).join('')}
+            </select>
+          </div>
+
+          <!-- SEARCH INPUT -->
+          <div style="position: relative;">
+            <input type="text" id="inputAdminSessionSearch" value="${state.adminSessionSearchQuery || ''}" placeholder="Search mentor or scholar..." style="padding: 0.45rem 0.85rem 0.45rem 2rem; border-radius: 8px; border: 1px solid var(--border-color); font-size: 0.84rem; background: var(--bg-hover); color: var(--text-primary); width: 210px;" />
+            <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 0.7rem; top: 50%; transform: translateY(-50%); font-size: 0.75rem; color: var(--text-muted);"></i>
+          </div>
+
+          ${selectedMentorIdOrName !== 'ALL' || searchQuery ? `
+            <button id="btnResetAdminSessionFilter" style="padding: 0.45rem 0.75rem; font-size: 0.78rem; font-weight: 800; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-hover); color: var(--text-secondary); cursor: pointer;"><i class="fa-solid fa-xmark"></i> Clear Filter</button>
+          ` : ''}
+        </div>
+      </div>
+
+      <!-- SELECTED MENTOR SPECIFIC SUMMARY BANNER -->
+      ${selectedMentor ? `
+        <div style="background: linear-gradient(135deg, rgba(46,16,101,0.06) 0%, rgba(107,33,168,0.12) 100%); border: 1px solid rgba(107,33,168,0.25); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+          <div style="display: flex; align-items: center; gap: 1rem;">
+            <img src="${selectedMentor.avatar && selectedMentor.avatar.startsWith('data:') ? selectedMentor.avatar : (selectedMentor.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80')}" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(selectedMentor.name)}&background=2e1065&color=ffffff';" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid var(--brand-primary);" />
+            <div>
+              <div style="font-weight: 800; font-size: 1.08rem; font-family: var(--font-display);">${selectedMentor.name}</div>
+              <div style="font-size: 0.83rem; color: var(--text-secondary);">${selectedMentor.domain || 'Executive Mentor'} · ${selectedMentor.organization || 'Jobberman Partner Network'}</div>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+            <span class="badge-tag badge-purple" style="font-size: 0.82rem; padding: 0.4rem 0.85rem;"><i class="fa-solid fa-video"></i> ${filteredSessions.length} Filtered Sessions</span>
+            <span class="badge-tag badge-green" style="font-size: 0.82rem; padding: 0.4rem 0.85rem;"><i class="fa-solid fa-chart-pie"></i> Cap: ${selectedMentor.monthlyCap || 10} Sessions / Mo</span>
+          </div>
+        </div>
+      ` : ''}
+
+      <!-- SESSIONS DATA TABLE -->
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem;">
           <thead>
-            <tr style="border-bottom: 2px solid var(--border-color);">
+            <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-secondary);">
               <th style="padding: 0.75rem;">Session ID</th>
-              <th style="padding: 0.75rem;">Mentor</th>
-              <th style="padding: 0.75rem;">Associate</th>
+              <th style="padding: 0.75rem;">Mentor Name</th>
+              <th style="padding: 0.75rem;">Scholar / Associate</th>
               <th style="padding: 0.75rem;">Date & Time</th>
+              <th style="padding: 0.75rem;">Duration</th>
               <th style="padding: 0.75rem;">Status</th>
+              <th style="padding: 0.75rem;">Zoho Room Link</th>
             </tr>
           </thead>
           <tbody>
-            ${state.sessions.map(s => `
+            ${filteredSessions.length === 0 ? `
+              <tr>
+                <td colspan="7" style="padding: 2.5rem; text-align: center; color: var(--text-secondary);">
+                  <i class="fa-solid fa-folder-open" style="font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.5;"></i>
+                  <div>No session logs found matching the selected mentor filter.</div>
+                </td>
+              </tr>
+            ` : filteredSessions.slice(0, state.adminRowsPerPage || 25).map(s => `
               <tr style="border-bottom: 1px solid var(--border-color);">
-                <td style="padding: 0.85rem; font-weight: 800;">${s.id}</td>
-                <td style="padding: 0.85rem;">${s.mentorName}</td>
+                <td style="padding: 0.85rem; font-weight: 800; color: var(--brand-primary);">${s.id}</td>
+                <td style="padding: 0.85rem; font-weight: 700;">${s.mentorName}</td>
                 <td style="padding: 0.85rem;">${s.associateName}</td>
-                <td style="padding: 0.85rem;">${s.date} (${s.time})</td>
-                <td style="padding: 0.85rem;"><span class="badge-tag badge-blue">${s.status}</span></td>
+                <td style="padding: 0.85rem;">${s.date} at ${s.time}</td>
+                <td style="padding: 0.85rem; font-weight: 700;">60 Mins</td>
+                <td style="padding: 0.85rem;"><span class="badge-tag ${s.status === 'Completed' ? 'badge-green' : 'badge-blue'}"><i class="fa-solid ${s.status === 'Completed' ? 'fa-check-double' : 'fa-clock'}"></i> ${s.status}</span></td>
+                <td style="padding: 0.85rem;">
+                  <a href="${s.meetingUrl || 'https://meeting.zoho.com/join?key=mcf-session'}" target="_blank" style="color: var(--brand-primary); font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem;"><i class="fa-solid fa-up-right-from-square"></i> Zoho Room</a>
+                </td>
               </tr>
             `).join('')}
           </tbody>
@@ -3015,6 +3105,28 @@ function bindEvents() {
     // Admin Export Table to CSV Handler
     document.getElementById('btnExportAdminCSV')?.addEventListener('click', () => {
       exportAdminTableToCSV(state.adminActiveTable || 'mentees');
+    });
+
+    // Admin Filter by Mentor Dropdown Listener
+    document.getElementById('selectAdminSessionMentor')?.addEventListener('change', (e) => {
+      state.adminSessionMentorFilter = e.target.value;
+      render();
+    });
+
+    // Admin Sessions Live Search Input Listener
+    document.getElementById('inputAdminSessionSearch')?.addEventListener('input', (e) => {
+      state.adminSessionSearchQuery = e.target.value;
+      const tableContainer = document.getElementById('adminAnalyticsTableContainer');
+      if (tableContainer && state.adminActiveTable === 'sessions') {
+        tableContainer.innerHTML = renderAdminSessionLogs();
+      }
+    });
+
+    // Admin Reset Session Filter Handler
+    document.getElementById('btnResetAdminSessionFilter')?.addEventListener('click', () => {
+      state.adminSessionMentorFilter = 'ALL';
+      state.adminSessionSearchQuery = '';
+      render();
     });
 
     // Admin Mentee Search Input Listener
