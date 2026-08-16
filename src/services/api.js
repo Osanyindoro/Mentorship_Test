@@ -69,6 +69,9 @@ export const apiService = {
             role: data.role,
             name: data.name,
             email: data.email,
+            password: data.password || '',
+            gender: data.gender || '',
+            must_reset_password: data.must_reset_password || false,
             institution: data.institution || data.organization || 'Mastercard Foundation Partner',
             organization: data.organization || data.institution || 'Jobberman Partner Network',
             title: data.title || 'Scholar',
@@ -327,6 +330,60 @@ export const apiService = {
     return this.getMentors();
   },
 
+  // Save associate profile fields (including gender) to Supabase
+  async updateAssociateProfile(userId, updates) {
+    const supabase = getSupabaseClient();
+    if (supabase && userId) {
+      try {
+        const payload = {};
+        if (updates.name !== undefined)        payload.name = updates.name;
+        if (updates.email !== undefined)       payload.email = updates.email;
+        if (updates.institution !== undefined) payload.institution = updates.institution;
+        if (updates.organization !== undefined) payload.organization = updates.organization;
+        if (updates.title !== undefined)       payload.title = updates.title;
+        if (updates.track !== undefined)       payload.track = updates.track;
+        if (updates.bio !== undefined)         payload.bio = updates.bio;
+        if (updates.gender !== undefined)      payload.gender = updates.gender;
+        if (updates.avatar !== undefined)      payload.avatar = updates.avatar;
+        const { error } = await supabase.from('users').update(payload).eq('id', userId);
+        if (error) console.warn('[Supabase Update Associate Profile]', error.message);
+      } catch (err) {
+        console.warn('[Supabase Update Associate Profile]', err.message);
+      }
+    }
+  },
+
+  // Save mentor profile fields (including gender) to Supabase
+  async updateMentorProfile(mentorId, updates) {
+    const supabase = getSupabaseClient();
+    if (supabase && mentorId) {
+      try {
+        const payload = {};
+        if (updates.name !== undefined)         payload.name = updates.name;
+        if (updates.title !== undefined)        payload.title = updates.title;
+        if (updates.organization !== undefined) payload.organization = updates.organization;
+        if (updates.domain !== undefined)       payload.domain = updates.domain;
+        if (updates.bio !== undefined)          payload.bio = updates.bio;
+        if (updates.gender !== undefined)       payload.gender = updates.gender;
+        if (updates.expertise !== undefined)    payload.expertise = updates.expertise;
+        if (updates.avatar !== undefined)       payload.avatar = updates.avatar;
+        if (updates.socialLinks !== undefined)  payload.social_links = updates.socialLinks;
+        const { error } = await supabase.from('users').update(payload).eq('id', mentorId);
+        if (error) console.warn('[Supabase Update Mentor Profile]', error.message);
+      } catch (err) {
+        console.warn('[Supabase Update Mentor Profile]', err.message);
+      }
+    }
+    // Also update local mock store
+    const mentors = getStoredMentors();
+    const mentor = mentors.find(m => m.id === mentorId);
+    if (mentor) {
+      Object.assign(mentor, updates);
+      saveStoredMentors(mentors);
+    }
+    return mentor;
+  },
+
   async fetchSessions() {
     const supabase = getSupabaseClient();
     if (supabase) {
@@ -448,5 +505,18 @@ export const apiService = {
       saveStoredTasks(tasks);
     }
     return task;
+  },
+
+  // First-login password setup for pre-loaded/seeded users
+  async setUserPassword(userId, newPassword) {
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      const { error } = await supabase
+        .from('users')
+        .update({ password: newPassword, must_reset_password: false })
+        .eq('id', userId);
+      if (error) throw new Error(error.message);
+    }
+    return true;
   }
 };

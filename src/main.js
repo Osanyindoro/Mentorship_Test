@@ -6,6 +6,7 @@ import { apiService } from './services/api.js';
 function getInitialRoute() {
   const path = window.location.pathname;
   if (path === '/login') return '/login';
+  if (path === '/set-password') return '/set-password';
   if (path === '/associate') return '/associate';
   if (path === '/mentor') return '/mentor';
   if (path === '/admin') return '/admin';
@@ -113,7 +114,11 @@ const state = {
   sessions: [],
   groupSessions: [],
   tasks: [],
-  notifications: []
+  notifications: [],
+
+  // Set Password Page (first-login pre-loaded users)
+  setPasswordError: null,
+  setPasswordSubmitting: false
 };
 
 // Initial Theme Setting
@@ -254,6 +259,8 @@ function render() {
   // Route Dispatcher
   if (state.currentPath === '/login') {
     appNode.innerHTML = renderLoginPage();
+  } else if (state.currentPath === '/set-password') {
+    appNode.innerHTML = renderSetPasswordPage();
   } else if (state.currentPath === '/') {
     appNode.innerHTML = renderPublicLandingPage();
   } else {
@@ -261,6 +268,79 @@ function render() {
   }
 
   bindEvents();
+}
+
+// --------------------------------------------------------------------------
+// SET PASSWORD PAGE (First-Login for Pre-Loaded Users)
+// --------------------------------------------------------------------------
+function renderSetPasswordPage() {
+  const user = state.currentUser || {};
+  return `
+    <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg-base); padding: 2rem;">
+      <div style="width: 100%; max-width: 460px;">
+
+        <!-- HEADER -->
+        <div style="text-align: center; margin-bottom: 2rem;">
+          <img src="https://cdn.punchng.com/wp-content/uploads/2020/11/16161239/jobberman-logo.fw_.png"
+            onerror="this.style.display='none'"
+            style="height: 38px; object-fit: contain; margin-bottom: 1.5rem;" alt="Jobberman" />
+          <div style="width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, var(--brand-primary), var(--brand-violet)); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; box-shadow: 0 8px 24px rgba(107,33,168,0.25);">
+            <i class="fa-solid fa-lock-open" style="font-size: 1.6rem; color: white;"></i>
+          </div>
+          <h1 style="font-family: var(--font-display); font-size: 1.65rem; font-weight: 800; margin-bottom: 0.4rem;">Set Your Password</h1>
+          <p style="font-size: 0.88rem; color: var(--text-secondary); max-width: 340px; margin: 0 auto;">
+            Welcome, <strong>${user.name || 'Scholar'}</strong>! Your account has been pre-created for you.
+            Please set a secure personal password to access your portal.
+          </p>
+        </div>
+
+        <!-- FORM CARD -->
+        <div class="mentor-card" style="padding: 2rem; border-radius: 18px;">
+          ${state.setPasswordError ? `
+            <div style="background: rgba(220,38,38,0.1); border: 1px solid rgba(220,38,38,0.3); border-radius: 10px; padding: 0.85rem 1rem; margin-bottom: 1.25rem; font-size: 0.88rem; font-weight: 700; color: #dc2626; display: flex; align-items: center; gap: 0.5rem;">
+              <i class="fa-solid fa-circle-exclamation"></i> ${state.setPasswordError}
+            </div>
+          ` : ''}
+
+          <form id="formSetNewPassword">
+            <div class="form-group">
+              <label class="form-label" style="font-weight: 800;">Email Address</label>
+              <input type="email" class="form-input" value="${user.email || ''}" disabled
+                style="border-radius: 10px; padding: 0.7rem 1rem; background: var(--bg-hover); color: var(--text-secondary); cursor: not-allowed;" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" style="font-weight: 800;">New Password <span style="color: #dc2626;">*</span></label>
+              <input type="password" class="form-input" id="inputNewPassword1" placeholder="Create a strong password (min. 8 characters)"
+                style="border-radius: 10px; padding: 0.7rem 1rem;" required autocomplete="new-password" />
+              <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.35rem;">
+                <i class="fa-solid fa-circle-info"></i> Must be at least 8 characters
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" style="font-weight: 800;">Confirm New Password <span style="color: #dc2626;">*</span></label>
+              <input type="password" class="form-input" id="inputNewPassword2" placeholder="Re-enter your new password"
+                style="border-radius: 10px; padding: 0.7rem 1rem;" required autocomplete="new-password" />
+            </div>
+
+            <button type="submit" class="btn-brand-primary" id="btnSubmitSetPassword"
+              style="width: 100%; justify-content: center; padding: 0.85rem; font-size: 0.95rem; font-weight: 800; margin-top: 0.5rem; border-radius: 12px; ${state.setPasswordSubmitting ? 'opacity: 0.7;' : ''}">
+              ${state.setPasswordSubmitting
+                ? `<i class="fa-solid fa-circle-notch fa-spin"></i> Setting Password...`
+                : `<i class="fa-solid fa-shield-halved"></i> Set Password & Enter Portal`}
+            </button>
+          </form>
+        </div>
+
+        <div style="text-align: center; margin-top: 1.25rem; font-size: 0.84rem; color: var(--text-muted);">
+          <i class="fa-solid fa-lock" style="margin-right: 0.3rem;"></i>
+          Your password is encrypted and never shared.
+          <br/>Need help? Email <a href="mailto:support@jobberman.com" style="color: var(--brand-primary); font-weight: 700;">support@jobberman.com</a>
+        </div>
+      </div>
+    </div>
+  `;
 }
 
 // --------------------------------------------------------------------------
@@ -2634,8 +2714,14 @@ function bindEvents() {
           state.currentRole = authResult.user.role;
           state.loginForm.isSubmitting = false;
 
-          showToast(`Welcome back, ${authResult.user.name}!`);
-          navigateTo(`/${authResult.user.role}`);
+          // First-login check: if pre-loaded user hasn't set a password yet
+          if (authResult.user.must_reset_password || authResult.user.password === 'RESET_REQUIRED') {
+            showToast(`Welcome ${authResult.user.name}! Please set your personal password to continue.`, 'fa-shield-halved');
+            navigateTo('/set-password');
+          } else {
+            showToast(`Welcome back, ${authResult.user.name}!`);
+            navigateTo(`/${authResult.user.role}`);
+          }
         } catch (err) {
           state.loginForm.isSubmitting = false;
           state.loginForm.errorMessage = err.message || 'The email or password you entered is incorrect.';
@@ -3210,6 +3296,49 @@ function bindEvents() {
       });
     });
   }
+
+  // ── SET PASSWORD PAGE handler (first-login pre-loaded users) ──────────────
+  document.getElementById('formSetNewPassword')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const pw1 = document.getElementById('inputNewPassword1')?.value || '';
+    const pw2 = document.getElementById('inputNewPassword2')?.value || '';
+
+    if (pw1.length < 8) {
+      state.setPasswordError = 'Password must be at least 8 characters long.';
+      render(); return;
+    }
+    if (pw1 !== pw2) {
+      state.setPasswordError = 'Passwords do not match. Please re-enter both fields.';
+      render(); return;
+    }
+
+    state.setPasswordError = null;
+    state.setPasswordSubmitting = true;
+    render();
+
+    try {
+      const user = state.currentUser;
+
+      // Update password and clear must_reset_password flag via apiService
+      await apiService.setUserPassword(user.id, pw1);
+
+      // Update local state + localStorage
+      if (state.currentUser) {
+        state.currentUser.password = pw1;
+        state.currentUser.must_reset_password = false;
+        localStorage.setItem('mently_user', JSON.stringify(state.currentUser));
+      }
+
+      state.setPasswordSubmitting = false;
+      showToast(`Password set! Welcome to your portal, ${user.name}! 🎉`, 'fa-shield-halved');
+      navigateTo(`/${user.role}`);
+    } catch (err) {
+      state.setPasswordSubmitting = false;
+      state.setPasswordError = 'Something went wrong. Please try again or contact support.';
+      console.error('[SetPassword]', err);
+      render();
+    }
+  });
 }
 
 // Initial Kickoff
