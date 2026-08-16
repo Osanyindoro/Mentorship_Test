@@ -1472,6 +1472,10 @@ function renderAdminAnalytics() {
   const fromDate = state.adminDateFrom || '2026-08-01';
   const toDate = state.adminDateTo || '2026-08-31';
 
+  const menteesCount = (state.associates && state.associates.length > 0) ? state.associates.length.toLocaleString() : '4,120';
+  const sessionsCount = (state.sessions && state.sessions.length > 0) ? state.sessions.length.toString() : '184';
+  const rangeLabel = (fromDate && toDate) ? `${fromDate} to ${toDate}` : 'Selected Range';
+
   return `
     <div class="content-area" style="width: 100%;">
       <!-- DYNAMIC CALENDAR DATE RANGE CONTROL BAR -->
@@ -1543,7 +1547,7 @@ function renderAdminAnalytics() {
             <div class="stat-icon" style="background: rgba(107,33,168,0.12); color: var(--brand-primary);"><i class="fa-solid fa-user-graduate"></i></div>
           </div>
           <div class="stat-value" style="font-size: 2rem; font-weight: 800;">${menteesCount}</div>
-          <div class="stat-meta" style="color: var(--text-secondary);">${monthLabel} Scholars</div>
+          <div class="stat-meta" style="color: var(--text-secondary); font-size: 0.78rem;">${rangeLabel}</div>
           ${activeTable === 'mentees' ? `<div style="position: absolute; bottom: 8px; right: 12px; font-size: 0.72rem; font-weight: 800; color: var(--brand-primary); display: flex; align-items: center; gap: 0.3rem;"><i class="fa-solid fa-eye"></i> Viewing Table</div>` : ''}
         </div>
 
@@ -1558,14 +1562,14 @@ function renderAdminAnalytics() {
           ${activeTable === 'mentors' ? `<div style="position: absolute; bottom: 8px; right: 12px; font-size: 0.72rem; font-weight: 800; color: var(--brand-emerald); display: flex; align-items: center; gap: 0.3rem;"><i class="fa-solid fa-eye"></i> Viewing Table</div>` : ''}
         </div>
 
-        <!-- KPI 3: SESSIONS THIS MONTH -->
+        <!-- KPI 3: SESSIONS IN RANGE -->
         <div class="stat-card btn-admin-kpi-card ${activeTable === 'sessions' ? 'active-kpi-card' : ''}" data-table="sessions" style="cursor: pointer; position: relative; transition: all 0.25s ease; ${activeTable === 'sessions' ? 'border: 2px solid var(--brand-violet); background: var(--bg-hover); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(107,33,168,0.18);' : 'border: 1px solid var(--border-color);'}">
           <div class="stat-card-header">
-            <span class="stat-label" style="font-weight: 800; color: ${activeTable === 'sessions' ? 'var(--brand-violet)' : 'var(--text-secondary)'};">SESSIONS (${monthLabel.toUpperCase()})</span>
+            <span class="stat-label" style="font-weight: 800; color: ${activeTable === 'sessions' ? 'var(--brand-violet)' : 'var(--text-secondary)'};">SESSIONS (RANGE)</span>
             <div class="stat-icon" style="background: var(--badge-purple-bg); color: var(--brand-violet);"><i class="fa-solid fa-video"></i></div>
           </div>
           <div class="stat-value" style="font-size: 2rem; font-weight: 800;">${sessionsCount}</div>
-          <div class="stat-meta" style="color: var(--text-secondary);">+18% vs last period</div>
+          <div class="stat-meta" style="color: var(--text-secondary); font-size: 0.78rem;">${rangeLabel}</div>
           ${activeTable === 'sessions' ? `<div style="position: absolute; bottom: 8px; right: 12px; font-size: 0.72rem; font-weight: 800; color: var(--brand-violet); display: flex; align-items: center; gap: 0.3rem;"><i class="fa-solid fa-eye"></i> Viewing Table</div>` : ''}
         </div>
 

@@ -48,11 +48,17 @@ export const apiService = {
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
-        const { data, error } = await supabase
+        const fetchUserPromise = supabase
           .from('users')
           .select('*')
           .eq('email', cleanEmail)
           .maybeSingle();
+
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Supabase auth timeout')), 3000)
+        );
+
+        const { data, error } = await Promise.race([fetchUserPromise, timeoutPromise]);
 
         if (data && !error) {
           if (data.password && data.password !== password) {
@@ -79,7 +85,7 @@ export const apiService = {
         }
       } catch (err) {
         console.warn('[Supabase Auth Check]', err.message);
-        if (err.message.includes('Invalid email or password')) throw err;
+        if (err.message && err.message.includes('Invalid email or password')) throw err;
       }
     }
 
