@@ -61,6 +61,9 @@ export const apiService = {
         const { data, error } = await Promise.race([fetchUserPromise, timeoutPromise]);
 
         if (data && !error) {
+          if (data.role && selectedRole && data.role !== selectedRole) {
+            throw new Error(`This account is registered as a ${data.role.toUpperCase()}. Please select "${data.role.charAt(0).toUpperCase() + data.role.slice(1)}" from the login dropdown.`);
+          }
           if (data.password && data.password !== password) {
             throw new Error("Invalid email or password.");
           }
