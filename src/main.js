@@ -276,16 +276,10 @@ function renderPublicLandingPage() {
       <!-- Public Header -->
       <header class="mently-header" style="justify-content: space-between;">
         <div class="brand-wrapper" style="cursor: pointer; display: flex; align-items: center; gap: 0.85rem;" id="btnNavBrandHome">
-          <div class="brand-logo-icon" style="background: linear-gradient(135deg, #2e1065 0%, #6b21a8 100%); width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #ffd700; box-shadow: 0 4px 12px rgba(46,16,101,0.2);">
-            <i class="fa-solid fa-graduation-cap" style="font-size: 1.25rem;"></i>
-          </div>
+          <img src="https://cdn.punchng.com/wp-content/uploads/2020/11/16161239/jobberman-logo.fw_.png" onerror="this.onerror=null; this.src='https://th.bing.com/th/id/R.b027fa05ff8c37baaf5b9326985ca6e0?rik=tjRRiqfBgaDl2A&pid=ImgRaw&r=0';" alt="Jobberman" style="height: 36px; width: auto; object-fit: contain;" />
+          <div style="width: 1px; height: 28px; background: var(--border-color); margin: 0 0.15rem;"></div>
           <div class="brand-text">
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-              <span class="brand-name" style="font-weight: 800; font-size: 1.05rem; color: var(--text-primary); font-family: var(--font-display);">Mastercard Foundation Associate Program</span>
-              <span style="background: rgba(255, 153, 0, 0.15); color: #d97706; border: 1px solid rgba(217, 119, 6, 0.3); font-weight: 800; font-size: 0.72rem; padding: 0.15rem 0.55rem; border-radius: 20px; font-family: var(--font-sans); display: inline-flex; align-items: center; gap: 0.3rem;">
-                <i class="fa-solid fa-briefcase"></i> Jobberman
-              </span>
-            </div>
+            <span class="brand-name" style="font-weight: 800; font-size: 1.05rem; color: var(--text-primary); font-family: var(--font-display);">Mastercard Foundation Associate Program</span>
             <span class="brand-tagline" style="font-size: 0.72rem; font-weight: 800; color: var(--brand-violet); letter-spacing: 0.05em; text-transform: uppercase;">ASSOCIATE MENTORSHIP PORTAL</span>
           </div>
         </div>
@@ -472,23 +466,34 @@ function renderPublicLandingPage() {
       <footer class="public-footer">
         <div style="max-width: 1240px; margin: 0 auto;">
           <div class="footer-top-grid">
-            <div class="brand-wrapper">
-              <div class="brand-logo-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+            <div class="brand-wrapper" style="display: flex; align-items: center; gap: 0.85rem;">
+              <img src="https://cdn.punchng.com/wp-content/uploads/2020/11/16161239/jobberman-logo.fw_.png" onerror="this.onerror=null; this.src='https://th.bing.com/th/id/R.b027fa05ff8c37baaf5b9326985ca6e0?rik=tjRRiqfBgaDl2A&pid=ImgRaw&r=0';" alt="Jobberman" style="height: 38px; width: auto; object-fit: contain;" />
+              <div style="width: 1px; height: 30px; background: var(--border-color);"></div>
               <div class="brand-text">
-                <span class="brand-name" style="font-size: 1.05rem;">Mastercard Foundation Associate Program</span>
-                <span class="brand-tagline">ASSOCIATE MENTORSHIP PORTAL</span>
+                <span class="brand-name" style="font-weight: 800; font-size: 1.05rem; color: var(--text-primary);">Mastercard Foundation Associate Program</span>
+                <span class="brand-tagline" style="font-size: 0.72rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700;">ASSOCIATE MENTORSHIP PORTAL</span>
               </div>
             </div>
 
-            <div style="display: flex; gap: 1.5rem; font-size: 0.88rem;">
-              <a class="public-nav-link" id="footerLinkHome">Home</a>
-              <a class="public-nav-link" id="footerLinkMentors">Find Mentors</a>
-              <a class="public-nav-link" id="footerLinkLogin">Login</a>
+            <!-- Jobberman Official Social Media Links -->
+            <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+              <span style="font-size: 0.82rem; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; margin-right: 0.25rem;">Follow Jobberman:</span>
+              <a href="https://www.linkedin.com/company/jobberman-nigeria/" target="_blank" style="width: 36px; height: 36px; border-radius: 50%; background: rgba(10, 102, 194, 0.1); color: #0A66C2; display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem; text-decoration: none;" title="LinkedIn"><i class="fa-brands fa-linkedin"></i></a>
+              <a href="https://twitter.com/jobbermandotcom" target="_blank" style="width: 36px; height: 36px; border-radius: 50%; background: rgba(15, 20, 25, 0.1); color: var(--text-primary); display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem; text-decoration: none;" title="Twitter / X"><i class="fa-brands fa-x-twitter"></i></a>
+              <a href="https://www.facebook.com/jobberman/" target="_blank" style="width: 36px; height: 36px; border-radius: 50%; background: rgba(24, 119, 242, 0.1); color: #1877F2; display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem; text-decoration: none;" title="Facebook"><i class="fa-brands fa-facebook"></i></a>
+              <a href="https://www.instagram.com/jobbermannigeria/" target="_blank" style="width: 36px; height: 36px; border-radius: 50%; background: rgba(225, 48, 108, 0.1); color: #E1306C; display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem; text-decoration: none;" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
+              <a href="https://www.youtube.com/user/jobbermanng" target="_blank" style="width: 36px; height: 36px; border-radius: 50%; background: rgba(255, 0, 0, 0.1); color: #FF0000; display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem; text-decoration: none;" title="YouTube"><i class="fa-brands fa-youtube"></i></a>
+              <a href="https://www.jobberman.com/" target="_blank" style="width: 36px; height: 36px; border-radius: 50%; background: rgba(46, 16, 101, 0.1); color: var(--brand-primary); display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem; text-decoration: none;" title="Jobberman Official Website"><i class="fa-solid fa-globe"></i></a>
             </div>
           </div>
 
-          <div class="footer-bottom">
-            © 2026 Mastercard Foundation Associate Program. All rights reserved.
+          <div class="footer-bottom" style="display: flex; justify-content: space-between; align-items: center; padding-top: 1.5rem; font-size: 0.82rem; color: var(--text-muted);">
+            <div>© 2026 Mastercard Foundation Associate Program & Jobberman. All rights reserved.</div>
+            <div style="display: flex; gap: 1.5rem;">
+              <a class="public-nav-link" id="footerLinkHome" style="color: var(--text-secondary);">Home</a>
+              <a class="public-nav-link" id="footerLinkMentors" style="color: var(--text-secondary);">Find Mentors</a>
+              <a class="public-nav-link" id="footerLinkLogin" style="color: var(--text-secondary);">Login</a>
+            </div>
           </div>
         </div>
       </footer>
@@ -763,16 +768,10 @@ function renderAuthenticatedDashboard() {
     <!-- Top Header -->
     <header class="mently-header">
       <div class="brand-wrapper" style="display: flex; align-items: center; gap: 0.85rem;">
-        <div class="brand-logo-icon" style="background: linear-gradient(135deg, #2e1065 0%, #6b21a8 100%); width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #ffd700; box-shadow: 0 4px 12px rgba(46,16,101,0.2);">
-          <i class="fa-solid fa-graduation-cap" style="font-size: 1.25rem;"></i>
-        </div>
+        <img src="https://cdn.punchng.com/wp-content/uploads/2020/11/16161239/jobberman-logo.fw_.png" onerror="this.onerror=null; this.src='https://th.bing.com/th/id/R.b027fa05ff8c37baaf5b9326985ca6e0?rik=tjRRiqfBgaDl2A&pid=ImgRaw&r=0';" alt="Jobberman" style="height: 36px; width: auto; object-fit: contain;" />
+        <div style="width: 1px; height: 28px; background: var(--border-color); margin: 0 0.15rem;"></div>
         <div class="brand-text">
-          <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <span class="brand-name" style="font-weight: 800; font-size: 1.05rem; color: var(--text-primary); font-family: var(--font-display);">Mastercard Foundation Associate Program</span>
-            <span style="background: rgba(255, 153, 0, 0.15); color: #d97706; border: 1px solid rgba(217, 119, 6, 0.3); font-weight: 800; font-size: 0.72rem; padding: 0.15rem 0.55rem; border-radius: 20px; font-family: var(--font-sans); display: inline-flex; align-items: center; gap: 0.3rem;">
-              <i class="fa-solid fa-briefcase"></i> Jobberman
-            </span>
-          </div>
+          <span class="brand-name" style="font-weight: 800; font-size: 1.05rem; color: var(--text-primary); font-family: var(--font-display);">Mastercard Foundation Associate Program</span>
           <span class="brand-tagline" style="font-size: 0.72rem; font-weight: 800; color: var(--brand-violet); letter-spacing: 0.05em; text-transform: uppercase;">ASSOCIATE MENTORSHIP PORTAL</span>
         </div>
       </div>
