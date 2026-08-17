@@ -545,10 +545,6 @@ function renderPublicLandingPage() {
 
           <div class="footer-bottom" style="display: flex; justify-content: space-between; align-items: center; padding-top: 1.5rem; font-size: 0.82rem; color: var(--text-muted);">
             <div>© 2026 Mastercard Foundation Associates Program & Jobberman. All rights reserved.</div>
-            <div style="display: flex; gap: 1.5rem;">
-              <a class="public-nav-link" id="footerLinkHome" style="color: var(--text-secondary);">Home</a>
-              <a class="public-nav-link" id="footerLinkLogin" style="color: var(--text-secondary);">Login</a>
-            </div>
           </div>
         </div>
       </footer>
