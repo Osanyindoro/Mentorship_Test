@@ -493,7 +493,21 @@ export const apiService = {
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
-        await supabase.from('sessions').insert([newSession]);
+        const dbSessionPayload = {
+          id: newSession.id,
+          associate_id: newSession.associateId || '',
+          associate_name: newSession.associateName || '',
+          mentor_id: newSession.mentorId || '',
+          mentor_name: newSession.mentorName || '',
+          mentor_domain: newSession.mentorDomain || '',
+          date: newSession.date,
+          time: newSession.time,
+          duration: newSession.duration || '1 Hour',
+          objective: newSession.objective || '',
+          status: 'Pending',
+          meeting_link: newSession.meetingLink || ''
+        };
+        await supabase.from('sessions').insert([dbSessionPayload]);
         if (mentor) {
           await supabase.from('users').update({ schedule: mentor.schedule }).eq('id', mentor.id);
         }
