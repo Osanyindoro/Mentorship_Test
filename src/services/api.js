@@ -371,7 +371,23 @@ export const apiService = {
     if (supabase) {
       try {
         const { data, error } = await supabase.from('sessions').select('*');
-        if (data && data.length > 0 && !error) return data;
+        if (data && data.length > 0 && !error) {
+          return data.map(s => ({
+            id: s.id,
+            associateId: s.associateId || s.associate_id || '',
+            associateName: s.associateName || s.associate_name || 'Associate',
+            mentorId: s.mentorId || s.mentor_id || '',
+            mentorName: s.mentorName || s.mentor_name || 'Mentor',
+            mentorDomain: s.mentorDomain || s.mentor_domain || '',
+            date: s.date,
+            time: s.time,
+            duration: s.duration || '1 Hour',
+            objective: s.objective || '',
+            status: s.status || 'Pending',
+            meetingLink: s.meetingLink || s.meeting_link || s.meetingUrl || '',
+            createdAt: s.created_at || s.createdAt || ''
+          }));
+        }
       } catch (err) {
         console.warn('[Supabase Sessions Fetch]', err.message);
       }

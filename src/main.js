@@ -1496,10 +1496,13 @@ function renderMentorDashboard(mentor) {
       <h3 style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 800; margin-bottom: 1rem;">Booked Mentorship Sessions</h3>
       <div style="display: flex; flex-direction: column; gap: 1rem;">
         ${(() => {
-          const mentorSessions = state.sessions.filter(s => 
-            String(s.mentorId) === String(mentor.id) || 
-            (s.mentorName && mentor.name && s.mentorName.toLowerCase() === mentor.name.toLowerCase())
-          );
+          const mentorSessions = state.sessions.filter(s => {
+            const sId = String(s.mentorId || s.mentor_id || '').toLowerCase();
+            const mId = String(mentor.id || '').toLowerCase();
+            const sName = String(s.mentorName || s.mentor_name || '').toLowerCase().trim();
+            const mName = String(mentor.name || '').toLowerCase().trim();
+            return (sId && mId && sId === mId) || (sName && mName && sName === mName);
+          });
 
           if (mentorSessions.length === 0) {
             return `
