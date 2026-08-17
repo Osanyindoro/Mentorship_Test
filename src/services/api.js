@@ -464,10 +464,33 @@ export const apiService = {
     sessions.unshift(newSession);
     saveStoredSessions(sessions);
 
+    // Also update mentor schedule if matched
+    const mentors = getStoredMentors();
+    const mentor = mentors.find(m => String(m.id) === String(bookingData.mentorId));
+    if (mentor) {
+      if (!mentor.schedule) mentor.schedule = [];
+      const existingSlot = mentor.schedule.find(s => s.date === bookingData.date && s.time === bookingData.time);
+      if (existingSlot) {
+        existingSlot.isBooked = true;
+        existingSlot.bookedBy = bookingData.associateName;
+      } else {
+        mentor.schedule.push({
+          date: bookingData.date,
+          time: bookingData.time,
+          isBooked: true,
+          bookedBy: bookingData.associateName
+        });
+      }
+      saveStoredMentors(mentors);
+    }
+
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
         await supabase.from('sessions').insert([newSession]);
+        if (mentor) {
+          await supabase.from('users').update({ schedule: mentor.schedule }).eq('id', mentor.id);
+        }
       } catch (err) {
         console.warn('[Supabase Create Session]', err.message);
       }
@@ -494,11 +517,48 @@ export const apiService = {
     return session;
   },
 
+  async createGroupSession(groupData) {
+    const groups = getStoredGroupSessions();
+    const newGroup = {
+      id: `GRP-${Math.floor(100 + Math.random() * 900)}`,
+      mentorId: groupData.mentorId,
+      mentorName: groupData.mentorName,
+      mentorTitle: groupData.mentorTitle || 'Executive Mentor',
+      mentorAvatar: groupData.mentorAvatar || '',
+      title: groupData.title,
+      domain: groupData.domain || 'Software Engineering & AI',
+      description: groupData.description,
+      date: groupData.date,
+      startTime: groupData.startTime || '04:00 PM',
+      endTime: groupData.endTime || '05:00 PM',
+      duration: groupData.duration || '60 mins',
+      maxCapacity: groupData.maxCapacity || 20,
+      enrolledMentees: [],
+      enrolledCount: 0
+    };
+    groups.unshift(newGroup);
+    saveStoredGroupSessions(groups);
+
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        await supabase.from('group_sessions').insert([newGroup]);
+      } catch (err) {
+        console.warn('[Supabase Create Group Session]', err.message);
+      }
+    }
+    return newGroup;
+  },
+
   async joinGroupSession(groupId, associateName) {
     const groups = getStoredGroupSessions();
     const group = groups.find(g => g.id === groupId);
     if (group) {
-      group.enrolledCount = (group.enrolledCount || 0) + 1;
+      if (!group.enrolledMentees) group.enrolledMentees = [];
+      if (!group.enrolledMentees.includes(associateName)) {
+        group.enrolledMentees.push(associateName);
+      }
+      group.enrolledCount = group.enrolledMentees.length;
       saveStoredGroupSessions(groups);
     }
     return group;
