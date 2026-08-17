@@ -467,7 +467,7 @@ const STORAGE_KEY_GROUP_SESSIONS = "mently_group_sessions_v5";
 const STORAGE_KEY_TASKS = "mently_tasks_v5";
 const STORAGE_KEY_NOTIFICATIONS = "mently_notifications_v5";
 const STORAGE_KEY_ASSOCIATES = "mently_associates_v5";
-const STORAGE_KEY_MENTORS = "mently_mentors_v5";
+const STORAGE_KEY_MENTORS = "mently_mentors_v6_real_profiles";
 const STORAGE_KEY_THEME = "mently_theme_v5";
 
 export function getStoredSessions() {
@@ -541,7 +541,17 @@ export function getStoredMentors() {
     localStorage.setItem(STORAGE_KEY_MENTORS, JSON.stringify(INITIAL_MENTORS));
     return INITIAL_MENTORS;
   }
-  return JSON.parse(data);
+  try {
+    const parsed = JSON.parse(data);
+    if (!Array.isArray(parsed) || parsed.length < 11 || parsed.some(m => m.id === 'MEN-101' || m.name === 'Dr. Samuel Osei')) {
+      localStorage.setItem(STORAGE_KEY_MENTORS, JSON.stringify(INITIAL_MENTORS));
+      return INITIAL_MENTORS;
+    }
+    return parsed;
+  } catch (e) {
+    localStorage.setItem(STORAGE_KEY_MENTORS, JSON.stringify(INITIAL_MENTORS));
+    return INITIAL_MENTORS;
+  }
 }
 
 export function saveStoredMentors(mentors) {
