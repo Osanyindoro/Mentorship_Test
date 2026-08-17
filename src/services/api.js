@@ -82,7 +82,11 @@ export const apiService = {
             domain: data.domain || data.track || 'Software Engineering & AI',
             bio: data.bio || '',
             avatar: data.avatar || 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&w=600&q=80',
-            schedule: data.schedule || []
+            schedule: data.schedule || [],
+            monthlyCap: data.monthly_cap || data.monthlyCap || 15,
+            sessionsUsedThisMonth: data.sessions_used || data.sessionsUsedThisMonth || 0,
+            expertise: data.expertise || ["Career Guidance", "Leadership Strategy"],
+            socialLinks: data.social_links || data.socialLinks || { linkedin: "https://linkedin.com" }
           };
           const token = `mcf_supa_${Date.now()}`;
           localStorage.setItem('mently_auth_token', token);

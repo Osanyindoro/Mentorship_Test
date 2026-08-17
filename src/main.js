@@ -1006,6 +1006,8 @@ function renderRoleView(associate, mentor) {
     domain: user.domain || mentor.domain,
     bio: user.bio || mentor.bio,
     avatar: user.avatar || mentor.avatar,
+    monthlyCap: user.monthlyCap || mentor.monthlyCap || 15,
+    sessionsUsedThisMonth: user.sessionsUsedThisMonth || mentor.sessionsUsedThisMonth || 0,
     schedule: user.schedule || mentor.schedule || [],
     expertise: user.expertise || mentor.expertise || ["Career Guidance", "Leadership Strategy"],
     socialLinks: user.socialLinks || user.social_links || mentor.socialLinks || { linkedin: "" }
@@ -1464,7 +1466,9 @@ function renderMenteeProfile(associate) {
 // MENTOR VIEWS
 // --------------------------------------------------------------------------
 function renderMentorDashboard(mentor) {
-  const usagePct = Math.round((mentor.sessionsUsedThisMonth / mentor.monthlyCap) * 100);
+  const cap = Number(mentor.monthlyCap) || 15;
+  const used = Number(mentor.sessionsUsedThisMonth) || 0;
+  const usagePct = Math.round((used / cap) * 100) || 0;
 
   return `
     <div class="content-area" style="width: 100%;">
@@ -1480,7 +1484,7 @@ function renderMentorDashboard(mentor) {
       <div class="mentor-card" style="margin-bottom: 2rem; border-left: 4px solid var(--brand-primary);">
         <div style="display: flex; justify-content: space-between; align-items: center; font-weight: 800; font-size: 0.9rem;">
           <span>Monthly Session Capacity Usage</span>
-          <span>${mentor.sessionsUsedThisMonth} / ${mentor.monthlyCap} Sessions Used (${usagePct}%)</span>
+          <span>${used} / ${cap} Sessions Used (${usagePct}%)</span>
         </div>
         <div class="capacity-progress-container">
           <div class="capacity-progress-fill" style="width: ${Math.min(usagePct, 100)}%;"></div>
