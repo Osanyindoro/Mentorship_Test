@@ -519,6 +519,31 @@ export const apiService = {
         console.warn('[Supabase Create Session]', err.message);
       }
     }
+
+    // Generate in-app notifications for Mentor & Associate
+    const notifs = getStoredNotifications();
+    notifs.unshift({
+      id: `NOTIF-${Date.now()}-M`,
+      userId: newSession.mentorId,
+      recipientName: newSession.mentorName,
+      title: "New 1-on-1 Session Booked!",
+      message: `${newSession.associateName} (${newSession.associateTitle || 'Associate'}) booked a session for ${newSession.date} at ${newSession.time}.`,
+      timestamp: "Just now",
+      type: "booking",
+      read: false
+    });
+    notifs.unshift({
+      id: `NOTIF-${Date.now()}-A`,
+      userId: newSession.associateId,
+      recipientName: newSession.associateName,
+      title: "Session Request Sent",
+      message: `Your mentorship request with ${newSession.mentorName} for ${newSession.date} at ${newSession.time} was submitted.`,
+      timestamp: "Just now",
+      type: "booking",
+      read: false
+    });
+    saveStoredNotifications(notifs);
+
     return newSession;
   },
 
@@ -549,6 +574,23 @@ export const apiService = {
         console.warn('[Supabase Accept Session]', err.message);
       }
     }
+
+    // Generate in-app acceptance notification for Associate
+    if (session) {
+      const notifs = getStoredNotifications();
+      notifs.unshift({
+        id: `NOTIF-${Date.now()}-ACC`,
+        userId: session.associateId,
+        recipientName: session.associateName,
+        title: "Session Accepted! 🎉",
+        message: `${session.mentorName} accepted your 1-on-1 session for ${session.date} at ${session.time}. Google Meet link generated.`,
+        timestamp: "Just now",
+        type: "acceptance",
+        read: false
+      });
+      saveStoredNotifications(notifs);
+    }
+
     return session;
   },
 

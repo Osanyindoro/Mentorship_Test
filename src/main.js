@@ -1079,7 +1079,7 @@ function renderMenteeHome(associate) {
           <div class="mentor-card" style="border-left: 4px solid #d97706; padding: 1.25rem;">
             <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(217,119,6,0.1); color: #d97706; font-weight: 800; display: flex; align-items: center; justify-content: center; margin-bottom: 0.75rem;">3</div>
             <h4 style="font-weight: 800; font-size: 1rem; margin-bottom: 0.4rem;">Connect & Grow</h4>
-            <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">Join live Zoho meeting sessions, complete assigned action tasks, and track your progress.</p>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">Join live Google Meet sessions, complete assigned action tasks, and track your progress.</p>
           </div>
         </div>
       </div>
@@ -1546,7 +1546,7 @@ function renderMentorDashboard(mentor) {
                     <i class="fa-solid fa-building" style="margin-right: 0.3rem; color: var(--brand-primary);"></i> Host: ${org}
                   </span>
                   <span style="font-size: 0.76rem; font-weight: 700; background: var(--bg-hover); color: var(--text-secondary); padding: 0.25rem 0.65rem; border-radius: 6px; border: 1px solid var(--border-color);">
-                    <i class="fa-solid fa-layer-group" style="margin-right: 0.3rem; color: var(--brand-violet);"></i> Track: ${track}
+                    <i class="fa-solid fa-briefcase" style="margin-right: 0.3rem; color: var(--brand-violet);"></i> Role: ${title}
                   </span>
                   <span style="font-size: 0.76rem; font-weight: 700; background: var(--bg-hover); color: var(--text-secondary); padding: 0.25rem 0.65rem; border-radius: 6px; border: 1px solid var(--border-color);">
                     <i class="fa-regular fa-calendar" style="margin-right: 0.3rem; color: #4285F4;"></i> ${s.date} at ${s.time}
