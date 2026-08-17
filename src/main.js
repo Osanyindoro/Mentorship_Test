@@ -2233,8 +2233,18 @@ function renderModals() {
   if (!state.activeModal) return '';
 
   if (state.activeModal === 'booking' && state.bookingMentor) {
-    const mentor = state.bookingMentor;
-    const openSlots = (mentor.schedule || []).filter(s => !s.isBooked);
+    const mentor = state.mentors.find(m => String(m.id) === String(state.bookingMentor.id)) || state.bookingMentor;
+    const rawSlots = (mentor.schedule || []).filter(s => !s.isBooked);
+    // Deduplicate identical slot combinations (same date and same time)
+    const openSlots = [];
+    const seenSlots = new Set();
+    for (const s of rawSlots) {
+      const key = `${s.date}_${s.time}`;
+      if (!seenSlots.has(key)) {
+        seenSlots.add(key);
+        openSlots.push(s);
+      }
+    }
     return `
       <div class="modal-overlay">
         <div class="modal-content-card">
