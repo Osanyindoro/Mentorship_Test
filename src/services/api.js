@@ -519,14 +519,8 @@ export const apiService = {
   },
 
   async acceptBookingSession(sessionId) {
-    const chars = 'abcdefghijklmnopqrstuvwxyz';
-    const rPart = (len) => {
-      let s = '';
-      for (let i = 0; i < len; i++) s += chars.charAt(Math.floor(Math.random() * chars.length));
-      return s;
-    };
-    const dynamicMeetCode = `${rPart(3)}-${rPart(4)}-${rPart(3)}`;
-    const googleMeetLink = `https://meet.google.com/${dynamicMeetCode}`;
+    // Official Google Meet instant launch room link
+    const googleMeetLink = `https://meet.google.com/new`;
 
     const sessions = getStoredSessions();
     const session = sessions.find(s => s.id === sessionId);
