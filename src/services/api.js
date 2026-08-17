@@ -386,42 +386,57 @@ export const apiService = {
   },
 
   async addMentorSlot(mentorId, slotData) {
+    const supabase = getSupabaseClient();
+    let updatedSchedule = null;
+
+    if (supabase && mentorId) {
+      try {
+        const { data: userRecord } = await supabase.from('users').select('schedule').eq('id', mentorId).single();
+        const sched = (userRecord && Array.isArray(userRecord.schedule)) ? userRecord.schedule : [];
+        sched.push({ ...slotData, isBooked: false, bookedBy: null });
+        updatedSchedule = sched;
+        await supabase.from('users').update({ schedule: sched }).eq('id', mentorId);
+      } catch (err) {
+        console.warn('[Supabase Add Slot]', err.message);
+      }
+    }
+
     const mentors = getStoredMentors();
     const mentor = mentors.find(m => m.id === mentorId);
     if (mentor) {
       if (!mentor.schedule) mentor.schedule = [];
       mentor.schedule.push({ ...slotData, isBooked: false, bookedBy: null });
       saveStoredMentors(mentors);
+      if (!updatedSchedule) updatedSchedule = mentor.schedule;
     }
-
-    const supabase = getSupabaseClient();
-    if (supabase && mentor) {
-      try {
-        await supabase.from('users').update({ schedule: mentor.schedule }).eq('id', mentorId);
-      } catch (err) {
-        console.warn('[Supabase Add Slot]', err.message);
-      }
-    }
-    return mentor;
+    return updatedSchedule;
   },
 
   async removeMentorSlot(mentorId, slotIndex) {
+    const supabase = getSupabaseClient();
+    let updatedSchedule = null;
+
+    if (supabase && mentorId) {
+      try {
+        const { data: userRecord } = await supabase.from('users').select('schedule').eq('id', mentorId).single();
+        if (userRecord && Array.isArray(userRecord.schedule) && userRecord.schedule[slotIndex]) {
+          userRecord.schedule.splice(slotIndex, 1);
+          updatedSchedule = userRecord.schedule;
+          await supabase.from('users').update({ schedule: userRecord.schedule }).eq('id', mentorId);
+        }
+      } catch (err) {
+        console.warn('[Supabase Remove Slot]', err.message);
+      }
+    }
+
     const mentors = getStoredMentors();
     const mentor = mentors.find(m => m.id === mentorId);
     if (mentor && mentor.schedule && mentor.schedule[slotIndex]) {
       mentor.schedule.splice(slotIndex, 1);
       saveStoredMentors(mentors);
+      if (!updatedSchedule) updatedSchedule = mentor.schedule;
     }
-
-    const supabase = getSupabaseClient();
-    if (supabase && mentor) {
-      try {
-        await supabase.from('users').update({ schedule: mentor.schedule }).eq('id', mentorId);
-      } catch (err) {
-        console.warn('[Supabase Remove Slot]', err.message);
-      }
-    }
-    return mentor;
+    return updatedSchedule;
   },
 
   async createBookingSession(bookingData) {

@@ -1005,7 +1005,10 @@ function renderRoleView(associate, mentor) {
     title: user.title || mentor.title,
     domain: user.domain || mentor.domain,
     bio: user.bio || mentor.bio,
-    avatar: user.avatar || mentor.avatar
+    avatar: user.avatar || mentor.avatar,
+    schedule: user.schedule || mentor.schedule || [],
+    expertise: user.expertise || mentor.expertise || ["Career Guidance", "Leadership Strategy"],
+    socialLinks: user.socialLinks || user.social_links || mentor.socialLinks || { linkedin: "" }
   } : mentor;
 
   if (role === 'associate') {
@@ -1642,6 +1645,91 @@ function renderMentorTasks(mentor) {
             <p style="font-size: 0.86rem; color: var(--text-secondary); margin-top: 0.6rem;">${t.description}</p>
           </div>
         `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function renderMentorProfile(mentor) {
+  return `
+    <div class="content-area" style="width: 100%; max-width: 800px; margin: 0 auto;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h2 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; display: flex; align-items: center; gap: 0.5rem;">
+          <i class="fa-solid fa-user-pen" style="color: var(--brand-primary);"></i> My Mentor Profile & Settings
+        </h2>
+      </div>
+
+      <div class="mentor-card" style="padding: 2rem; border-radius: 16px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
+        <!-- MENTOR PHOTO UPLOAD SECTION -->
+        <div style="display: flex; align-items: center; gap: 1.5rem; padding-bottom: 1.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color);">
+          <img src="${mentor.avatar && mentor.avatar.startsWith('data:') ? mentor.avatar : (mentor.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80')}" id="mentorTabAvatarPreview" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(mentor.name)}&background=2e1065&color=ffffff';" style="width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 3px solid var(--brand-primary);" />
+          <div>
+            <h4 style="font-weight: 800; font-size: 1.05rem; margin-bottom: 0.25rem;">Executive Headshot Photo</h4>
+            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.75rem;">JPG or PNG format (Max 5MB)</p>
+            <label for="mentorTabAvatarInput" class="btn-brand-primary" style="padding: 0.45rem 1rem; font-size: 0.82rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem;">
+              <i class="fa-solid fa-upload"></i> Upload New Picture
+            </label>
+            <input type="file" id="mentorTabAvatarInput" accept="image/jpeg,image/png,image/webp" style="display: none;" />
+          </div>
+        </div>
+
+        <form id="formMentorTabProfile">
+          <div class="form-group">
+            <label class="form-label" style="font-weight: 700;">Full Name</label>
+            <input type="text" class="form-input" id="mentorTabName" value="${mentor.name || ''}" required style="border-radius: 10px; padding: 0.7rem 1rem;" />
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+            <div class="form-group">
+              <label class="form-label" style="font-weight: 700;">Professional Title</label>
+              <input type="text" class="form-input" id="mentorTabTitle" value="${mentor.title || ''}" required style="border-radius: 10px; padding: 0.7rem 1rem;" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="font-weight: 700;">Organization / Employer</label>
+              <input type="text" class="form-input" id="mentorTabOrg" value="${mentor.organization || mentor.institution || ''}" required style="border-radius: 10px; padding: 0.7rem 1rem;" />
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+            <div class="form-group">
+              <label class="form-label" style="font-weight: 700;">Specialist Domain</label>
+              <input type="text" class="form-input" id="mentorTabDomain" value="${mentor.domain || ''}" placeholder="e.g. Monitoring & Evaluation" style="border-radius: 10px; padding: 0.7rem 1rem;" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="font-weight: 700;">Gender</label>
+              <select class="form-input" id="mentorTabGender" style="border-radius: 10px; padding: 0.7rem 1rem;">
+                <option value="" ${!mentor.gender ? 'selected' : ''}>-- Select Gender --</option>
+                <option value="Male" ${mentor.gender === 'Male' ? 'selected' : ''}>Male</option>
+                <option value="Female" ${mentor.gender === 'Female' ? 'selected' : ''}>Female</option>
+                <option value="Non-binary" ${mentor.gender === 'Non-binary' ? 'selected' : ''}>Non-binary / Gender Diverse</option>
+                <option value="Prefer not to say" ${mentor.gender === 'Prefer not to say' ? 'selected' : ''}>Prefer not to say</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" style="font-weight: 700;">Bio / Executive Summary</label>
+            <textarea class="form-input" id="mentorTabBio" rows="4" style="border-radius: 10px; padding: 0.7rem 1rem; resize: vertical;">${mentor.bio || ''}</textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" style="font-weight: 700;">Areas of Expertise (Comma Separated)</label>
+            <input type="text" class="form-input" id="mentorTabExpertise" value="${(mentor.expertise || []).join(', ')}" placeholder="e.g. MERL, Data Strategy, Career Coaching" style="border-radius: 10px; padding: 0.7rem 1rem;" />
+          </div>
+
+          <div style="font-size: 0.85rem; font-weight: 800; text-transform: uppercase; color: var(--brand-primary); margin-bottom: 0.8rem; margin-top: 1.25rem;">Social Media Links & Handles</div>
+
+          <div class="form-group">
+            <label class="form-label" style="font-weight: 700;"><i class="fa-brands fa-linkedin" style="color: #0A66C2;"></i> LinkedIn Profile URL</label>
+            <input type="url" class="form-input" id="mentorTabLinkedIn" value="${mentor.socialLinks?.linkedin || ''}" placeholder="https://linkedin.com/in/username" style="border-radius: 10px; padding: 0.7rem 1rem;" />
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.75rem;">
+            <button type="submit" class="btn-brand-primary" style="padding: 0.7rem 1.8rem; font-weight: 800; font-size: 0.92rem;">
+              <i class="fa-solid fa-floppy-disk"></i> Save Mentor Profile
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   `;
@@ -2900,6 +2988,60 @@ function bindEvents() {
       }
 
       showToast('Profile updated successfully!', 'fa-circle-check');
+      render();
+    });
+
+    // Mentor In-Page Profile Tab Photo Upload Handler
+    const mentorTabAvatarInput = document.getElementById('mentorTabAvatarInput');
+    if (mentorTabAvatarInput) {
+      mentorTabAvatarInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          compressImageFile(file, (compressedDataUrl) => {
+            if (state.currentUser) state.currentUser.avatar = compressedDataUrl;
+            const preview = document.getElementById('mentorTabAvatarPreview');
+            if (preview) preview.src = compressedDataUrl;
+            showToast('New executive headshot photo selected!', 'fa-image');
+          });
+        }
+      });
+    }
+
+    // Mentor In-Page Profile Tab Form Submit Handler
+    document.getElementById('formMentorTabProfile')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const activeMentor = (state.currentUser && state.currentUser.role === 'mentor')
+        ? state.currentUser
+        : (state.mentors[state.currentMentorIndex] || state.mentors[0]);
+
+      const name = document.getElementById('mentorTabName')?.value || activeMentor.name;
+      const title = document.getElementById('mentorTabTitle')?.value || activeMentor.title;
+      const organization = document.getElementById('mentorTabOrg')?.value || activeMentor.organization;
+      const domain = document.getElementById('mentorTabDomain')?.value || activeMentor.domain;
+      const gender = document.getElementById('mentorTabGender')?.value || activeMentor.gender || '';
+      const bio = document.getElementById('mentorTabBio')?.value || activeMentor.bio;
+      const expRaw = document.getElementById('mentorTabExpertise')?.value || '';
+      const expertise = expRaw.split(',').map(s => s.trim()).filter(Boolean);
+      const linkedin = document.getElementById('mentorTabLinkedIn')?.value || '';
+
+      const updates = {
+        name,
+        title,
+        organization,
+        domain,
+        gender,
+        bio,
+        expertise,
+        socialLinks: { ...(activeMentor.socialLinks || {}), linkedin }
+      };
+
+      if (state.currentUser && state.currentUser.role === 'mentor') {
+        Object.assign(state.currentUser, updates);
+        localStorage.setItem('mently_user', JSON.stringify(state.currentUser));
+      }
+
+      await apiService.updateMentorProfile(activeMentor.id, updates);
+      showToast('Mentor profile updated successfully!', 'fa-circle-check');
       render();
     });
 
