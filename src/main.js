@@ -2235,60 +2235,108 @@ function renderModals() {
   if (state.activeModal === 'booking' && state.bookingMentor) {
     const mentor = state.mentors.find(m => String(m.id) === String(state.bookingMentor.id)) || state.bookingMentor;
     const rawSlots = (mentor.schedule || []).filter(s => !s.isBooked);
-    // Deduplicate identical slot combinations (same date and same time)
-    const openSlots = [];
-    const seenSlots = new Set();
+    
+    // Group slots by date
+    const slotsByDate = {};
     for (const s of rawSlots) {
-      const key = `${s.date}_${s.time}`;
-      if (!seenSlots.has(key)) {
-        seenSlots.add(key);
-        openSlots.push(s);
+      if (!slotsByDate[s.date]) slotsByDate[s.date] = [];
+      if (!slotsByDate[s.date].includes(s.time)) {
+        slotsByDate[s.date].push(s.time);
       }
     }
+    const availableDates = Object.keys(slotsByDate).sort();
+
+    // Default selected date to first available date if not set or invalid
+    let selectedDate = state.bookingData.date;
+    if (!selectedDate || !availableDates.includes(selectedDate)) {
+      selectedDate = availableDates.length > 0 ? availableDates[0] : null;
+      state.bookingData.date = selectedDate;
+    }
+
+    const currentTimesForDate = selectedDate ? (slotsByDate[selectedDate] || []) : [];
+    if (currentTimesForDate.length > 0 && (!state.bookingData.time || !currentTimesForDate.includes(state.bookingData.time))) {
+      state.bookingData.time = currentTimesForDate[0];
+    }
+
     return `
       <div class="modal-overlay">
-        <div class="modal-content-card">
-          <div class="modal-header-flex">
-            <div class="modal-title">Book 1-on-1 Session with ${mentor.name}</div>
+        <div class="modal-content-card" style="max-width: 620px; border-radius: 20px; padding: 2rem;">
+          <div class="modal-header-flex" style="margin-bottom: 1.25rem;">
+            <div>
+              <div class="modal-title" style="font-size: 1.35rem; font-weight: 800; font-family: var(--font-display);">Book 1-on-1 Mentorship Session</div>
+              <p style="font-size: 0.86rem; color: var(--text-secondary); margin-top: 0.2rem;">With <strong>${mentor.name}</strong> · ${mentor.title}</p>
+            </div>
             <button class="close-modal-btn btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
           </div>
 
-          <div style="margin-bottom: 1.25rem;">
-            <label class="form-label" style="font-weight: 800; display: block; margin-bottom: 0.6rem;">Available Mentor Time Slots</label>
-            ${openSlots.length > 0 ? `
-              <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.75rem;">
-                ${openSlots.map(s => {
-                  const isSelected = state.bookingData.date === s.date && state.bookingData.time === s.time;
+          ${availableDates.length > 0 ? `
+            <!-- STEP 1: SELECT AVAILABLE DATE -->
+            <div style="margin-bottom: 1.5rem;">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.65rem;">
+                <label class="form-label" style="font-weight: 800; font-size: 0.88rem; margin: 0; display: flex; align-items: center; gap: 0.45rem;">
+                  <i class="fa-regular fa-calendar" style="color: var(--brand-primary);"></i> Step 1: Select Available Date
+                </label>
+                <span style="font-size: 0.78rem; font-weight: 700; color: var(--brand-violet);">${availableDates.length} date${availableDates.length === 1 ? '' : 's'} open</span>
+              </div>
+
+              <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
+                ${availableDates.map(dateStr => {
+                  const isDateActive = state.bookingData.date === dateStr;
+                  const dateObj = new Date(dateStr + 'T00:00:00');
+                  const weekday = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
+                  const formattedDay = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                  const count = slotsByDate[dateStr].length;
+
                   return `
-                    <button type="button" class="slot-pick-btn ${isSelected ? 'active' : ''}" 
-                            data-date="${s.date}" data-time="${s.time}" 
-                            style="display: flex; align-items: center; gap: 0.75rem; text-align: left; padding: 0.75rem 1rem; border-radius: 12px; border: 2px solid ${isSelected ? 'var(--brand-primary)' : 'var(--border-color)'}; background: ${isSelected ? 'rgba(46,16,101,0.08)' : 'var(--bg-surface)'}; cursor: pointer; transition: all 0.2s ease;">
-                      <div style="width: 36px; height: 36px; border-radius: 50%; background: ${isSelected ? 'var(--brand-primary)' : 'var(--bg-hover)'}; color: ${isSelected ? '#ffffff' : 'var(--brand-primary)'}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                        <i class="fa-regular fa-clock" style="font-size: 0.95rem;"></i>
-                      </div>
-                      <div>
-                        <div style="font-weight: 800; font-size: 0.88rem; color: var(--text-primary); margin-bottom: 0.15rem;">${s.date}</div>
-                        <div style="font-size: 0.82rem; font-weight: 700; color: var(--brand-violet);">${s.time}</div>
-                      </div>
+                    <button type="button" class="btn-booking-date-pill ${isDateActive ? 'active' : ''}" data-date="${dateStr}"
+                            style="padding: 0.65rem 1.1rem; border-radius: 12px; border: 2px solid ${isDateActive ? 'var(--brand-primary)' : 'var(--border-color)'}; background: ${isDateActive ? 'linear-gradient(135deg, #1b0a3a 0%, #2e1065 100%)' : 'var(--bg-surface)'}; color: ${isDateActive ? '#ffffff' : 'var(--text-primary)'}; cursor: pointer; transition: all 0.2s ease; text-align: center; box-shadow: ${isDateActive ? '0 4px 14px rgba(46,16,101,0.25)' : 'none'};">
+                      <div style="font-size: 0.74rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: ${isDateActive ? '#ffd700' : 'var(--text-muted)'};">${weekday}</div>
+                      <div style="font-size: 0.95rem; font-weight: 800; margin: 0.15rem 0;">${formattedDay}</div>
+                      <div style="font-size: 0.72rem; font-weight: 700; color: ${isDateActive ? '#e9d5ff' : 'var(--brand-violet)'};">${count} slot${count === 1 ? '' : 's'}</div>
                     </button>
                   `;
                 }).join('')}
               </div>
-            ` : `
-              <div style="padding: 1.5rem; text-align: center; background: var(--bg-surface-secondary); border-radius: var(--radius-md); border: 1px dashed var(--border-color); color: var(--text-secondary);">
-                <i class="fa-regular fa-calendar-xmark" style="font-size: 1.8rem; color: var(--brand-primary); margin-bottom: 0.5rem; display: block;"></i>
-                <div style="font-weight: 700; margin-bottom: 0.3rem; color: var(--text-primary);">No Open Time Slots Currently Available</div>
-                <div style="font-size: 0.84rem;">This mentor has not posted any open time slots yet. Please check back later.</div>
+            </div>
+
+            <!-- STEP 2: SELECT TIME SLOT FOR CHOSEN DATE -->
+            <div style="margin-bottom: 1.5rem; background: var(--bg-hover); padding: 1.25rem; border-radius: 14px; border: 1px solid var(--border-color);">
+              <label class="form-label" style="font-weight: 800; font-size: 0.88rem; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.45rem;">
+                <i class="fa-regular fa-clock" style="color: var(--brand-primary);"></i> Step 2: Choose 1-Hour Time Slot for ${selectedDate}
+              </label>
+
+              <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 0.6rem;">
+                ${currentTimesForDate.map(t => {
+                  const isTimeActive = state.bookingData.time === t;
+                  return `
+                    <button type="button" class="btn-booking-time-pill ${isTimeActive ? 'active' : ''}" data-time="${t}"
+                            style="padding: 0.65rem 0.9rem; border-radius: 10px; border: 2px solid ${isTimeActive ? 'var(--brand-primary)' : 'var(--border-color)'}; background: ${isTimeActive ? 'var(--brand-primary)' : 'var(--bg-surface)'}; color: ${isTimeActive ? '#ffffff' : 'var(--text-primary)'}; font-weight: 800; font-size: 0.84rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer; transition: all 0.2s ease;">
+                      <i class="fa-regular fa-circle-dot" style="color: ${isTimeActive ? '#ffd700' : 'var(--brand-violet)'}; font-size: 0.75rem;"></i>
+                      ${t}
+                    </button>
+                  `;
+                }).join('')}
               </div>
-            `}
+            </div>
+          ` : `
+            <div style="padding: 2.5rem 1.5rem; text-align: center; background: var(--bg-surface-secondary); border-radius: 14px; border: 1px dashed var(--border-color); color: var(--text-secondary); margin-bottom: 1.5rem;">
+              <div style="width: 54px; height: 54px; border-radius: 50%; background: rgba(46,16,101,0.08); display: flex; align-items: center; justify-content: center; margin: 0 auto 0.75rem; color: var(--brand-primary);">
+                <i class="fa-regular fa-calendar-xmark" style="font-size: 1.6rem;"></i>
+              </div>
+              <div style="font-weight: 800; font-size: 1.05rem; margin-bottom: 0.35rem; color: var(--text-primary);">No Open Time Slots Currently Available</div>
+              <div style="font-size: 0.86rem; max-width: 380px; margin: 0 auto;">This mentor has not posted open 1-on-1 availability yet. Please check back later or choose another mentor.</div>
+            </div>
+          `}
+
+          <!-- SESSION OBJECTIVE -->
+          <div class="form-group" style="margin-bottom: 1.25rem;">
+            <label class="form-label" style="font-weight: 800; font-size: 0.88rem;">Session Objective / Discussion Questions</label>
+            <textarea class="form-textarea" rows="3" id="bookingObjectiveInput" placeholder="What specific career topics, portfolio reviews, or questions would you like to cover in this session?" style="border-radius: 12px; padding: 0.85rem 1rem; font-size: 0.88rem;">${state.bookingData.objective || ''}</textarea>
           </div>
 
-          <div class="form-group">
-            <label class="form-label">Session Objective / Discussion Questions</label>
-            <textarea class="form-textarea" rows="3" id="bookingObjectiveInput" placeholder="Describe what you would like to discuss during this 1-on-1 session...">${state.bookingData.objective || ''}</textarea>
-          </div>
-
-          <button class="btn-brand-primary" id="btnConfirmBookingSubmit" ${openSlots.length === 0 ? 'disabled style="opacity:0.5; cursor:not-allowed; width: 100%; justify-content: center; padding: 0.8rem;"' : 'style="width: 100%; justify-content: center; padding: 0.8rem;"'}>Confirm Booking</button>
+          <button class="btn-brand-primary" id="btnConfirmBookingSubmit" ${availableDates.length === 0 ? 'disabled style="opacity:0.4; cursor:not-allowed; width: 100%; justify-content: center; padding: 0.85rem; font-size: 0.95rem; border-radius: 12px;"' : 'style="width: 100%; justify-content: center; padding: 0.85rem; font-size: 0.95rem; border-radius: 12px;"'}>
+            <i class="fa-solid fa-calendar-check"></i> Confirm 1-on-1 Booking
+          </button>
         </div>
       </div>
     `;
@@ -3119,12 +3167,22 @@ function bindEvents() {
       });
     });
 
-    // Slot Picker Buttons in Modal
-    document.querySelectorAll('.slot-pick-btn').forEach(btn => {
+    // Step 1: Booking Date Pill Selection
+    document.querySelectorAll('.btn-booking-date-pill').forEach(btn => {
       btn.addEventListener('click', () => {
         const objInput = document.getElementById('bookingObjectiveInput');
         if (objInput) state.bookingData.objective = objInput.value;
         state.bookingData.date = btn.dataset.date;
+        state.bookingData.time = null; // reset to allow user to pick time for new date
+        render();
+      });
+    });
+
+    // Step 2: Booking Time Pill Selection
+    document.querySelectorAll('.btn-booking-time-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const objInput = document.getElementById('bookingObjectiveInput');
+        if (objInput) state.bookingData.objective = objInput.value;
         state.bookingData.time = btn.dataset.time;
         render();
       });
