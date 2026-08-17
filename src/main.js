@@ -920,9 +920,27 @@ function renderAuthenticatedDashboard() {
     </nav>
 
     <!-- Main Workspace Area -->
-    <main class="mently-container">
+    <main class="mently-container" style="flex: 1;">
       ${renderRoleView(activeAssociate, activeMentor)}
     </main>
+
+    <!-- Authenticated Dashboard Footer with Social Handles -->
+    <footer style="border-top: 1px solid var(--border-color); background: var(--bg-surface); padding: 1.5rem 2rem; margin-top: 3rem;">
+      <div style="max-width: 1240px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div style="font-size: 0.82rem; color: var(--text-muted);">
+          © 2026 Mastercard Foundation Associates Program & Jobberman. All rights reserved.
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+          <span style="font-size: 0.78rem; font-weight: 800; color: var(--text-secondary); text-transform: uppercase;">Follow Jobberman:</span>
+          <a href="https://www.linkedin.com/company/jobberman-nigeria/" target="_blank" style="width: 32px; height: 32px; border-radius: 50%; background: rgba(10, 102, 194, 0.1); color: #0A66C2; display: inline-flex; align-items: center; justify-content: center; font-size: 0.95rem; text-decoration: none;" title="LinkedIn"><i class="fa-brands fa-linkedin"></i></a>
+          <a href="https://twitter.com/jobbermandotcom" target="_blank" style="width: 32px; height: 32px; border-radius: 50%; background: rgba(15, 20, 25, 0.1); color: var(--text-primary); display: inline-flex; align-items: center; justify-content: center; font-size: 0.95rem; text-decoration: none;" title="Twitter / X"><i class="fa-brands fa-x-twitter"></i></a>
+          <a href="https://www.facebook.com/jobberman/" target="_blank" style="width: 32px; height: 32px; border-radius: 50%; background: rgba(24, 119, 242, 0.1); color: #1877F2; display: inline-flex; align-items: center; justify-content: center; font-size: 0.95rem; text-decoration: none;" title="Facebook"><i class="fa-brands fa-facebook"></i></a>
+          <a href="https://www.instagram.com/jobbermannigeria/" target="_blank" style="width: 32px; height: 32px; border-radius: 50%; background: rgba(225, 48, 108, 0.1); color: #E1306C; display: inline-flex; align-items: center; justify-content: center; font-size: 0.95rem; text-decoration: none;" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
+          <a href="https://www.youtube.com/user/jobbermanng" target="_blank" style="width: 32px; height: 32px; border-radius: 50%; background: rgba(255, 0, 0, 0.1); color: #FF0000; display: inline-flex; align-items: center; justify-content: center; font-size: 0.95rem; text-decoration: none;" title="YouTube"><i class="fa-brands fa-youtube"></i></a>
+          <a href="https://www.jobberman.com/" target="_blank" style="width: 32px; height: 32px; border-radius: 50%; background: rgba(46, 16, 101, 0.1); color: var(--brand-primary); display: inline-flex; align-items: center; justify-content: center; font-size: 0.95rem; text-decoration: none;" title="Jobberman Official Website"><i class="fa-solid fa-globe"></i></a>
+        </div>
+      </div>
+    </footer>
 
     <!-- Active Modals -->
     ${renderModals()}
@@ -3097,9 +3115,12 @@ function bindEvents() {
     }
 
     document.getElementById('btnSaveMentorProfileSubmit')?.addEventListener('click', async () => {
-      const activeMentor = state.mentors[state.currentMentorIndex];
+      const activeMentor = (state.currentUser && state.currentUser.role === 'mentor') 
+        ? state.currentUser 
+        : (state.mentors[state.currentMentorIndex] || state.mentors[0]);
+
       const name = document.getElementById('editMentorName')?.value || activeMentor.name;
-      const avatar = document.getElementById('editMentorAvatar')?.value || activeMentor.avatar;
+      const avatar = (state.editingMentorProfile && state.editingMentorProfile.avatar) || activeMentor.avatar;
       const title = document.getElementById('editMentorTitle')?.value || activeMentor.title;
       const organization = document.getElementById('editMentorOrg')?.value || activeMentor.organization;
       const domain = document.getElementById('editMentorDomain')?.value || activeMentor.domain;
@@ -3113,7 +3134,7 @@ function bindEvents() {
 
       const gender = document.getElementById('editMentorGender')?.value || activeMentor.gender || '';
 
-      await apiService.updateMentorProfile(activeMentor.id, {
+      const updates = {
         name,
         avatar,
         title,
@@ -3123,10 +3144,17 @@ function bindEvents() {
         gender,
         expertise,
         socialLinks: { linkedin, github, twitter }
-      });
+      };
+
+      if (state.currentUser && state.currentUser.role === 'mentor') {
+        Object.assign(state.currentUser, updates);
+        localStorage.setItem('mently_user', JSON.stringify(state.currentUser));
+      }
+
+      await apiService.updateMentorProfile(activeMentor.id, updates);
 
       state.activeModal = null;
-      showToast('Mentor profile updated successfully!');
+      showToast('Mentor profile updated successfully!', 'fa-circle-check');
       await initAppData();
     });
 
