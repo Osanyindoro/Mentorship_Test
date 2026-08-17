@@ -1517,26 +1517,66 @@ function renderMentorDashboard(mentor) {
           return mentorSessions.map(s => {
             const isGoogleMeet = s.meetingLink && s.meetingLink.includes('meet.google.com');
             const calUrl = getGoogleCalendarUrl(s);
+            const assoc = state.associates.find(a => String(a.id) === String(s.associateId) || a.name === s.associateName) || {};
+            const org = s.associateOrg || assoc.organization || assoc.institution || 'Jobberman Nigeria';
+            const title = s.associateTitle || assoc.title || 'Mastercard Foundation Associate';
+            const track = assoc.track || s.mentorDomain || 'General Track';
 
             return `
-              <div class="mentor-card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem;">
-                  <div style="font-weight: 800; font-size: 1.05rem;">Associate: ${s.associateName}</div>
-                  <span class="badge-tag ${s.status === 'Accepted' ? 'badge-green' : 'badge-gold'}">${s.status}</span>
+              <div class="mentor-card" style="border-radius: 16px; border: 1px solid var(--border-color); padding: 1.5rem; background: var(--bg-surface); box-shadow: var(--shadow-sm);">
+                <!-- Header with Associate Name & Status -->
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.9rem; flex-wrap: wrap; gap: 0.5rem;">
+                  <div>
+                    <div style="font-weight: 800; font-size: 1.15rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
+                      <i class="fa-solid fa-user-graduate" style="color: var(--brand-primary); font-size: 1rem;"></i>
+                      ${s.associateName}
+                    </div>
+                    <div style="font-size: 0.85rem; font-weight: 700; color: var(--brand-violet); margin-top: 0.2rem;">
+                      ${title} <span style="color: var(--text-muted); font-weight: 400;">at</span> ${org}
+                    </div>
+                  </div>
+                  <span class="badge-tag ${s.status === 'Accepted' ? 'badge-green' : 'badge-gold'}" style="font-size: 0.8rem; padding: 0.35rem 0.85rem; border-radius: 20px;">
+                    ${s.status === 'Accepted' ? '<i class="fa-solid fa-circle-check"></i> Accepted' : '<i class="fa-solid fa-clock"></i> Pending Acceptance'}
+                  </span>
                 </div>
-                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.8rem;">${s.objective}</p>
-                <div class="card-footer" style="flex-wrap: wrap; gap: 0.75rem;">
-                  <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted);"><i class="fa-regular fa-clock"></i> ${s.date} at ${s.time}</span>
-                  <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+
+                <!-- Associate Track & Host Org Tags -->
+                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;">
+                  <span style="font-size: 0.76rem; font-weight: 700; background: var(--bg-hover); color: var(--text-secondary); padding: 0.25rem 0.65rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                    <i class="fa-solid fa-building" style="margin-right: 0.3rem; color: var(--brand-primary);"></i> Host: ${org}
+                  </span>
+                  <span style="font-size: 0.76rem; font-weight: 700; background: var(--bg-hover); color: var(--text-secondary); padding: 0.25rem 0.65rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                    <i class="fa-solid fa-layer-group" style="margin-right: 0.3rem; color: var(--brand-violet);"></i> Track: ${track}
+                  </span>
+                  <span style="font-size: 0.76rem; font-weight: 700; background: var(--bg-hover); color: var(--text-secondary); padding: 0.25rem 0.65rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                    <i class="fa-regular fa-calendar" style="margin-right: 0.3rem; color: #4285F4;"></i> ${s.date} at ${s.time}
+                  </span>
+                </div>
+
+                <!-- Detailed Mentorship Reason & Agenda -->
+                <div style="background: var(--bg-surface-secondary); border-radius: 10px; padding: 1rem; border-left: 3px solid var(--brand-primary); margin-bottom: 1.2rem;">
+                  <div style="font-size: 0.76rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--brand-primary); margin-bottom: 0.35rem;">
+                    <i class="fa-solid fa-bullseye"></i> Mentorship Agenda & Discussion Points
+                  </div>
+                  <p style="font-size: 0.88rem; color: var(--text-primary); line-height: 1.55; margin: 0; white-space: pre-wrap;">${s.objective}</p>
+                </div>
+
+                <!-- Footer with Action Buttons -->
+                <div class="card-footer" style="padding-top: 0.8rem; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+                  <span style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted);">
+                    <i class="fa-regular fa-clock"></i> Duration: ${s.duration || '1 Hour'}
+                  </span>
+
+                  <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
                     ${s.status === 'Pending' ? `
-                      <button class="btn-brand-primary btn-accept-session" data-id="${s.id}" style="padding: 0.4rem 0.9rem; font-size: 0.8rem;">
+                      <button class="btn-brand-primary btn-accept-session" data-id="${s.id}" style="padding: 0.5rem 1.1rem; font-size: 0.85rem; border-radius: 10px;">
                         <i class="fa-solid fa-calendar-check"></i> Accept & Generate Google Meet Link
                       </button>
                     ` : `
-                      <a href="${s.meetingLink}" target="_blank" class="btn-brand-primary" style="padding: 0.4rem 0.9rem; font-size: 0.8rem;">
+                      <a href="${s.meetingLink}" target="_blank" class="btn-brand-primary" style="padding: 0.5rem 1.1rem; font-size: 0.85rem; border-radius: 10px; text-decoration: none;">
                         <i class="fa-solid fa-video"></i> ${isGoogleMeet ? 'Start Google Meet' : 'Start Meeting'}
                       </a>
-                      <a href="${calUrl}" target="_blank" class="btn-secondary" style="padding: 0.4rem 0.85rem; font-size: 0.8rem; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 700; border: 1px solid var(--border-color); color: var(--text-primary);">
+                      <a href="${calUrl}" target="_blank" class="btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem; border-radius: 10px; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 700; border: 1px solid var(--border-color); color: var(--text-primary);">
                         <i class="fa-regular fa-calendar-plus" style="color: #4285F4;"></i> Add to Google Calendar
                       </a>
                     `}
@@ -2352,10 +2392,27 @@ function renderModals() {
             </div>
           `}
 
-          <!-- SESSION OBJECTIVE -->
-          <div class="form-group" style="margin-bottom: 1.25rem;">
-            <label class="form-label" style="font-weight: 800; font-size: 0.88rem;">Session Objective / Discussion Questions</label>
-            <textarea class="form-textarea" rows="3" id="bookingObjectiveInput" placeholder="What specific career topics, portfolio reviews, or questions would you like to cover in this session?" style="border-radius: 12px; padding: 0.85rem 1rem; font-size: 0.88rem;">${state.bookingData.objective || ''}</textarea>
+          <!-- STEP 3: MANDATORY MENTORSHIP REASON & AGENDA -->
+          <div style="background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.25rem; margin-bottom: 1.5rem;">
+            <div style="font-weight: 800; font-size: 0.9rem; color: var(--text-primary); margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.4rem;">
+              <i class="fa-solid fa-clipboard-list" style="color: var(--brand-primary);"></i> Step 3: Mentorship Objectives & Profile Confirmation <span style="color: #dc2626; font-size: 0.8rem;">*All fields required</span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin-bottom: 0.8rem;">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-weight: 700; font-size: 0.8rem;">Your Current Job Title / Role <span style="color: #dc2626;">*</span></label>
+                <input type="text" class="form-input" id="bookingAssociateTitle" placeholder="e.g. Data Analyst, MERL Officer" value="${state.currentUser?.title || ''}" required style="border-radius: 10px; padding: 0.6rem 0.8rem; font-size: 0.85rem;" />
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-weight: 700; font-size: 0.8rem;">Your Host Organization / Institution <span style="color: #dc2626;">*</span></label>
+                <input type="text" class="form-input" id="bookingAssociateOrg" placeholder="e.g. Jobberman Nigeria, MCF Partner" value="${state.currentUser?.organization || state.currentUser?.institution || 'Jobberman Nigeria'}" required style="border-radius: 10px; padding: 0.6rem 0.8rem; font-size: 0.85rem;" />
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" style="font-weight: 700; font-size: 0.8rem;">Reason for Mentorship & Detailed Session Agenda <span style="color: #dc2626;">*</span></label>
+              <textarea class="form-textarea" rows="3" id="bookingObjectiveInput" placeholder="Outline specific discussion points, career goals, challenges you are facing, or questions you would like your mentor to guide you on..." required style="border-radius: 10px; padding: 0.7rem 0.85rem; font-size: 0.85rem;">${state.bookingData.objective || ''}</textarea>
+            </div>
           </div>
 
           <button class="btn-brand-primary" id="btnConfirmBookingSubmit" ${availableDates.length === 0 ? 'disabled style="opacity:0.4; cursor:not-allowed; width: 100%; justify-content: center; padding: 0.85rem; font-size: 0.95rem; border-radius: 12px;"' : 'style="width: 100%; justify-content: center; padding: 0.85rem; font-size: 0.95rem; border-radius: 12px;"'}>
@@ -3219,25 +3276,47 @@ function bindEvents() {
         : (state.associates[state.currentAssociateIndex] || state.associates[0] || { id: 'MCF-STAFF-001', name: 'Bolaji Akinjole' });
 
       const objInput = document.getElementById('bookingObjectiveInput');
+      const titleInput = document.getElementById('bookingAssociateTitle');
+      const orgInput = document.getElementById('bookingAssociateOrg');
+
       const date = state.bookingData.date;
       const time = state.bookingData.time;
-      const objective = objInput ? objInput.value : (state.bookingData.objective || 'Strategic career guidance session.');
+      const objective = objInput ? objInput.value.trim() : '';
+      const assocTitle = titleInput ? titleInput.value.trim() : (activeAssoc.title || '');
+      const assocOrg = orgInput ? orgInput.value.trim() : (activeAssoc.organization || activeAssoc.institution || '');
 
       if (!date || !time) {
         showToast('Please select one of the mentor\'s available open time slots.', 'fa-circle-exclamation');
         return;
       }
 
+      if (!assocTitle) {
+        showToast('Please specify your current job title/role.', 'fa-circle-exclamation');
+        return;
+      }
+
+      if (!assocOrg) {
+        showToast('Please specify your host organization.', 'fa-circle-exclamation');
+        return;
+      }
+
+      if (!objective || objective.length < 10) {
+        showToast('Please enter a detailed reason and agenda for the mentorship session (min 10 characters).', 'fa-circle-exclamation');
+        return;
+      }
+
       await apiService.createBookingSession({
         associateId: activeAssoc.id,
         associateName: activeAssoc.name,
+        associateTitle: assocTitle,
+        associateOrg: assocOrg,
         mentorId: state.bookingMentor.id,
         mentorName: state.bookingMentor.name,
         mentorDomain: state.bookingMentor.domain,
         date: date,
         time: time,
         duration: '1 Hour',
-        objective: objective || 'Strategic career guidance session.',
+        objective: objective,
         consentToRecord: true
       });
 
