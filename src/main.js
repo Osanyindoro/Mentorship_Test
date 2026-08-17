@@ -1,5 +1,6 @@
 import './style.css';
-import { getStoredTheme, saveStoredTheme } from './data/mockData.js';
+import jobbermanLogo from './assets/jobberman-logo.png';
+import { getStoredTheme, saveStoredTheme, getStoredAssociates, saveStoredAssociates, getStoredMentors, saveStoredMentors } from './data/mockData.js';
 import { apiService } from './services/api.js';
 
 // Route Helper Functions
@@ -281,9 +282,7 @@ function renderSetPasswordPage() {
 
         <!-- HEADER -->
         <div style="text-align: center; margin-bottom: 2rem;">
-          <img src="https://cdn.punchng.com/wp-content/uploads/2020/11/16161239/jobberman-logo.fw_.png"
-            onerror="this.style.display='none'"
-            style="height: 38px; object-fit: contain; margin-bottom: 1.5rem;" alt="Jobberman" />
+          <img src="${jobbermanLogo}" alt="Jobberman Logo" class="brand-logo-img" style="height: 38px; width: 38px; border-radius: 8px; object-fit: cover; margin-bottom: 1.5rem;" />
           <div style="width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, var(--brand-primary), var(--brand-violet)); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; box-shadow: 0 8px 24px rgba(107,33,168,0.25);">
             <i class="fa-solid fa-lock-open" style="font-size: 1.6rem; color: white;"></i>
           </div>
@@ -365,7 +364,7 @@ function renderPublicLandingPage() {
       <!-- Public Header -->
       <header class="mently-header" style="justify-content: space-between;">
         <div class="brand-wrapper" style="cursor: pointer; display: flex; align-items: center; gap: 0.85rem;" id="btnNavBrandHome">
-          <img src="https://cdn.punchng.com/wp-content/uploads/2020/11/16161239/jobberman-logo.fw_.png" onerror="this.onerror=null; this.src='https://th.bing.com/th/id/R.b027fa05ff8c37baaf5b9326985ca6e0?rik=tjRRiqfBgaDl2A&pid=ImgRaw&r=0';" alt="Jobberman" style="height: 36px; width: auto; object-fit: contain;" />
+          <img src="${jobbermanLogo}" alt="Jobberman Logo" class="brand-logo-img" style="height: 38px; width: 38px; border-radius: 8px; object-fit: cover;" />
           <div style="width: 1px; height: 28px; background: var(--border-color); margin: 0 0.15rem;"></div>
           <div class="brand-text">
             <span class="brand-name" style="font-weight: 800; font-size: 1.05rem; color: var(--text-primary); font-family: var(--font-display);">Mastercard Foundation Associate Program</span>
@@ -556,7 +555,7 @@ function renderPublicLandingPage() {
         <div style="max-width: 1240px; margin: 0 auto;">
           <div class="footer-top-grid">
             <div class="brand-wrapper" style="display: flex; align-items: center; gap: 0.85rem;">
-              <img src="https://cdn.punchng.com/wp-content/uploads/2020/11/16161239/jobberman-logo.fw_.png" onerror="this.onerror=null; this.src='https://th.bing.com/th/id/R.b027fa05ff8c37baaf5b9326985ca6e0?rik=tjRRiqfBgaDl2A&pid=ImgRaw&r=0';" alt="Jobberman" style="height: 38px; width: auto; object-fit: contain;" />
+              <img src="${jobbermanLogo}" alt="Jobberman Logo" class="brand-logo-img" style="height: 38px; width: 38px; border-radius: 8px; object-fit: cover;" />
               <div style="width: 1px; height: 30px; background: var(--border-color);"></div>
               <div class="brand-text">
                 <span class="brand-name" style="font-weight: 800; font-size: 1.05rem; color: var(--text-primary);">Mastercard Foundation Associate Program</span>
@@ -631,7 +630,7 @@ function renderLoginPage() {
       <!-- Login Top Bar -->
       <header class="login-header-bar">
         <div class="brand-wrapper" style="cursor: pointer;" id="btnBackToHomeBrand">
-          <div class="brand-logo-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+          <img src="${jobbermanLogo}" alt="Jobberman Logo" class="brand-logo-img" style="height: 38px; width: 38px; border-radius: 8px; object-fit: cover;" />
           <div class="brand-text">
             <span class="brand-name" style="font-size: 1.05rem;">Mastercard Foundation Associate Program</span>
             <span class="brand-tagline">ASSOCIATE MENTORSHIP PORTAL</span>
@@ -869,7 +868,7 @@ function renderAuthenticatedDashboard() {
     <!-- Top Header -->
     <header class="mently-header">
       <div class="brand-wrapper" style="display: flex; align-items: center; gap: 0.85rem;">
-        <img src="https://cdn.punchng.com/wp-content/uploads/2020/11/16161239/jobberman-logo.fw_.png" onerror="this.onerror=null; this.src='https://th.bing.com/th/id/R.b027fa05ff8c37baaf5b9326985ca6e0?rik=tjRRiqfBgaDl2A&pid=ImgRaw&r=0';" alt="Jobberman" style="height: 36px; width: auto; object-fit: contain;" />
+        <img src="${jobbermanLogo}" alt="Jobberman Logo" class="brand-logo-img" style="height: 38px; width: 38px; border-radius: 8px; object-fit: cover;" />
         <div style="width: 1px; height: 28px; background: var(--border-color); margin: 0 0.15rem;"></div>
         <div class="brand-text">
           <span class="brand-name" style="font-weight: 800; font-size: 1.05rem; color: var(--text-primary); font-family: var(--font-display);">Mastercard Foundation Associate Program</span>
