@@ -266,43 +266,46 @@ export const apiService = {
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
-        const { data, error } = await supabase.from('users').select('*').eq('role', 'mentor');
-        if (data && data.length > 0 && !error) {
-          return data.map(u => ({
-            ...u,
-            rating: u.rating || 5.0,
-            totalSessions: u.totalSessions || 42,
-            expertise: u.expertise || ["AI / Machine Learning", "Career Guidance"],
-            socialLinks: u.social_links || u.socialLinks || { linkedin: "https://linkedin.com" }
-          }));
-        }
-
-        // Auto-seed default mentors into Supabase if empty
-        const defaultMentors = getStoredMentors().map(u => ({
+        // Automatically upsert all 11 real mentors into Supabase DB
+        const realMentorsForDb = INITIAL_MENTORS.map(u => ({
           id: u.id,
           role: 'mentor',
           name: u.name,
           email: u.email,
           password: u.password || 'password123',
           phone: u.phone || '+234 80 918 2736',
-          institution: u.organization || 'DeepMind / CMU Africa Faculty',
-          organization: u.organization || 'DeepMind / CMU Africa Faculty',
-          title: u.title || 'Executive Mentor',
-          track: u.domain || 'Software Engineering & AI',
-          domain: u.domain || 'Software Engineering & AI',
-          bio: u.bio || '',
+          institution: u.organization,
+          organization: u.organization,
+          title: u.title,
+          track: u.domain,
+          domain: u.domain,
+          bio: u.bio,
           avatar: u.avatar,
-          expertise: u.expertise || ["AI / Machine Learning", "PhD Advice"],
-          social_links: u.socialLinks || { linkedin: "https://linkedin.com/in/samuelosei" },
+          expertise: u.expertise,
+          social_links: u.socialLinks,
           schedule: u.schedule || []
         }));
 
         try {
-          await supabase.from('users').insert(defaultMentors);
+          await supabase.from('users').upsert(realMentorsForDb, { onConflict: 'id' });
         } catch (e) {
-          console.warn('[Supabase Seed Mentors]', e.message);
+          console.warn('[Supabase Sync Real Mentors]', e.message);
         }
-        return defaultMentors;
+
+        const { data, error } = await supabase.from('users').select('*').eq('role', 'mentor');
+        if (data && data.length > 0 && !error) {
+          // Filter out old legacy mock mentors (MEN-101 to MEN-104)
+          const filtered = data.filter(u => !['MEN-101', 'MEN-102', 'MEN-103', 'MEN-104'].includes(u.id));
+          if (filtered.length > 0) {
+            return filtered.map(u => ({
+              ...u,
+              rating: u.rating || 4.9,
+              totalSessions: u.totalSessions || 25,
+              expertise: u.expertise || ["Career Guidance", "Leadership"],
+              socialLinks: u.social_links || u.socialLinks || { linkedin: "https://linkedin.com" }
+            }));
+          }
+        }
       } catch (err) {
         console.warn('[Supabase Mentors Fetch]', err.message);
       }
