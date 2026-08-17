@@ -224,41 +224,27 @@ export const apiService = {
         const { data, error } = await supabase.from('users').select('*').eq('role', 'associate');
         if (data && data.length > 0 && !error) {
           return data.map(u => ({
-            ...u,
+            id: u.id,
+            role: u.role || 'associate',
+            name: u.name || '',
+            email: u.email || '',
+            password: u.password || '',
+            gender: u.gender || '',
+            must_reset_password: u.must_reset_password || false,
+            phone: u.phone || '+234 801 000 0000',
+            institution: u.institution || u.organization || 'Jobberman Nigeria',
+            organization: u.organization || u.institution || 'Jobberman Nigeria',
+            cohort: u.cohort || '2024-2026 Cohort',
+            title: u.title || 'Mastercard Foundation Associate',
+            track: u.track || u.domain || 'Software Engineering & AI',
+            domain: u.domain || u.track || 'Software Engineering & AI',
+            bio: u.bio || '',
+            avatar: u.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80',
+            skills: u.skills || ["Communication", "Leadership", "Project Management"],
             careerGoal: u.career_goal || u.careerGoal || '',
-            skills: u.skills || [],
-            socialLinks: u.social_links || u.socialLinks || {}
+            schedule: u.schedule || []
           }));
         }
-
-        // Auto-seed default associates into Supabase if empty
-        const defaultAssocs = getStoredAssociates().map(u => ({
-          id: u.id,
-          role: 'associate',
-          name: u.name,
-          email: u.email,
-          gender: u.gender || '',
-          password: u.password || 'password123',
-          phone: u.phone || '+234 801 000 0000',
-          institution: u.institution || 'Jobberman Nigeria',
-          organization: u.organization || 'Jobberman Nigeria',
-          cohort: u.cohort || '2024-2026 Cohort',
-          title: u.title || 'Mastercard Foundation Associate',
-          track: u.track || 'General Mentorship',
-          domain: u.track || 'General Mentorship',
-          bio: u.bio || '',
-          avatar: u.avatar,
-          skills: u.skills || ["Communication", "Leadership", "Project Management"],
-          career_goal: u.careerGoal || "",
-          schedule: u.schedule || []
-        }));
-
-        try {
-          await supabase.from('users').insert(defaultAssocs);
-        } catch (e) {
-          console.warn('[Supabase Seed Associates]', e.message);
-        }
-        return defaultAssocs;
       } catch (err) {
         console.warn('[Supabase Associates Fetch]', err.message);
       }
@@ -273,9 +259,23 @@ export const apiService = {
         const { data, error } = await supabase.from('users').select('*').eq('role', 'mentor');
         if (data && data.length > 0 && !error) {
           return data.map(u => ({
-            ...u,
+            id: u.id,
+            role: 'mentor',
+            name: u.name || '',
+            email: u.email || '',
+            password: u.password || '',
+            gender: u.gender || '',
+            organization: u.organization || u.institution || 'Jobberman Partner Network',
+            institution: u.institution || u.organization || 'Jobberman Partner Network',
+            title: u.title || 'Executive Mentor',
+            domain: u.domain || u.track || 'Software Engineering & AI',
+            track: u.track || u.domain || 'Software Engineering & AI',
+            bio: u.bio || '',
+            avatar: u.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80',
             rating: u.rating || 5.0,
-            totalSessions: u.totalSessions || 25,
+            totalSessions: u.total_sessions || u.totalSessions || 25,
+            monthlyCap: u.monthly_cap || u.monthlyCap || 15,
+            sessionsUsedThisMonth: u.sessions_used || u.sessionsUsedThisMonth || 0,
             expertise: u.expertise || ["Career Guidance", "Leadership Strategy"],
             socialLinks: u.social_links || u.socialLinks || { linkedin: "https://linkedin.com" },
             schedule: u.schedule || []
