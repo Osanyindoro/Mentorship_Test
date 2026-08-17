@@ -137,7 +137,7 @@ function showToast(message, icon = 'fa-circle-check') {
   toast.innerHTML = `
     <i class="fa-solid ${icon}" style="color: var(--brand-primary); font-size: 1.25rem;"></i>
     <div>
-      <div style="font-weight: 800; font-size: 0.9rem;">Mastercard Foundation Associate Program</div>
+      <div style="font-weight: 800; font-size: 0.9rem;">Mastercard Foundation Associates Program</div>
       <div style="font-size: 0.82rem; color: var(--text-secondary);">${message}</div>
     </div>
   `;
@@ -367,7 +367,7 @@ function renderPublicLandingPage() {
           <img src="${jobbermanLogo}" alt="Jobberman Logo" class="brand-logo-img" style="height: 38px; width: 38px; border-radius: 8px; object-fit: cover;" />
           <div style="width: 1px; height: 28px; background: var(--border-color); margin: 0 0.15rem;"></div>
           <div class="brand-text">
-            <span class="brand-name" style="font-weight: 800; font-size: 1.05rem; color: var(--text-primary); font-family: var(--font-display);">Mastercard Foundation Associate Program</span>
+            <span class="brand-name" style="font-weight: 800; font-size: 1.05rem; color: var(--text-primary); font-family: var(--font-display);">Mastercard Foundation Associates Program</span>
             <span class="brand-tagline" style="font-size: 0.72rem; font-weight: 800; color: var(--brand-violet); letter-spacing: 0.05em; text-transform: uppercase;">ASSOCIATE MENTORSHIP PORTAL</span>
           </div>
         </div>
@@ -396,7 +396,7 @@ function renderPublicLandingPage() {
         <!-- Hero Section -->
         <section class="landing-hero" id="section-hero">
           <div>
-            <span class="hero-pill-badge"><i class="fa-solid fa-star"></i> Mastercard Foundation Associate Program</span>
+            <span class="hero-pill-badge"><i class="fa-solid fa-star"></i> Mastercard Foundation Associates Program</span>
             <h1 class="landing-hero-title">Find a Mentor.<br/><span>Grow With Purpose.</span></h1>
             <p class="landing-hero-sub">
               Connect with experienced mentors who can help you develop your skills, navigate your career and achieve your professional goals.
@@ -558,7 +558,7 @@ function renderPublicLandingPage() {
               <img src="${jobbermanLogo}" alt="Jobberman Logo" class="brand-logo-img" style="height: 38px; width: 38px; border-radius: 8px; object-fit: cover;" />
               <div style="width: 1px; height: 30px; background: var(--border-color);"></div>
               <div class="brand-text">
-                <span class="brand-name" style="font-weight: 800; font-size: 1.05rem; color: var(--text-primary);">Mastercard Foundation Associate Program</span>
+                <span class="brand-name" style="font-weight: 800; font-size: 1.05rem; color: var(--text-primary);">Mastercard Foundation Associates Program</span>
                 <span class="brand-tagline" style="font-size: 0.72rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700;">ASSOCIATE MENTORSHIP PORTAL</span>
               </div>
             </div>
@@ -576,7 +576,7 @@ function renderPublicLandingPage() {
           </div>
 
           <div class="footer-bottom" style="display: flex; justify-content: space-between; align-items: center; padding-top: 1.5rem; font-size: 0.82rem; color: var(--text-muted);">
-            <div>© 2026 Mastercard Foundation Associate Program & Jobberman. All rights reserved.</div>
+            <div>© 2026 Mastercard Foundation Associates Program & Jobberman. All rights reserved.</div>
             <div style="display: flex; gap: 1.5rem;">
               <a class="public-nav-link" id="footerLinkHome" style="color: var(--text-secondary);">Home</a>
               <a class="public-nav-link" id="footerLinkMentors" style="color: var(--text-secondary);">Find Mentors</a>
@@ -632,7 +632,7 @@ function renderLoginPage() {
         <div class="brand-wrapper" style="cursor: pointer;" id="btnBackToHomeBrand">
           <img src="${jobbermanLogo}" alt="Jobberman Logo" class="brand-logo-img" style="height: 38px; width: 38px; border-radius: 8px; object-fit: cover;" />
           <div class="brand-text">
-            <span class="brand-name" style="font-size: 1.05rem;">Mastercard Foundation Associate Program</span>
+            <span class="brand-name" style="font-size: 1.05rem;">Mastercard Foundation Associates Program</span>
             <span class="brand-tagline">ASSOCIATE MENTORSHIP PORTAL</span>
           </div>
         </div>
@@ -669,7 +669,7 @@ function renderLoginPage() {
           </div>
 
           <div class="login-quote-card">
-            "Mentorship through the Mastercard Foundation Associate Program provided me with the clarity and guidance needed to publish my research and secure admission into CMU Africa."
+            "Mentorship through the Mastercard Foundation Associates Program provided me with the clarity and guidance needed to publish my research and secure admission into CMU Africa."
             <div style="font-weight: 800; margin-top: 0.6rem; font-size: 0.85rem; opacity: 0.95;">— Amina Kwame, Tech Fellow</div>
           </div>
         </div>
@@ -871,7 +871,7 @@ function renderAuthenticatedDashboard() {
         <img src="${jobbermanLogo}" alt="Jobberman Logo" class="brand-logo-img" style="height: 38px; width: 38px; border-radius: 8px; object-fit: cover;" />
         <div style="width: 1px; height: 28px; background: var(--border-color); margin: 0 0.15rem;"></div>
         <div class="brand-text">
-          <span class="brand-name" style="font-weight: 800; font-size: 1.05rem; color: var(--text-primary); font-family: var(--font-display);">Mastercard Foundation Associate Program</span>
+          <span class="brand-name" style="font-weight: 800; font-size: 1.05rem; color: var(--text-primary); font-family: var(--font-display);">Mastercard Foundation Associates Program</span>
           <span class="brand-tagline" style="font-size: 0.72rem; font-weight: 800; color: var(--brand-violet); letter-spacing: 0.05em; text-transform: uppercase;">ASSOCIATE MENTORSHIP PORTAL</span>
         </div>
       </div>
@@ -1025,7 +1025,7 @@ function renderMenteeHome(associate) {
       <div class="mently-hero-banner" style="background: linear-gradient(135deg, #1b0a3a 0%, #2e1065 100%); border-radius: 18px; padding: 2.25rem; color: #fff; margin-bottom: 2rem; box-shadow: 0 10px 30px rgba(46, 16, 101, 0.25); position: relative; overflow: hidden;">
         <div style="position: relative; z-index: 2;">
           <div class="hero-pill-badge" style="background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); color: #ffd700; border: 1px solid rgba(255,215,0,0.3); font-weight: 800; font-size: 0.82rem; padding: 0.35rem 0.85rem; border-radius: 20px; display: inline-flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
-            <i class="fa-solid fa-rocket"></i> Mastercard Foundation Associate Program
+            <i class="fa-solid fa-rocket"></i> Mastercard Foundation Associates Program
           </div>
           <h1 class="hero-title" style="font-family: var(--font-display); font-size: 2.2rem; font-weight: 800; color: #ffffff; margin-bottom: 0.75rem; line-height: 1.2;">Your growth journey starts here.</h1>
           <p class="hero-subtitle" style="font-size: 1rem; color: rgba(255,255,255,0.85); max-width: 680px; margin-bottom: 1.5rem; line-height: 1.6;">Connect with verified executive mentors, book 1-on-1 career guidance sessions, and supercharge your leadership skills.</p>
