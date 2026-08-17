@@ -346,19 +346,6 @@ function renderSetPasswordPage() {
 // 1. PUBLIC LANDING PAGE
 // --------------------------------------------------------------------------
 function renderPublicLandingPage() {
-  const domainList = [
-    "All",
-    "Software Engineering & AI",
-    "Fintech & Product",
-    "Public Health & Social Impact",
-    "Software Engineering & Data"
-  ];
-
-  const filteredMentors = state.mentors.filter(m => {
-    if (state.landingDomainFilter === 'All') return true;
-    return m.domain === state.landingDomainFilter;
-  });
-
   return `
     <div style="min-height: 100vh; display: flex; flex-direction: column;">
       <!-- Public Header -->
@@ -374,7 +361,6 @@ function renderPublicLandingPage() {
 
         <nav class="public-nav-links">
           <a class="public-nav-link" id="navLinkHome">Home</a>
-          <a class="public-nav-link" id="navLinkMentors">Find Mentors</a>
           <a class="public-nav-link" id="navLinkHowItWorks">How It Works</a>
           <a class="public-nav-link" id="navLinkValue">Program Value</a>
         </nav>
@@ -396,14 +382,14 @@ function renderPublicLandingPage() {
         <!-- Hero Section -->
         <section class="landing-hero" id="section-hero">
           <div>
-            <span class="hero-pill-badge"><i class="fa-solid fa-star"></i> Mastercard Foundation Associates Program</span>
+            <span class="hero-pill-badge"><i class="fa-solid fa-shield-halved"></i> Mastercard Foundation Associates Program</span>
             <h1 class="landing-hero-title">Find a Mentor.<br/><span>Grow With Purpose.</span></h1>
             <p class="landing-hero-sub">
-              Connect with experienced mentors who can help you develop your skills, navigate your career and achieve your professional goals.
+              Connect with verified executive mentors who can help you develop your skills, navigate your career, and achieve your professional goals in a secure, private environment.
             </p>
             <div class="landing-hero-ctas">
               <button class="btn-brand-primary" id="btnHeroFindMentors" style="padding: 0.8rem 1.8rem; font-size: 0.95rem;">
-                <i class="fa-solid fa-magnifying-glass"></i> Find a Mentor
+                <i class="fa-solid fa-lock"></i> Login to Access Mentors
               </button>
               <button class="btn-brand-secondary" id="btnHeroLogin" style="padding: 0.8rem 1.8rem; font-size: 0.95rem; border: 1px solid var(--border-color);">
                 <i class="fa-solid fa-right-to-bracket"></i> Login
@@ -411,57 +397,39 @@ function renderPublicLandingPage() {
             </div>
           </div>
 
-          <!-- Hero Visual Stack -->
+          <!-- Hero Visual Stack (Privacy Protected & Clean Program Badges) -->
           <div class="hero-visual-wrapper">
-            <div class="hero-visual-card-stack">
-              <div class="hero-visual-card card-1">
-                <img src="${state.mentors[0]?.avatar || '/assets/mentor_samuel.jpg'}" style="width: 52px; height: 52px; border-radius: 50%; object-fit: cover; border: 2px solid var(--brand-primary);" />
+            <div class="hero-visual-card-stack" style="gap: 1rem; display: flex; flex-direction: column;">
+              <div class="hero-visual-card card-1" style="background: var(--bg-card); border-left: 4px solid var(--brand-primary); padding: 1rem 1.25rem;">
+                <div style="width: 44px; height: 44px; border-radius: 50%; background: rgba(37, 99, 235, 0.12); color: var(--brand-primary); display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                  <i class="fa-solid fa-user-tie"></i>
+                </div>
                 <div>
-                  <div style="font-weight: 800; font-size: 0.95rem;">${state.mentors[0]?.name || 'Dr. Samuel Osei'}</div>
-                  <div style="font-size: 0.78rem; color: var(--text-secondary);">${state.mentors[0]?.title || 'Principal AI Scientist'}</div>
-                  <span class="badge-tag badge-blue" style="font-size: 0.72rem; margin-top: 0.25rem;">Software Engineering & AI</span>
+                  <div style="font-weight: 800; font-size: 0.95rem;">Executive Mentorship</div>
+                  <div style="font-size: 0.78rem; color: var(--text-secondary);">Verified Senior Industry Leaders & Directors</div>
+                  <span class="badge-tag badge-blue" style="font-size: 0.72rem; margin-top: 0.25rem;"><i class="fa-solid fa-shield-check"></i> Verified Network</span>
                 </div>
               </div>
 
-              <div class="hero-visual-card card-2">
-                <img src="${state.mentors[1]?.avatar || '/assets/mentor_nia.jpg'}" style="width: 52px; height: 52px; border-radius: 50%; object-fit: cover; border: 2px solid var(--brand-violet);" />
+              <div class="hero-visual-card card-2" style="background: var(--bg-card); border-left: 4px solid var(--brand-violet); padding: 1rem 1.25rem;">
+                <div style="width: 44px; height: 44px; border-radius: 50%; background: rgba(107, 33, 168, 0.12); color: var(--brand-violet); display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                  <i class="fa-solid fa-calendar-check"></i>
+                </div>
                 <div>
-                  <div style="font-weight: 800; font-size: 0.95rem;">${state.mentors[1]?.name || 'Nia Temilade'}</div>
-                  <div style="font-size: 0.78rem; color: var(--text-secondary);">${state.mentors[1]?.title || 'VP of Product Management'}</div>
-                  <span class="badge-tag badge-purple" style="font-size: 0.72rem; margin-top: 0.25rem;">Fintech & Product</span>
+                  <div style="font-weight: 800; font-size: 0.95rem;">Structured 1-on-1 Sessions</div>
+                  <div style="font-size: 0.78rem; color: var(--text-secondary);">Direct Career & Technical Roadmap Reviews</div>
+                  <span class="badge-tag badge-purple" style="font-size: 0.72rem; margin-top: 0.25rem;"><i class="fa-solid fa-lock"></i> Scholar Authenticated</span>
                 </div>
               </div>
 
-              <div class="hero-stats-badge">
-                <i class="fa-solid fa-users-viewfinder" style="font-size: 1.4rem; color: var(--brand-primary);"></i>
+              <div class="hero-stats-badge" style="background: var(--bg-card); border: 1px solid var(--border-color);">
+                <i class="fa-solid fa-user-shield" style="font-size: 1.4rem; color: var(--brand-emerald);"></i>
                 <div>
-                  <div style="font-weight: 900; font-size: 1rem; color: var(--text-primary);">4,120+ Associates</div>
-                  <div style="font-size: 0.75rem; color: var(--text-secondary);">Empowered Across Africa</div>
+                  <div style="font-weight: 900; font-size: 1rem; color: var(--text-primary);">Protected Portal</div>
+                  <div style="font-size: 0.75rem; color: var(--text-secondary);">Authorized Access Only</div>
                 </div>
               </div>
             </div>
-          </div>
-        </section>
-
-        <!-- Mentor Discovery Section -->
-        <section class="public-section" id="section-mentors">
-          <div class="public-section-header">
-            <h2 class="public-section-title">Find the right mentor for your journey</h2>
-            <p class="public-section-sub">Empowering associates with world-class mentorship, technical guidance, and leadership acceleration.</p>
-          </div>
-
-          <!-- Filter Pills -->
-          <div class="domain-pills-container">
-            ${domainList.map(d => `
-              <button class="domain-pill-btn ${state.landingDomainFilter === d ? 'active' : ''}" data-domain="${d}">
-                ${d}
-              </button>
-            `).join('')}
-          </div>
-
-          <!-- Mentor Cards Grid -->
-          <div class="cards-grid">
-            ${filteredMentors.map(m => renderLandingMentorCard(m)).join('')}
           </div>
         </section>
 
@@ -475,20 +443,20 @@ function renderPublicLandingPage() {
           <div class="how-it-works-grid">
             <div class="step-card">
               <div class="step-number">01</div>
-              <h3 class="step-title">Explore</h3>
-              <p class="step-desc">Discover mentors based on your interests, goals and specialist domain across AI, Fintech, Data, and Health.</p>
+              <h3 class="step-title">Authenticate</h3>
+              <p class="step-desc">Log in securely with your authorized Mastercard Foundation scholar credentials.</p>
             </div>
 
             <div class="step-card">
               <div class="step-number">02</div>
               <h3 class="step-title">Connect</h3>
-              <p class="step-desc">Review mentor profiles, explore background bios, social links, and find the right person for your development journey.</p>
+              <p class="step-desc">Browse executive mentor bios, specializations, and available open time slots.</p>
             </div>
 
             <div class="step-card">
               <div class="step-number">03</div>
               <h3 class="step-title">Grow</h3>
-              <p class="step-desc">Book 1-on-1 sessions, complete assigned action tasks, attend masterclasses and build meaningful professional relationships.</p>
+              <p class="step-desc">Book 1-on-1 guidance sessions, receive action tasks, and attend group masterclasses.</p>
             </div>
           </div>
         </section>
@@ -571,7 +539,7 @@ function renderPublicLandingPage() {
               <a href="https://www.facebook.com/jobberman/" target="_blank" style="width: 36px; height: 36px; border-radius: 50%; background: rgba(24, 119, 242, 0.1); color: #1877F2; display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem; text-decoration: none;" title="Facebook"><i class="fa-brands fa-facebook"></i></a>
               <a href="https://www.instagram.com/jobbermannigeria/" target="_blank" style="width: 36px; height: 36px; border-radius: 50%; background: rgba(225, 48, 108, 0.1); color: #E1306C; display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem; text-decoration: none;" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
               <a href="https://www.youtube.com/user/jobbermanng" target="_blank" style="width: 36px; height: 36px; border-radius: 50%; background: rgba(255, 0, 0, 0.1); color: #FF0000; display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem; text-decoration: none;" title="YouTube"><i class="fa-brands fa-youtube"></i></a>
-              <a href="https://www.jobberman.com/" target="_blank" style="width: 36px; height: 36px; border-radius: 50%; background: rgba(46, 16, 101, 0.1); color: var(--brand-primary); display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem; text-decoration: none;" title="Jobberman Official Website"><i class="fa-solid fa-globe"></i></a>
+              <a href="https://www.jobberman.com/" target="_blank" style="width: 36px; height: 36px; border-radius: 50%; background: rgba(46, 16, 101, 0.1); color: var(--brand-primary); display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem; text-decoration: none;" title="Jobberman Official Website"><i class="fa-globe"></i></a>
             </div>
           </div>
 
@@ -579,7 +547,6 @@ function renderPublicLandingPage() {
             <div>© 2026 Mastercard Foundation Associates Program & Jobberman. All rights reserved.</div>
             <div style="display: flex; gap: 1.5rem;">
               <a class="public-nav-link" id="footerLinkHome" style="color: var(--text-secondary);">Home</a>
-              <a class="public-nav-link" id="footerLinkMentors" style="color: var(--text-secondary);">Find Mentors</a>
               <a class="public-nav-link" id="footerLinkLogin" style="color: var(--text-secondary);">Login</a>
             </div>
           </div>
@@ -587,7 +554,7 @@ function renderPublicLandingPage() {
       </footer>
     </div>
 
-    <!-- Mentor Profile Preview Modal for Unauthenticated Users -->
+    <!-- Modal Drawer -->
     ${renderModals()}
   `;
 }
@@ -2797,12 +2764,10 @@ function bindEvents() {
     document.getElementById('footerLinkLogin')?.addEventListener('click', () => navigateTo('/login'));
 
     document.getElementById('footerLinkHome')?.addEventListener('click', () => navigateTo('/'));
-    document.getElementById('footerLinkMentors')?.addEventListener('click', () => {
-      document.getElementById('section-mentors')?.scrollIntoView({ behavior: 'smooth' });
-    });
 
     document.getElementById('btnHeroFindMentors')?.addEventListener('click', () => {
-      document.getElementById('section-mentors')?.scrollIntoView({ behavior: 'smooth' });
+      showToast('🔒 Mentor access is restricted to authorized scholars. Please log in.', 'fa-lock');
+      navigateTo('/login');
     });
 
     // Domain Pill Filters on Landing Page
