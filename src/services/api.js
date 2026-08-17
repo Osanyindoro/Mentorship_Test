@@ -544,7 +544,7 @@ export const apiService = {
           .from('sessions')
           .update({ 
             status: 'Accepted',
-            meetingLink: googleMeetLink
+            meeting_link: googleMeetLink
           })
           .eq('id', sessionId);
       } catch (err) {

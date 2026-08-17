@@ -3324,11 +3324,21 @@ function bindEvents() {
     // Mentor Accept Session (Triggers Dynamic Google Meet & Calendar Sync)
     document.querySelectorAll('.btn-accept-session').forEach(btn => {
       btn.addEventListener('click', async () => {
-        const session = state.sessions.find(s => s.id === btn.dataset.id);
-        const updated = await apiService.acceptBookingSession(btn.dataset.id);
+        const sessionId = btn.dataset.id;
+        const session = state.sessions.find(s => String(s.id) === String(sessionId));
+        
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Generating Google Meet...`;
+
+        const updated = await apiService.acceptBookingSession(sessionId);
+        if (session && updated) {
+          session.status = 'Accepted';
+          session.meetingLink = updated.meetingLink;
+        }
 
         const assocName = session ? session.associateName : 'Associate';
         showToast(`🎉 Google Meet created! Session accepted for ${assocName}.`, 'fa-video');
+        render();
         await initAppData();
       });
     });
