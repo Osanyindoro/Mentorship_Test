@@ -983,15 +983,16 @@ function renderRoleView(associate, mentor) {
 
   // Bind genuine registered user data dynamically
   const activeUserAssoc = user && user.role === 'associate' ? {
-    ...associate,
     id: user.id || associate.id,
     name: user.name || associate.name,
     email: user.email || associate.email,
     gender: user.gender || associate.gender || '',
-    institution: user.institution || associate.institution,
-    title: user.title || associate.title,
-    track: user.track || associate.track,
-    bio: user.bio || associate.bio,
+    institution: user.institution || user.organization || associate.institution || 'Jobberman Nigeria',
+    organization: user.organization || user.institution || associate.organization || 'Jobberman Nigeria',
+    title: user.title || associate.title || 'M&E Specialist',
+    track: user.track || user.domain || associate.track || 'Monitoring & Evaluation',
+    domain: user.domain || user.track || associate.domain || 'Monitoring & Evaluation',
+    bio: user.bio || associate.bio || '',
     avatar: user.avatar || associate.avatar
   } : associate;
 
