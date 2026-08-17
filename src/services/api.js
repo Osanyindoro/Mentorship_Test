@@ -648,7 +648,44 @@ export const apiService = {
       task.status = status;
       saveStoredTasks(tasks);
     }
+
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        await supabase.from('tasks').update({ status }).eq('id', taskId);
+      } catch (err) {
+        console.warn('[Supabase Update Task Status]', err.message);
+      }
+    }
     return task;
+  },
+
+  async createTask(taskData) {
+    const tasks = getStoredTasks();
+    const newTask = {
+      id: `TSK-${Math.floor(1000 + Math.random() * 9000)}`,
+      mentorId: taskData.mentorId,
+      mentorName: taskData.mentorName,
+      associateId: taskData.associateId,
+      associateName: taskData.associateName,
+      title: taskData.title,
+      description: taskData.description,
+      deadline: taskData.deadline,
+      status: 'Pending',
+      createdAt: new Date().toISOString().split('T')[0]
+    };
+    tasks.unshift(newTask);
+    saveStoredTasks(tasks);
+
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        await supabase.from('tasks').insert([newTask]);
+      } catch (err) {
+        console.warn('[Supabase Create Task]', err.message);
+      }
+    }
+    return newTask;
   },
 
   // First-login password setup for pre-loaded/seeded users

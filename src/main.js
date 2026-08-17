@@ -3584,7 +3584,10 @@ function bindEvents() {
     });
 
     document.getElementById('btnSubmitCreateTask')?.addEventListener('click', async () => {
-      const activeMentor = state.mentors[state.currentMentorIndex];
+      const activeMentor = (state.currentUser && state.currentUser.role === 'mentor')
+        ? state.currentUser
+        : (state.mentors[state.currentMentorIndex] || state.mentors[0] || { id: 'MEN-2026-001', name: 'Andre Garbutt' });
+
       const selectedIds = state.newTaskData.selectedAssociateIds || [];
       const title = document.getElementById('createTaskTitle')?.value;
       const description = document.getElementById('createTaskDescription')?.value;
@@ -3596,7 +3599,7 @@ function bindEvents() {
       }
 
       if (!title || !description || !deadline) {
-        showToast('Please fill out all required task fields.', 'fa-circle-exclamation');
+        showToast('Please fill out all required task fields (title, instructions, deadline).', 'fa-circle-exclamation');
         return;
       }
 
