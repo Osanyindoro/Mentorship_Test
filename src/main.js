@@ -2070,6 +2070,7 @@ function renderModals() {
 
   if (state.activeModal === 'booking' && state.bookingMentor) {
     const mentor = state.bookingMentor;
+    const openSlots = (mentor.schedule || []).filter(s => !s.isBooked);
     return `
       <div class="modal-overlay">
         <div class="modal-content-card">
@@ -2078,21 +2079,48 @@ function renderModals() {
             <button class="close-modal-btn btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
           </div>
 
-          <div style="margin-bottom: 1.25rem;">
-            <label class="form-label">Select Available Time Slot</label>
-            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.6rem;">
-              ${mentor.schedule.filter(s => !s.isBooked).map(s => `
-                <button class="btn-brand-secondary slot-pick-btn ${state.bookingData.date === s.date && state.bookingData.time === s.time ? 'active' : ''}" 
-                        data-date="${s.date}" data-time="${s.time}" style="color: var(--text-primary); border: 1px solid var(--border-color);">
-                  ${s.date}<br/>${s.time}
-                </button>
-              `).join('')}
+          ${openSlots.length > 0 ? `
+            <div style="margin-bottom: 1.25rem;">
+              <label class="form-label">Available Open Time Slots</label>
+              <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.6rem;">
+                ${openSlots.map(s => `
+                  <button class="btn-brand-secondary slot-pick-btn ${state.bookingData.date === s.date && state.bookingData.time === s.time ? 'active' : ''}" 
+                          data-date="${s.date}" data-time="${s.time}" style="color: var(--text-primary); border: 1px solid var(--border-color);">
+                    ${s.date}<br/>${s.time}
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+          ` : ''}
+
+          <div style="margin-bottom: 1.25rem; background: var(--bg-surface-secondary); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+            <label class="form-label" style="font-weight: 800; color: var(--brand-primary); margin-bottom: 0.5rem; display: block;">
+              <i class="fa-regular fa-calendar-check" style="margin-right: 0.4rem;"></i> ${openSlots.length > 0 ? 'Or Choose Custom Date & Time' : 'Select Date & Time for Session'}
+            </label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+              <div>
+                <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary);">Preferred Date</label>
+                <input type="date" class="form-input" id="bookingCustomDate" value="${state.bookingData.date || '2026-08-25'}" style="margin-top: 0.2rem;" />
+              </div>
+              <div>
+                <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary);">Preferred Time</label>
+                <select class="form-select" id="bookingCustomTime" style="margin-top: 0.2rem;">
+                  <option value="09:00 AM" ${state.bookingData.time === '09:00 AM' ? 'selected' : ''}>09:00 AM</option>
+                  <option value="10:00 AM" ${state.bookingData.time === '10:00 AM' ? 'selected' : ''}>10:00 AM</option>
+                  <option value="11:00 AM" ${state.bookingData.time === '11:00 AM' ? 'selected' : ''}>11:00 AM</option>
+                  <option value="01:00 PM" ${state.bookingData.time === '01:00 PM' ? 'selected' : ''}>01:00 PM</option>
+                  <option value="02:00 PM" ${state.bookingData.time === '02:00 PM' ? 'selected' : ''}>02:00 PM</option>
+                  <option value="03:00 PM" ${state.bookingData.time === '03:00 PM' ? 'selected' : ''}>03:00 PM</option>
+                  <option value="04:00 PM" ${state.bookingData.time === '04:00 PM' ? 'selected' : ''}>04:00 PM</option>
+                  <option value="05:00 PM" ${state.bookingData.time === '05:00 PM' ? 'selected' : ''}>05:00 PM</option>
+                </select>
+              </div>
             </div>
           </div>
 
           <div class="form-group">
             <label class="form-label">Session Objective / Questions</label>
-            <textarea class="form-textarea" rows="3" id="bookingObjectiveInput" placeholder="Describe what you would like to discuss...">${state.bookingData.objective}</textarea>
+            <textarea class="form-textarea" rows="3" id="bookingObjectiveInput" placeholder="Describe what you would like to discuss...">${state.bookingData.objective || ''}</textarea>
           </div>
 
           <button class="btn-brand-primary" id="btnConfirmBookingSubmit" style="width: 100%; justify-content: center; padding: 0.8rem;">Confirm Booking</button>
@@ -2847,7 +2875,7 @@ function bindEvents() {
     // View Mentor Profile Modal
     document.querySelectorAll('.btn-inspect-profile').forEach(btn => {
       btn.addEventListener('click', () => {
-        const m = state.mentors.find(x => x.id === btn.dataset.id);
+        const m = state.mentors.find(x => String(x.id) === String(btn.dataset.id));
         state.inspectingMentor = m;
         state.activeModal = 'mentor_profile';
         render();
@@ -2857,13 +2885,16 @@ function bindEvents() {
     // Book 1-on-1 Slot Modal
     document.querySelectorAll('.btn-book-slot').forEach(btn => {
       btn.addEventListener('click', () => {
-        const m = state.mentors.find(x => x.id === btn.dataset.id);
+        const m = state.mentors.find(x => String(x.id) === String(btn.dataset.id));
         state.bookingMentor = m;
         state.activeModal = 'booking';
-        const availableSlot = m.schedule.find(s => !s.isBooked);
+        const availableSlot = (m?.schedule || []).find(s => !s.isBooked);
         if (availableSlot) {
           state.bookingData.date = availableSlot.date;
           state.bookingData.time = availableSlot.time;
+        } else {
+          state.bookingData.date = '2026-08-25';
+          state.bookingData.time = '10:00 AM';
         }
         render();
       });
@@ -2872,6 +2903,8 @@ function bindEvents() {
     // Slot Picker Buttons in Modal
     document.querySelectorAll('.slot-pick-btn').forEach(btn => {
       btn.addEventListener('click', () => {
+        const objInput = document.getElementById('bookingObjectiveInput');
+        if (objInput) state.bookingData.objective = objInput.value;
         state.bookingData.date = btn.dataset.date;
         state.bookingData.time = btn.dataset.time;
         render();
@@ -2880,11 +2913,19 @@ function bindEvents() {
 
     // Confirm Booking Submit
     document.getElementById('btnConfirmBookingSubmit')?.addEventListener('click', async () => {
-      const activeAssoc = state.associates[state.currentAssociateIndex];
-      const objInput = document.getElementById('bookingObjectiveInput');
-      const objective = objInput ? objInput.value : state.bookingData.objective;
+      const activeAssoc = (state.currentUser && state.currentUser.role === 'associate') 
+        ? state.currentUser 
+        : (state.associates[state.currentAssociateIndex] || state.associates[0] || { id: 'MCF-STAFF-001', name: 'Bolaji Akinjole' });
 
-      if (!state.bookingData.date || !state.bookingData.time) {
+      const objInput = document.getElementById('bookingObjectiveInput');
+      const customDateInput = document.getElementById('bookingCustomDate');
+      const customTimeInput = document.getElementById('bookingCustomTime');
+
+      const date = customDateInput?.value || state.bookingData.date || '2026-08-25';
+      const time = customTimeInput?.value || state.bookingData.time || '10:00 AM';
+      const objective = objInput ? objInput.value : (state.bookingData.objective || 'Strategic career guidance session.');
+
+      if (!date || !time) {
         showToast('Please select a date and time slot.', 'fa-circle-exclamation');
         return;
       }
@@ -2895,14 +2936,15 @@ function bindEvents() {
         mentorId: state.bookingMentor.id,
         mentorName: state.bookingMentor.name,
         mentorDomain: state.bookingMentor.domain,
-        date: state.bookingData.date,
-        time: state.bookingData.time,
+        date: date,
+        time: time,
         duration: '1 Hour',
         objective: objective || 'Strategic career guidance session.',
         consentToRecord: true
       });
 
       state.activeModal = null;
+      state.bookingData = { date: '', time: '', objective: '' };
       showToast('Session booked successfully!');
       await initAppData();
     });
@@ -3059,7 +3101,10 @@ function bindEvents() {
     });
 
     document.getElementById('btnSubmitCreateGroup')?.addEventListener('click', async () => {
-      const activeMentor = state.mentors[state.currentMentorIndex];
+      const activeMentor = (state.currentUser && state.currentUser.role === 'mentor')
+        ? state.currentUser
+        : (state.mentors[state.currentMentorIndex] || state.mentors[0] || { id: 'MEN-2026-001', name: 'Andre Garbutt', title: 'Executive Mentor', domain: 'Software Engineering & AI' });
+
       const title = document.getElementById('createGroupTitle')?.value;
       const domain = document.getElementById('createGroupDomain')?.value;
       const description = document.getElementById('createGroupDescription')?.value;
@@ -3069,23 +3114,23 @@ function bindEvents() {
       const maxCapacity = parseInt(document.getElementById('createGroupMaxCapacity')?.value || 20, 10);
 
       if (!title || !description || !date) {
-        showToast('Please fill out all required fields for the group session.', 'fa-circle-exclamation');
+        showToast('Please fill out all required fields (title, description, date).', 'fa-circle-exclamation');
         return;
       }
 
       await apiService.createGroupSession({
         mentorId: activeMentor.id,
         mentorName: activeMentor.name,
-        mentorTitle: activeMentor.title,
-        mentorAvatar: activeMentor.avatar,
-        title,
-        domain,
-        description,
-        date,
+        mentorTitle: activeMentor.title || 'Executive Mentor',
+        mentorAvatar: activeMentor.avatar || '',
+        title: title.trim(),
+        domain: domain || activeMentor.domain || 'Software Engineering & AI',
+        description: description.trim(),
+        date: date,
         startTime: startTime || '04:00 PM',
         endTime: endTime || '05:00 PM',
         duration: '60 mins',
-        maxCapacity
+        maxCapacity: maxCapacity
       });
 
       state.activeModal = null;
