@@ -499,17 +499,34 @@ export const apiService = {
   },
 
   async acceptBookingSession(sessionId) {
+    const chars = 'abcdefghijklmnopqrstuvwxyz';
+    const rPart = (len) => {
+      let s = '';
+      for (let i = 0; i < len; i++) s += chars.charAt(Math.floor(Math.random() * chars.length));
+      return s;
+    };
+    const dynamicMeetCode = `${rPart(3)}-${rPart(4)}-${rPart(3)}`;
+    const googleMeetLink = `https://meet.google.com/${dynamicMeetCode}`;
+
     const sessions = getStoredSessions();
     const session = sessions.find(s => s.id === sessionId);
     if (session) {
       session.status = 'Accepted';
+      session.meetingLink = googleMeetLink;
+      session.provider = 'Google Meet';
       saveStoredSessions(sessions);
     }
 
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
-        await supabase.from('sessions').update({ status: 'Accepted' }).eq('id', sessionId);
+        await supabase
+          .from('sessions')
+          .update({ 
+            status: 'Accepted',
+            meetingLink: googleMeetLink
+          })
+          .eq('id', sessionId);
       } catch (err) {
         console.warn('[Supabase Accept Session]', err.message);
       }

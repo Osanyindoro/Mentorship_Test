@@ -219,6 +219,24 @@ export default function handler(req, res) {
     return res.status(200).json(notifications);
   }
 
+  if (url.includes('/create-meeting') || url.includes('/create_meeting')) {
+    const { sessionId } = req.body || {};
+    const chars = 'abcdefghijklmnopqrstuvwxyz';
+    const rPart = (len) => {
+      let s = '';
+      for (let i = 0; i < len; i++) s += chars.charAt(Math.floor(Math.random() * chars.length));
+      return s;
+    };
+    const meetCode = `${rPart(3)}-${rPart(4)}-${rPart(3)}`;
+    const meetLink = `https://meet.google.com/${meetCode}`;
+
+    return res.status(200).json({
+      success: true,
+      meetingLink: meetLink,
+      provider: 'Google Meet'
+    });
+  }
+
   return res.status(200).json({
     service: 'Jobberman x Mastercard Foundation Mentorship Live REST API',
     status: 'online',
@@ -231,7 +249,8 @@ export default function handler(req, res) {
       { name: 'Tasks List', path: '/v1/tasks', method: 'GET' },
       { name: 'Notifications', path: '/v1/notifications', method: 'GET' },
       { name: 'User Login', path: '/v1/auth/login', method: 'POST' },
-      { name: 'User Register', path: '/v1/auth/register', method: 'POST' }
+      { name: 'User Register', path: '/v1/auth/register', method: 'POST' },
+      { name: 'Create Google Meet Link', path: '/v1/create-meeting', method: 'POST' }
     ]
   });
 }

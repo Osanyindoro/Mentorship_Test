@@ -1287,36 +1287,80 @@ function renderMenteeTasksList() {
   `;
 }
 
+function getGoogleCalendarUrl(session) {
+  try {
+    const dStr = session.date || new Date().toISOString().split('T')[0];
+    const cleanTime = (session.time || '10:00 AM').replace(/\s+/g, ' ');
+    const parts = cleanTime.match(/(\d+):(\d+)\s*(AM|PM)/i);
+    let hours = parts ? parseInt(parts[1], 10) : 10;
+    const mins = parts ? parseInt(parts[2], 10) : 0;
+    const ampm = parts ? parts[3].toUpperCase() : 'AM';
+    if (ampm === 'PM' && hours < 12) hours += 12;
+    if (ampm === 'AM' && hours === 12) hours = 0;
+
+    const start = new Date(`${dStr}T${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}:00`);
+    const end = new Date(start.getTime() + 60 * 60 * 1000);
+
+    const fmt = (d) => d.toISOString().replace(/-|:|\.\d+/g, '');
+    const dates = `${fmt(start)}/${fmt(end)}`;
+    const title = encodeURIComponent(`MCF Mentorship: ${session.mentorName} & ${session.associateName}`);
+    const details = encodeURIComponent(`Mastercard Foundation 1-on-1 Mentorship Session\n\nGoogle Meet Link: ${session.meetingLink || 'https://meet.google.com'}\nObjective: ${session.objective || 'Career mentorship'}`);
+    const location = encodeURIComponent(session.meetingLink || 'https://meet.google.com');
+
+    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dates}&details=${details}&location=${location}`;
+  } catch (e) {
+    return 'https://calendar.google.com';
+  }
+}
+
 function renderMenteeSessionsList() {
   return `
     <div class="content-area" style="width: 100%;">
       <h2 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; margin-bottom: 1.5rem;">My Scheduled Sessions</h2>
 
       <div style="display: flex; flex-direction: column; gap: 1.25rem;">
-        ${state.sessions.map(s => `
-          <div class="mentor-card">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.8rem;">
-              <div>
-                <div style="font-weight: 800; font-size: 1.1rem;">1-on-1 Session with ${s.mentorName}</div>
-                <div style="font-size: 0.85rem; color: var(--text-secondary);">${s.mentorDomain}</div>
-              </div>
-              <span class="badge-tag ${s.status === 'Accepted' ? 'badge-green' : 'badge-gold'}">${s.status}</span>
-            </div>
+        ${state.sessions.map(s => {
+          const isGoogleMeet = s.meetingLink && s.meetingLink.includes('meet.google.com');
+          const isZoho = s.meetingLink && s.meetingLink.includes('zoho');
+          const calUrl = getGoogleCalendarUrl(s);
 
-            <div style="font-size: 0.86rem; color: var(--text-secondary); margin-bottom: 1rem;">
-              <strong>Objective:</strong> ${s.objective}
-            </div>
-
-            <div class="card-footer">
-              <div style="font-size: 0.82rem; color: var(--text-muted); font-weight: 700;">
-                <i class="fa-regular fa-clock"></i> ${s.date} at ${s.time} (${s.duration})
+          return `
+            <div class="mentor-card">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.8rem;">
+                <div>
+                  <div style="font-weight: 800; font-size: 1.1rem;">1-on-1 Session with ${s.mentorName}</div>
+                  <div style="font-size: 0.85rem; color: var(--text-secondary);">${s.mentorDomain}</div>
+                </div>
+                <span class="badge-tag ${s.status === 'Accepted' ? 'badge-green' : 'badge-gold'}">${s.status}</span>
               </div>
-              ${s.meetingLink ? `
-                <a href="${s.meetingLink}" target="_blank" class="btn-brand-primary" style="padding: 0.4rem 0.9rem; font-size: 0.8rem;"><i class="fa-solid fa-video"></i> Join Zoho Meet</a>
-              ` : ''}
+
+              <div style="font-size: 0.86rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                <strong>Objective:</strong> ${s.objective}
+              </div>
+
+              <div class="card-footer" style="flex-wrap: wrap; gap: 0.75rem;">
+                <div style="font-size: 0.82rem; color: var(--text-muted); font-weight: 700;">
+                  <i class="fa-regular fa-clock"></i> ${s.date} at ${s.time} (${s.duration || '1 Hour'})
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                  ${s.status === 'Accepted' && s.meetingLink ? `
+                    <a href="${s.meetingLink}" target="_blank" class="btn-brand-primary" style="padding: 0.4rem 0.9rem; font-size: 0.8rem;">
+                      <i class="fa-solid fa-video"></i> ${isGoogleMeet ? 'Join Google Meet' : isZoho ? 'Join Zoho Meet' : 'Join Meeting'}
+                    </a>
+                    <a href="${calUrl}" target="_blank" class="btn-secondary" style="padding: 0.4rem 0.85rem; font-size: 0.8rem; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 700; border: 1px solid var(--border-color); color: var(--text-primary);">
+                      <i class="fa-regular fa-calendar-plus" style="color: #4285F4;"></i> Add to Google Calendar
+                    </a>
+                  ` : `
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">
+                      <i class="fa-solid fa-hourglass-half"></i> Awaiting Mentor Acceptance
+                    </span>
+                  `}
+                </div>
+              </div>
             </div>
-          </div>
-        `).join('')}
+          `;
+        }).join('')}
       </div>
     </div>
   `;
@@ -1426,23 +1470,37 @@ function renderMentorDashboard(mentor) {
       <!-- Booked Sessions -->
       <h3 style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 800; margin-bottom: 1rem;">Booked Mentorship Sessions</h3>
       <div style="display: flex; flex-direction: column; gap: 1rem;">
-        ${state.sessions.map(s => `
-          <div class="mentor-card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem;">
-              <div style="font-weight: 800; font-size: 1.05rem;">Associate: ${s.associateName}</div>
-              <span class="badge-tag ${s.status === 'Accepted' ? 'badge-green' : 'badge-gold'}">${s.status}</span>
+        ${state.sessions.map(s => {
+          const isGoogleMeet = s.meetingLink && s.meetingLink.includes('meet.google.com');
+          const calUrl = getGoogleCalendarUrl(s);
+
+          return `
+            <div class="mentor-card">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem;">
+                <div style="font-weight: 800; font-size: 1.05rem;">Associate: ${s.associateName}</div>
+                <span class="badge-tag ${s.status === 'Accepted' ? 'badge-green' : 'badge-gold'}">${s.status}</span>
+              </div>
+              <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.8rem;">${s.objective}</p>
+              <div class="card-footer" style="flex-wrap: wrap; gap: 0.75rem;">
+                <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted);"><i class="fa-regular fa-clock"></i> ${s.date} at ${s.time}</span>
+                <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                  ${s.status === 'Pending' ? `
+                    <button class="btn-brand-primary btn-accept-session" data-id="${s.id}" style="padding: 0.4rem 0.9rem; font-size: 0.8rem;">
+                      <i class="fa-solid fa-calendar-check"></i> Accept & Generate Google Meet Link
+                    </button>
+                  ` : `
+                    <a href="${s.meetingLink}" target="_blank" class="btn-brand-primary" style="padding: 0.4rem 0.9rem; font-size: 0.8rem;">
+                      <i class="fa-solid fa-video"></i> ${isGoogleMeet ? 'Start Google Meet' : 'Start Meeting'}
+                    </a>
+                    <a href="${calUrl}" target="_blank" class="btn-secondary" style="padding: 0.4rem 0.85rem; font-size: 0.8rem; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 700; border: 1px solid var(--border-color); color: var(--text-primary);">
+                      <i class="fa-regular fa-calendar-plus" style="color: #4285F4;"></i> Add to Google Calendar
+                    </a>
+                  `}
+                </div>
+              </div>
             </div>
-            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.8rem;">${s.objective}</p>
-            <div class="card-footer">
-              <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted);"><i class="fa-regular fa-clock"></i> ${s.date} at ${s.time}</span>
-              ${s.status === 'Pending' ? `
-                <button class="btn-brand-primary btn-accept-session" data-id="${s.id}" style="padding: 0.4rem 0.9rem; font-size: 0.8rem;">Accept Session & Generate Zoho Link</button>
-              ` : `
-                <a href="${s.meetingLink}" target="_blank" class="btn-brand-primary" style="padding: 0.4rem 0.9rem; font-size: 0.8rem;"><i class="fa-solid fa-video"></i> Start Zoho Session</a>
-              `}
-            </div>
-          </div>
-        `).join('')}
+          `;
+        }).join('')}
       </div>
     </div>
   `;
@@ -3001,14 +3059,14 @@ function bindEvents() {
       });
     });
 
-    // Mentor Accept Session (Triggers Email & iCal Calendar Invites)
+    // Mentor Accept Session (Triggers Dynamic Google Meet & Calendar Sync)
     document.querySelectorAll('.btn-accept-session').forEach(btn => {
       btn.addEventListener('click', async () => {
         const session = state.sessions.find(s => s.id === btn.dataset.id);
-        await apiService.acceptBookingSession(btn.dataset.id);
+        const updated = await apiService.acceptBookingSession(btn.dataset.id);
 
-        const assocEmail = session ? session.associateName : 'Associate';
-        showToast(`📧 Session Accepted! Confirmation email & calendar invite sent to ${assocEmail}!`, 'fa-envelope-circle-check');
+        const assocName = session ? session.associateName : 'Associate';
+        showToast(`🎉 Google Meet created! Session accepted for ${assocName}.`, 'fa-video');
         await initAppData();
       });
     });
