@@ -1491,37 +1491,54 @@ function renderMentorDashboard(mentor) {
       <!-- Booked Sessions -->
       <h3 style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 800; margin-bottom: 1rem;">Booked Mentorship Sessions</h3>
       <div style="display: flex; flex-direction: column; gap: 1rem;">
-        ${state.sessions.map(s => {
-          const isGoogleMeet = s.meetingLink && s.meetingLink.includes('meet.google.com');
-          const calUrl = getGoogleCalendarUrl(s);
+        ${(() => {
+          const mentorSessions = state.sessions.filter(s => 
+            String(s.mentorId) === String(mentor.id) || 
+            (s.mentorName && mentor.name && s.mentorName.toLowerCase() === mentor.name.toLowerCase())
+          );
 
-          return `
-            <div class="mentor-card">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem;">
-                <div style="font-weight: 800; font-size: 1.05rem;">Associate: ${s.associateName}</div>
-                <span class="badge-tag ${s.status === 'Accepted' ? 'badge-green' : 'badge-gold'}">${s.status}</span>
+          if (mentorSessions.length === 0) {
+            return `
+              <div class="mentor-card" style="text-align: center; padding: 2.5rem 1.5rem; color: var(--text-muted);">
+                <i class="fa-regular fa-calendar-check" style="font-size: 2rem; color: var(--brand-primary); margin-bottom: 0.5rem; display: block;"></i>
+                <div style="font-weight: 800; font-size: 1.05rem; color: var(--text-primary); margin-bottom: 0.25rem;">No Booked Sessions Yet</div>
+                <div style="font-size: 0.85rem;">When an associate books an open time slot from your schedule, it will appear here for you to accept and start meeting.</div>
               </div>
-              <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.8rem;">${s.objective}</p>
-              <div class="card-footer" style="flex-wrap: wrap; gap: 0.75rem;">
-                <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted);"><i class="fa-regular fa-clock"></i> ${s.date} at ${s.time}</span>
-                <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-                  ${s.status === 'Pending' ? `
-                    <button class="btn-brand-primary btn-accept-session" data-id="${s.id}" style="padding: 0.4rem 0.9rem; font-size: 0.8rem;">
-                      <i class="fa-solid fa-calendar-check"></i> Accept & Generate Google Meet Link
-                    </button>
-                  ` : `
-                    <a href="${s.meetingLink}" target="_blank" class="btn-brand-primary" style="padding: 0.4rem 0.9rem; font-size: 0.8rem;">
-                      <i class="fa-solid fa-video"></i> ${isGoogleMeet ? 'Start Google Meet' : 'Start Meeting'}
-                    </a>
-                    <a href="${calUrl}" target="_blank" class="btn-secondary" style="padding: 0.4rem 0.85rem; font-size: 0.8rem; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 700; border: 1px solid var(--border-color); color: var(--text-primary);">
-                      <i class="fa-regular fa-calendar-plus" style="color: #4285F4;"></i> Add to Google Calendar
-                    </a>
-                  `}
+            `;
+          }
+
+          return mentorSessions.map(s => {
+            const isGoogleMeet = s.meetingLink && s.meetingLink.includes('meet.google.com');
+            const calUrl = getGoogleCalendarUrl(s);
+
+            return `
+              <div class="mentor-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem;">
+                  <div style="font-weight: 800; font-size: 1.05rem;">Associate: ${s.associateName}</div>
+                  <span class="badge-tag ${s.status === 'Accepted' ? 'badge-green' : 'badge-gold'}">${s.status}</span>
+                </div>
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.8rem;">${s.objective}</p>
+                <div class="card-footer" style="flex-wrap: wrap; gap: 0.75rem;">
+                  <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted);"><i class="fa-regular fa-clock"></i> ${s.date} at ${s.time}</span>
+                  <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                    ${s.status === 'Pending' ? `
+                      <button class="btn-brand-primary btn-accept-session" data-id="${s.id}" style="padding: 0.4rem 0.9rem; font-size: 0.8rem;">
+                        <i class="fa-solid fa-calendar-check"></i> Accept & Generate Google Meet Link
+                      </button>
+                    ` : `
+                      <a href="${s.meetingLink}" target="_blank" class="btn-brand-primary" style="padding: 0.4rem 0.9rem; font-size: 0.8rem;">
+                        <i class="fa-solid fa-video"></i> ${isGoogleMeet ? 'Start Google Meet' : 'Start Meeting'}
+                      </a>
+                      <a href="${calUrl}" target="_blank" class="btn-secondary" style="padding: 0.4rem 0.85rem; font-size: 0.8rem; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 700; border: 1px solid var(--border-color); color: var(--text-primary);">
+                        <i class="fa-regular fa-calendar-plus" style="color: #4285F4;"></i> Add to Google Calendar
+                      </a>
+                    `}
+                  </div>
                 </div>
               </div>
-            </div>
-          `;
-        }).join('')}
+            `;
+          }).join('');
+        })()}
       </div>
     </div>
   `;
