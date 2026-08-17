@@ -2079,51 +2079,32 @@ function renderModals() {
             <button class="close-modal-btn btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
           </div>
 
-          ${openSlots.length > 0 ? `
-            <div style="margin-bottom: 1.25rem;">
-              <label class="form-label">Available Open Time Slots</label>
+          <div style="margin-bottom: 1.25rem;">
+            <label class="form-label" style="font-weight: 800; display: block; margin-bottom: 0.6rem;">Available Mentor Time Slots</label>
+            ${openSlots.length > 0 ? `
               <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.6rem;">
                 ${openSlots.map(s => `
                   <button class="btn-brand-secondary slot-pick-btn ${state.bookingData.date === s.date && state.bookingData.time === s.time ? 'active' : ''}" 
-                          data-date="${s.date}" data-time="${s.time}" style="color: var(--text-primary); border: 1px solid var(--border-color);">
-                    ${s.date}<br/>${s.time}
+                          data-date="${s.date}" data-time="${s.time}" style="color: var(--text-primary); border: 1.5px solid ${state.bookingData.date === s.date && state.bookingData.time === s.time ? 'var(--brand-primary)' : 'var(--border-color)'}; background: ${state.bookingData.date === s.date && state.bookingData.time === s.time ? 'rgba(46,16,101,0.08)' : 'var(--bg-surface)'}; font-weight: 700;">
+                    <i class="fa-regular fa-clock" style="margin-right: 0.3rem;"></i> ${s.date}<br/><span style="font-size: 0.8rem; color: var(--brand-primary);">${s.time}</span>
                   </button>
                 `).join('')}
               </div>
-            </div>
-          ` : ''}
-
-          <div style="margin-bottom: 1.25rem; background: var(--bg-surface-secondary); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
-            <label class="form-label" style="font-weight: 800; color: var(--brand-primary); margin-bottom: 0.5rem; display: block;">
-              <i class="fa-regular fa-calendar-check" style="margin-right: 0.4rem;"></i> ${openSlots.length > 0 ? 'Or Choose Custom Date & Time' : 'Select Date & Time for Session'}
-            </label>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
-              <div>
-                <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary);">Preferred Date</label>
-                <input type="date" class="form-input" id="bookingCustomDate" value="${state.bookingData.date || '2026-08-25'}" style="margin-top: 0.2rem;" />
+            ` : `
+              <div style="padding: 1.5rem; text-align: center; background: var(--bg-surface-secondary); border-radius: var(--radius-md); border: 1px dashed var(--border-color); color: var(--text-secondary);">
+                <i class="fa-regular fa-calendar-xmark" style="font-size: 1.8rem; color: var(--brand-primary); margin-bottom: 0.5rem; display: block;"></i>
+                <div style="font-weight: 700; margin-bottom: 0.3rem; color: var(--text-primary);">No Open Time Slots Currently Available</div>
+                <div style="font-size: 0.84rem;">This mentor has not posted any open time slots yet. Please check back later.</div>
               </div>
-              <div>
-                <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary);">Preferred Time</label>
-                <select class="form-select" id="bookingCustomTime" style="margin-top: 0.2rem;">
-                  <option value="09:00 AM" ${state.bookingData.time === '09:00 AM' ? 'selected' : ''}>09:00 AM</option>
-                  <option value="10:00 AM" ${state.bookingData.time === '10:00 AM' ? 'selected' : ''}>10:00 AM</option>
-                  <option value="11:00 AM" ${state.bookingData.time === '11:00 AM' ? 'selected' : ''}>11:00 AM</option>
-                  <option value="01:00 PM" ${state.bookingData.time === '01:00 PM' ? 'selected' : ''}>01:00 PM</option>
-                  <option value="02:00 PM" ${state.bookingData.time === '02:00 PM' ? 'selected' : ''}>02:00 PM</option>
-                  <option value="03:00 PM" ${state.bookingData.time === '03:00 PM' ? 'selected' : ''}>03:00 PM</option>
-                  <option value="04:00 PM" ${state.bookingData.time === '04:00 PM' ? 'selected' : ''}>04:00 PM</option>
-                  <option value="05:00 PM" ${state.bookingData.time === '05:00 PM' ? 'selected' : ''}>05:00 PM</option>
-                </select>
-              </div>
-            </div>
+            `}
           </div>
 
           <div class="form-group">
-            <label class="form-label">Session Objective / Questions</label>
-            <textarea class="form-textarea" rows="3" id="bookingObjectiveInput" placeholder="Describe what you would like to discuss...">${state.bookingData.objective || ''}</textarea>
+            <label class="form-label">Session Objective / Discussion Questions</label>
+            <textarea class="form-textarea" rows="3" id="bookingObjectiveInput" placeholder="Describe what you would like to discuss during this 1-on-1 session...">${state.bookingData.objective || ''}</textarea>
           </div>
 
-          <button class="btn-brand-primary" id="btnConfirmBookingSubmit" style="width: 100%; justify-content: center; padding: 0.8rem;">Confirm Booking</button>
+          <button class="btn-brand-primary" id="btnConfirmBookingSubmit" ${openSlots.length === 0 ? 'disabled style="opacity:0.5; cursor:not-allowed; width: 100%; justify-content: center; padding: 0.8rem;"' : 'style="width: 100%; justify-content: center; padding: 0.8rem;"'}>Confirm Booking</button>
         </div>
       </div>
     `;
@@ -2918,15 +2899,12 @@ function bindEvents() {
         : (state.associates[state.currentAssociateIndex] || state.associates[0] || { id: 'MCF-STAFF-001', name: 'Bolaji Akinjole' });
 
       const objInput = document.getElementById('bookingObjectiveInput');
-      const customDateInput = document.getElementById('bookingCustomDate');
-      const customTimeInput = document.getElementById('bookingCustomTime');
-
-      const date = customDateInput?.value || state.bookingData.date || '2026-08-25';
-      const time = customTimeInput?.value || state.bookingData.time || '10:00 AM';
+      const date = state.bookingData.date;
+      const time = state.bookingData.time;
       const objective = objInput ? objInput.value : (state.bookingData.objective || 'Strategic career guidance session.');
 
       if (!date || !time) {
-        showToast('Please select a date and time slot.', 'fa-circle-exclamation');
+        showToast('Please select one of the mentor\'s available open time slots.', 'fa-circle-exclamation');
         return;
       }
 
