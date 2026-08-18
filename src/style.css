@@ -902,14 +902,104 @@ a {
 
 @media (max-width: 768px) {
   .mently-header {
-    padding: 0.8rem 1rem;
+    padding: 0.85rem 1rem;
     flex-wrap: wrap;
-    gap: 0.8rem;
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  .brand-wrapper {
+    gap: 0.65rem;
+    max-width: 62%;
+  }
+
+  .brand-logo-img {
+    height: 34px !important;
+    width: 34px !important;
+    flex-shrink: 0;
+  }
+
+  .brand-name {
+    font-size: 0.88rem !important;
+    line-height: 1.2 !important;
+  }
+
+  .brand-tagline {
+    font-size: 0.62rem !important;
+    letter-spacing: 0.03em !important;
+    line-height: 1.1 !important;
+    margin-top: 0.15rem;
+  }
+
+  .header-right-actions {
+    gap: 0.35rem;
+    margin-left: auto;
+  }
+
+  .auth-user-badge {
+    padding: 0.25rem 0.55rem;
+    gap: 0.4rem;
+  }
+
+  .auth-user-name {
+    max-width: 90px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.78rem;
   }
 
   .header-search-bar {
     order: 3;
     width: 100%;
+    margin-top: 0.25rem;
+    padding: 0.45rem 0.9rem;
+  }
+
+  /* Option 2: Single-Line Touch Scrollable Pill Navigation Bar */
+  .mently-subnav {
+    padding: 0.6rem 1rem;
+    overflow-x: auto;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-card);
+  }
+
+  .mently-subnav::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Edge */
+  }
+
+  .subnav-link {
+    flex-shrink: 0;
+    padding: 0.45rem 0.9rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    border-radius: var(--radius-full);
+    border: 1px solid var(--border-color);
+    background: var(--bg-input);
+    color: var(--text-secondary);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: all 0.2s ease;
+    border-bottom: none !important;
+    white-space: nowrap;
+  }
+
+  .subnav-link:hover, .subnav-link.active {
+    background: var(--brand-primary) !important;
+    color: #ffffff !important;
+    border-color: var(--brand-primary) !important;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+  }
+
+  .subnav-link.active i {
+    color: #ffffff !important;
   }
 
   .hero-title {
