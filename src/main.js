@@ -359,22 +359,42 @@ function renderPublicLandingPage() {
           </div>
         </div>
 
-        <nav class="public-nav-links">
-          <a class="public-nav-link" id="navLinkHome">Home</a>
-          <a class="public-nav-link" id="navLinkHowItWorks">How It Works</a>
-          <a class="public-nav-link" id="navLinkValue">Program Value</a>
-        </nav>
+        <div style="display: flex; align-items: center; gap: 1.75rem;">
+          <nav class="public-nav-links">
+            <a class="public-nav-link" id="navLinkHome">Home</a>
+            <a class="public-nav-link" id="navLinkHowItWorks">How It Works</a>
+            <a class="public-nav-link" id="navLinkValue">Program Value</a>
+          </nav>
 
-        <div style="display: flex; align-items: center; gap: 1rem;">
-          <button class="btn-icon-circle" id="btnToggleTheme" title="Toggle Theme">
-            <i class="fa-solid ${state.theme === 'dark' ? 'fa-sun' : 'fa-moon'}"></i>
-          </button>
-          
-          <button class="btn-brand-primary btn-nav-login" id="btnNavLogin">
-            <i class="fa-solid fa-user"></i> Login
-          </button>
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <button class="btn-icon-circle" id="btnToggleTheme" title="Toggle Theme">
+              <i class="fa-solid ${state.theme === 'dark' ? 'fa-sun' : 'fa-moon'}"></i>
+            </button>
+            
+            <button class="btn-brand-primary btn-nav-login" id="btnNavLogin">
+              <i class="fa-solid fa-user"></i> Login
+            </button>
+
+            <!-- Mobile Hamburger Menu Button (ASG style) -->
+            <button class="btn-mobile-nav-toggle" id="btnMobileNavToggle" aria-label="Toggle Navigation Menu">
+              <i class="fa-solid fa-bars" id="iconMobileNavToggle"></i>
+            </button>
+          </div>
         </div>
       </header>
+
+      <!-- Collapsible Mobile Navigation Drawer Dropdown -->
+      <div class="mobile-nav-drawer" id="mobileNavDrawer">
+        <a class="mobile-nav-item" id="mobileNavLinkHome">
+          <i class="fa-solid fa-house"></i> Home
+        </a>
+        <a class="mobile-nav-item" id="mobileNavLinkHowItWorks">
+          <i class="fa-solid fa-circle-info"></i> How It Works
+        </a>
+        <a class="mobile-nav-item" id="mobileNavLinkValue">
+          <i class="fa-solid fa-star"></i> Program Value
+        </a>
+      </div>
 
       <!-- Main Landing Content -->
       <main style="max-width: 1240px; margin: 2rem auto; padding: 0 1.5rem; flex: 1; width: 100%;">
@@ -2753,6 +2773,44 @@ function bindEvents() {
     document.getElementById('navLinkValue')?.addEventListener('click', () => {
       document.getElementById('section-value')?.scrollIntoView({ behavior: 'smooth' });
     });
+
+    // Mobile Hamburger Toggle Handler
+    const btnMobileToggle = document.getElementById('btnMobileNavToggle');
+    const mobileDrawer = document.getElementById('mobileNavDrawer');
+    const iconMobileToggle = document.getElementById('iconMobileNavToggle');
+
+    if (btnMobileToggle && mobileDrawer) {
+      btnMobileToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = mobileDrawer.classList.toggle('open');
+        if (iconMobileToggle) {
+          iconMobileToggle.className = isOpen ? 'fa-solid fa-xmark' : 'fa-solid fa-bars';
+        }
+      });
+
+      // Close drawer on mobile link click
+      const closeMobileDrawer = () => {
+        mobileDrawer.classList.remove('open');
+        if (iconMobileToggle) {
+          iconMobileToggle.className = 'fa-solid fa-bars';
+        }
+      };
+
+      document.getElementById('mobileNavLinkHome')?.addEventListener('click', () => {
+        closeMobileDrawer();
+        document.getElementById('section-hero')?.scrollIntoView({ behavior: 'smooth' });
+      });
+
+      document.getElementById('mobileNavLinkHowItWorks')?.addEventListener('click', () => {
+        closeMobileDrawer();
+        document.getElementById('section-how-it-works')?.scrollIntoView({ behavior: 'smooth' });
+      });
+
+      document.getElementById('mobileNavLinkValue')?.addEventListener('click', () => {
+        closeMobileDrawer();
+        document.getElementById('section-value')?.scrollIntoView({ behavior: 'smooth' });
+      });
+    }
 
     document.getElementById('btnNavLogin')?.addEventListener('click', () => navigateTo('/login'));
     document.getElementById('btnHeroLogin')?.addEventListener('click', () => navigateTo('/login'));
