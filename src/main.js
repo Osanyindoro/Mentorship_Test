@@ -359,27 +359,25 @@ function renderPublicLandingPage() {
           </div>
         </div>
 
-        <div style="display: flex; align-items: center; gap: 1.75rem;">
-          <nav class="public-nav-links">
-            <a class="public-nav-link" id="navLinkHome">Home</a>
-            <a class="public-nav-link" id="navLinkHowItWorks">How It Works</a>
-            <a class="public-nav-link" id="navLinkValue">Program Value</a>
-          </nav>
+        <nav class="public-nav-links">
+          <a class="public-nav-link" id="navLinkHome">Home</a>
+          <a class="public-nav-link" id="navLinkHowItWorks">How It Works</a>
+          <a class="public-nav-link" id="navLinkValue">Program Value</a>
+        </nav>
 
-          <div style="display: flex; align-items: center; gap: 0.75rem;">
-            <button class="btn-icon-circle" id="btnToggleTheme" title="Toggle Theme">
-              <i class="fa-solid ${state.theme === 'dark' ? 'fa-sun' : 'fa-moon'}"></i>
-            </button>
-            
-            <button class="btn-brand-primary btn-nav-login" id="btnNavLogin">
-              <i class="fa-solid fa-user"></i> Login
-            </button>
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <button class="btn-icon-circle" id="btnToggleTheme" title="Toggle Theme">
+            <i class="fa-solid ${state.theme === 'dark' ? 'fa-sun' : 'fa-moon'}"></i>
+          </button>
+          
+          <button class="btn-brand-primary btn-nav-login" id="btnNavLogin">
+            <i class="fa-solid fa-user"></i> Login
+          </button>
 
-            <!-- Mobile Hamburger Menu Button (ASG style) -->
-            <button class="btn-mobile-nav-toggle" id="btnMobileNavToggle" aria-label="Toggle Navigation Menu">
-              <i class="fa-solid fa-bars" id="iconMobileNavToggle"></i>
-            </button>
-          </div>
+          <!-- Mobile Hamburger Menu Button (ASG style) -->
+          <button class="btn-mobile-nav-toggle" id="btnMobileNavToggle" aria-label="Toggle Navigation Menu">
+            <i class="fa-solid fa-bars" id="iconMobileNavToggle"></i>
+          </button>
         </div>
       </header>
 
