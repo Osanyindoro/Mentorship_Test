@@ -523,6 +523,185 @@ a {
   transform: translateY(-3px);
 }
 
+/* Mentor Card Redesign (ADPList / Picture Main Focus based on Mentor-card.html) */
+.mentor-card-redesign {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(20, 30, 60, 0.06), 0 12px 28px rgba(20, 30, 60, 0.08);
+  display: flex;
+  flex-direction: column;
+  transition: var(--transition-smooth);
+}
+
+.mentor-card-redesign:hover {
+  border-color: var(--brand-primary);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15), 0 16px 32px rgba(20, 30, 60, 0.12);
+  transform: translateY(-4px);
+}
+
+.photo-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: var(--bg-hover);
+  overflow: hidden;
+}
+
+.photo-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.mentor-card-redesign:hover .photo-wrap img {
+  transform: scale(1.03);
+}
+
+.photo-wrap .badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  color: #1a2233;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  box-shadow: 0 2px 6px rgba(20, 30, 60, 0.15);
+  backdrop-filter: blur(4px);
+  z-index: 2;
+}
+
+.photo-wrap .badge svg {
+  width: 12px;
+  height: 12px;
+  flex: none;
+}
+
+.mentor-card-redesign .body {
+  padding: 18px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.mentor-card-redesign h2 {
+  margin: 0 0 4px;
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.mentor-card-redesign .role {
+  margin: 0 0 6px;
+  font-size: 13.5px;
+  line-height: 1.4;
+  color: var(--text-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.mentor-card-redesign .org {
+  margin: 0 0 14px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--brand-primary);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.mentor-card-redesign .meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 12px;
+  margin-top: auto;
+  margin-bottom: 16px;
+  border-top: 1px solid var(--border-color);
+  font-size: 13px;
+}
+
+.mentor-card-redesign .rating {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.mentor-card-redesign .rating svg {
+  width: 14px;
+  height: 14px;
+  fill: var(--brand-gold, #c8933b);
+}
+
+.mentor-card-redesign .rating span.count {
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.mentor-card-redesign .avail {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #1c7a4d;
+  font-weight: 600;
+}
+
+.mentor-card-redesign .avail svg {
+  width: 14px;
+  height: 14px;
+  stroke: #1c7a4d;
+}
+
+.mentor-card-redesign .actions {
+  display: flex;
+  gap: 10px;
+}
+
+.mentor-card-redesign .btn {
+  flex: 1;
+  text-align: center;
+  padding: 11px 0;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1.5px solid var(--brand-primary);
+  background: transparent;
+  color: var(--brand-primary);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.mentor-card-redesign .btn.primary {
+  background: var(--brand-primary);
+  color: #ffffff;
+  border-color: var(--brand-primary);
+}
+
+.mentor-card-redesign .btn:hover {
+  background: var(--brand-primary);
+  color: #ffffff;
+}
+
+.mentor-card-redesign .btn.primary:hover {
+  background: var(--brand-violet);
+  border-color: var(--brand-violet);
+}
+
 .card-header-flex {
   display: flex;
   gap: 1rem;

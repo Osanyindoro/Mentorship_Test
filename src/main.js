@@ -1180,29 +1180,44 @@ function renderMenteeDiscovery() {
 }
 
 function renderMentorCard(mentor) {
-  const availableSlot = mentor.schedule.find(s => !s.isBooked);
+  const availableSlot = mentor.schedule ? mentor.schedule.find(s => !s.isBooked) : null;
+  const avatarUrl = mentor.avatar && mentor.avatar.startsWith('data:') 
+    ? mentor.avatar 
+    : (mentor.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(mentor.name)}&size=600&background=2551d9&color=ffffff&bold=true&format=png`);
+  const fallbackUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(mentor.name)}&size=600&background=2551d9&color=ffffff&bold=true&format=png`;
+
+  const badgeText = mentor.domain ? mentor.domain.split(',')[0].split('&')[0].trim() : 'Executive Mentor';
+
   return `
-    <div class="mentor-card">
-      <div class="card-header-flex">
-        <img src="${mentor.avatar && mentor.avatar.startsWith('data:') ? mentor.avatar : (mentor.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80')}" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(mentor.name)}&background=2e1065&color=ffffff';" class="mentor-avatar-lg" />
-        <div>
-          <div class="mentor-name">${mentor.name}</div>
-          <div class="mentor-title">${mentor.title}</div>
-          <div class="mentor-org">${mentor.organization}</div>
+    <div class="mentor-card-redesign">
+      <div class="photo-wrap">
+        <img src="${avatarUrl}" onerror="this.onerror=null; this.src='${fallbackUrl}';" alt="${mentor.name}" />
+        <div class="badge">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 14.8l-5.2 2.8 1-5.8L1.6 7.7l5.8-.8L10 1.6z"/></svg>
+          ${badgeText}
         </div>
       </div>
 
-      <p class="mentor-bio-preview">${mentor.bio}</p>
+      <div class="body">
+        <h2>${mentor.name}</h2>
+        <p class="role">${mentor.title}</p>
+        <p class="org">${mentor.organization}</p>
 
-      <div class="card-tags-flex">
-        <span class="badge-tag badge-blue"><i class="fa-solid fa-briefcase"></i> ${mentor.domain}</span>
-        <span class="badge-tag badge-gold"><i class="fa-solid fa-star"></i> ${mentor.rating} (${mentor.totalSessions} sessions)</span>
-        ${availableSlot ? `<span class="badge-tag badge-green"><i class="fa-regular fa-circle-check"></i> Available ${availableSlot.date}</span>` : ''}
-      </div>
+        <div class="meta-row">
+          <div class="rating">
+            <svg viewBox="0 0 20 20"><path d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 14.8l-5.2 2.8 1-5.8L1.6 7.7l5.8-.8L10 1.6z"/></svg>
+            ${mentor.rating || 5.0} <span class="count">(${mentor.totalSessions || mentor.sessionsUsedThisMonth || 12} sessions)</span>
+          </div>
+          <div class="avail">
+            <svg viewBox="0 0 20 20" fill="none" stroke-width="1.8"><circle cx="10" cy="10" r="8"/><path d="M10 6v4l3 2"/></svg>
+            ${availableSlot ? availableSlot.date : 'Available'}
+          </div>
+        </div>
 
-      <div class="card-footer">
-        <button class="btn-brand-primary btn-inspect-profile" data-id="${mentor.id}" style="padding: 0.45rem 1rem; font-size: 0.82rem;">View Profile</button>
-        <button class="btn-brand-primary btn-book-slot" data-id="${mentor.id}" style="padding: 0.45rem 1rem; font-size: 0.82rem; background: var(--brand-violet);">Book 1-on-1</button>
+        <div class="actions">
+          <button class="btn btn-inspect-profile" data-id="${mentor.id}">View Profile</button>
+          <button class="btn primary btn-book-slot" data-id="${mentor.id}">Book 1-on-1</button>
+        </div>
       </div>
     </div>
   `;
