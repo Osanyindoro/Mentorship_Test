@@ -2578,7 +2578,21 @@ function renderModals() {
 
           <div class="form-group">
             <label class="form-label">Description & Key Takeaways</label>
-            <textarea class="form-textarea" rows="3" id="createGroupDescription" placeholder="Describe the topics covered and expectations for attendees...">${state.newGroupData.description || ''}</textarea>
+            <div class="rich-text-editor-container">
+              <div class="rich-text-toolbar" id="groupEditorToolbar">
+                <button type="button" class="btn-rte-action" data-command="bold" title="Bold"><i class="fa-solid fa-bold"></i></button>
+                <button type="button" class="btn-rte-action" data-command="italic" title="Italic"><i class="fa-solid fa-italic"></i></button>
+                <button type="button" class="btn-rte-action" data-command="underline" title="Underline"><i class="fa-solid fa-underline"></i></button>
+                <button type="button" class="btn-rte-action" data-command="strikethrough" title="Strikethrough"><i class="fa-solid fa-strikethrough"></i></button>
+                <div class="rte-divider"></div>
+                <button type="button" class="btn-rte-action" data-command="insertUnorderedList" title="Bullet List"><i class="fa-solid fa-list-ul"></i></button>
+                <button type="button" class="btn-rte-action" data-command="insertOrderedList" title="Numbered List"><i class="fa-solid fa-list-ol"></i></button>
+                <div class="rte-divider"></div>
+                <button type="button" class="btn-rte-action" data-command="formatBlock" data-value="H3" title="Heading"><i class="fa-solid fa-heading"></i></button>
+                <button type="button" class="btn-rte-action" data-command="removeFormat" title="Clear Formatting"><i class="fa-solid fa-eraser"></i></button>
+              </div>
+              <div class="rich-text-editor-content" id="createGroupDescriptionEditor" contenteditable="true" data-placeholder="Describe the topics covered and expectations for attendees...">${state.newGroupData.description || ''}</div>
+            </div>
           </div>
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
@@ -2669,7 +2683,21 @@ function renderModals() {
 
           <div class="form-group">
             <label class="form-label">Instructions & Deliverables</label>
-            <textarea class="form-textarea" rows="3" id="createTaskDescription" placeholder="Detailed guidance for the associate...">${state.newTaskData.description || ''}</textarea>
+            <div class="rich-text-editor-container">
+              <div class="rich-text-toolbar" id="taskEditorToolbar">
+                <button type="button" class="btn-rte-action" data-command="bold" title="Bold"><i class="fa-solid fa-bold"></i></button>
+                <button type="button" class="btn-rte-action" data-command="italic" title="Italic"><i class="fa-solid fa-italic"></i></button>
+                <button type="button" class="btn-rte-action" data-command="underline" title="Underline"><i class="fa-solid fa-underline"></i></button>
+                <button type="button" class="btn-rte-action" data-command="strikethrough" title="Strikethrough"><i class="fa-solid fa-strikethrough"></i></button>
+                <div class="rte-divider"></div>
+                <button type="button" class="btn-rte-action" data-command="insertUnorderedList" title="Bullet List"><i class="fa-solid fa-list-ul"></i></button>
+                <button type="button" class="btn-rte-action" data-command="insertOrderedList" title="Numbered List"><i class="fa-solid fa-list-ol"></i></button>
+                <div class="rte-divider"></div>
+                <button type="button" class="btn-rte-action" data-command="formatBlock" data-value="H3" title="Heading"><i class="fa-solid fa-heading"></i></button>
+                <button type="button" class="btn-rte-action" data-command="removeFormat" title="Clear Formatting"><i class="fa-solid fa-eraser"></i></button>
+              </div>
+              <div class="rich-text-editor-content" id="createTaskDescriptionEditor" contenteditable="true" data-placeholder="Detailed guidance for the associate...">${state.newTaskData.description || ''}</div>
+            </div>
           </div>
 
           <div class="form-group">
@@ -3530,6 +3558,39 @@ function bindEvents() {
       render();
     });
 
+    // Rich Text Editor Toolbar Event Binding
+    document.querySelectorAll('.rich-text-toolbar .btn-rte-action').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const command = btn.getAttribute('data-command');
+        const value = btn.getAttribute('data-value') || null;
+        document.execCommand(command, false, value);
+        
+        const groupEditor = document.getElementById('createGroupDescriptionEditor');
+        if (groupEditor && groupEditor.contains(document.getSelection().anchorNode)) {
+          state.newGroupData.description = groupEditor.innerHTML;
+        }
+        const taskEditor = document.getElementById('createTaskDescriptionEditor');
+        if (taskEditor && taskEditor.contains(document.getSelection().anchorNode)) {
+          state.newTaskData.description = taskEditor.innerHTML;
+        }
+      });
+    });
+
+    const groupDescEditor = document.getElementById('createGroupDescriptionEditor');
+    if (groupDescEditor) {
+      groupDescEditor.addEventListener('input', () => {
+        state.newGroupData.description = groupDescEditor.innerHTML;
+      });
+    }
+
+    const taskDescEditor = document.getElementById('createTaskDescriptionEditor');
+    if (taskDescEditor) {
+      taskDescEditor.addEventListener('input', () => {
+        state.newTaskData.description = taskDescEditor.innerHTML;
+      });
+    }
+
     document.getElementById('btnSubmitCreateGroup')?.addEventListener('click', async () => {
       const activeMentor = (state.currentUser && state.currentUser.role === 'mentor')
         ? state.currentUser
@@ -3537,13 +3598,16 @@ function bindEvents() {
 
       const title = document.getElementById('createGroupTitle')?.value;
       const domain = document.getElementById('createGroupDomain')?.value;
-      const description = document.getElementById('createGroupDescription')?.value;
+      const editorEl = document.getElementById('createGroupDescriptionEditor');
+      const description = editorEl ? editorEl.innerHTML : (state.newGroupData.description || '');
       const date = document.getElementById('createGroupDate')?.value;
       const startTime = document.getElementById('createGroupStartTime')?.value;
       const endTime = document.getElementById('createGroupEndTime')?.value;
       const maxCapacity = parseInt(document.getElementById('createGroupMaxCapacity')?.value || 20, 10);
 
-      if (!title || !description || !date) {
+      const cleanText = editorEl ? editorEl.textContent.trim() : description.replace(/<[^>]*>?/gm, '').trim();
+
+      if (!title || !cleanText || !date) {
         showToast('Please fill out all required fields (title, description, date).', 'fa-circle-exclamation');
         return;
       }
@@ -3564,6 +3628,7 @@ function bindEvents() {
       });
 
       state.activeModal = null;
+      state.newGroupData.description = '';
       showToast('Group Masterclass created and published successfully!');
       await initAppData();
     });
@@ -3622,15 +3687,18 @@ function bindEvents() {
 
       const selectedIds = state.newTaskData.selectedAssociateIds || [];
       const title = document.getElementById('createTaskTitle')?.value;
-      const description = document.getElementById('createTaskDescription')?.value;
+      const taskEditorEl = document.getElementById('createTaskDescriptionEditor');
+      const description = taskEditorEl ? taskEditorEl.innerHTML : (state.newTaskData.description || '');
       const deadline = document.getElementById('createTaskDeadline')?.value;
+
+      const cleanText = taskEditorEl ? taskEditorEl.textContent.trim() : description.replace(/<[^>]*>?/gm, '').trim();
 
       if (selectedIds.length === 0) {
         showToast('Please select at least one associate for this task.', 'fa-circle-exclamation');
         return;
       }
 
-      if (!title || !description || !deadline) {
+      if (!title || !cleanText || !deadline) {
         showToast('Please fill out all required task fields (title, instructions, deadline).', 'fa-circle-exclamation');
         return;
       }
@@ -3652,6 +3720,7 @@ function bindEvents() {
       state.activeModal = null;
       state.newTaskData.selectedAssociateIds = [];
       state.newTaskData.searchQuery = '';
+      state.newTaskData.description = '';
       showToast(`Task successfully assigned to ${selectedAssociates.length} mentee${selectedAssociates.length === 1 ? '' : 's'}!`);
       await initAppData();
     });
