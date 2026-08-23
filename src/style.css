@@ -13,7 +13,7 @@
   --brand-rose: #E11D48;            /* Alert / Cancel Red */
 
   /* Neutral Light Palette */
-  --bg-main: #F8FAFC;
+  --bg-main: #F4F8FF;
   --bg-card: #FFFFFF;
   --bg-sidebar: #FFFFFF;
   --bg-input: #F1F5F9;
@@ -93,12 +93,19 @@
 
 body {
   font-family: var(--font-main);
-  background-color: var(--bg-main);
+  background-color: #F4F8FF;
+  background-image: linear-gradient(180deg, #F4F8FF 0%, #E8F1FD 100%);
+  background-attachment: fixed;
   color: var(--text-primary);
   min-height: 100vh;
   overflow-x: hidden;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+}
+
+[data-theme="dark"] body {
+  background-color: var(--bg-main);
+  background-image: none;
 }
 
 button, input, select, textarea {
