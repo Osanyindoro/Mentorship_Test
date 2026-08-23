@@ -1,5 +1,6 @@
 import './style.css';
 import jobbermanLogo from './assets/jobberman-logo.png';
+import heroBannerNew from './assets/hero-banner-new.png';
 import { getStoredTheme, saveStoredTheme, getStoredAssociates, saveStoredAssociates, getStoredMentors, saveStoredMentors } from './data/mockData.js';
 import { apiService } from './services/api.js';
 
@@ -397,84 +398,71 @@ function renderPublicLandingPage() {
       <!-- Main Landing Content -->
       <main style="max-width: 1240px; margin: 2rem auto; padding: 0 1.5rem; flex: 1; width: 100%;">
         
-        <!-- Hero Section -->
-        <section class="landing-hero" id="section-hero">
-          <div>
-            <span class="hero-pill-badge"><i class="fa-solid fa-shield-halved"></i> Mastercard Foundation Associates Program</span>
-            <h1 class="landing-hero-title">Find a Mentor.<br/><span>Grow With Purpose.</span></h1>
-            <p class="landing-hero-sub">
-              Connect with verified executive mentors who can help you develop your skills, navigate your career, and achieve your professional goals in a secure, private environment.
-            </p>
-            <div class="landing-hero-ctas">
-              <button class="btn-brand-primary" id="btnHeroFindMentors" style="padding: 0.8rem 1.8rem; font-size: 0.95rem;">
-                <i class="fa-solid fa-lock"></i> Login to Access Mentors
-              </button>
-              <button class="btn-brand-secondary" id="btnHeroLogin" style="padding: 0.8rem 1.8rem; font-size: 0.95rem; border: 1px solid var(--border-color);">
-                <i class="fa-solid fa-right-to-bracket"></i> Login
-              </button>
+        <!-- Hero Section Redesign (matching requested design) -->
+        <section class="landing-hero-redesign" id="section-hero">
+          <div class="hero-grid">
+            <div class="hero-left-content">
+              <div class="pill-tag"><i class="fa-solid fa-graduation-cap"></i> MASTERCARD FOUNDATION ASSOCIATES PROGRAM</div>
+              <h1>Find a Mentor.<br/><span class="grad">Grow With Purpose.</span></h1>
+              <p class="lead">
+                Connect with verified executive mentors who can help you develop your skills, navigate your career, and achieve your professional goals in a secure, private environment.
+              </p>
+              <div class="hero-ctas">
+                <button class="btn-primary" id="btnHeroFindMentors">
+                  <i class="fa-solid fa-lock"></i> Login to Access Mentors
+                </button>
+              </div>
+            </div>
+
+            <!-- Hero Photo Showcase (Uncropped & Seamless Background Blending) -->
+            <div class="hero-photo-wrap seamless">
+              <img src="${heroBannerNew}" alt="Mastercard Foundation Mentorship Session" class="hero-seamless-img" />
             </div>
           </div>
 
-          <!-- Hero Visual Stack (Privacy Protected & Clean Program Badges) -->
-          <div class="hero-visual-wrapper">
-            <div class="hero-visual-card-stack" style="gap: 1rem; display: flex; flex-direction: column;">
-              <div class="hero-visual-card card-1" style="background: var(--bg-card); border-left: 4px solid var(--brand-primary); padding: 1rem 1.25rem;">
-                <div style="width: 44px; height: 44px; border-radius: 50%; background: rgba(37, 99, 235, 0.12); color: var(--brand-primary); display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
-                  <i class="fa-solid fa-user-tie"></i>
-                </div>
-                <div>
-                  <div style="font-weight: 800; font-size: 0.95rem;">Executive Mentorship</div>
-                  <div style="font-size: 0.78rem; color: var(--text-secondary);">Verified Senior Industry Leaders & Directors</div>
-                  <span class="badge-tag badge-blue" style="font-size: 0.72rem; margin-top: 0.25rem;"><i class="fa-solid fa-shield-check"></i> Verified Network</span>
-                </div>
-              </div>
-
-              <div class="hero-visual-card card-2" style="background: var(--bg-card); border-left: 4px solid var(--brand-violet); padding: 1rem 1.25rem;">
-                <div style="width: 44px; height: 44px; border-radius: 50%; background: rgba(107, 33, 168, 0.12); color: var(--brand-violet); display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
-                  <i class="fa-solid fa-calendar-check"></i>
-                </div>
-                <div>
-                  <div style="font-weight: 800; font-size: 0.95rem;">Structured 1-on-1 Sessions</div>
-                  <div style="font-size: 0.78rem; color: var(--text-secondary);">Direct Career & Technical Roadmap Reviews</div>
-                  <span class="badge-tag badge-purple" style="font-size: 0.72rem; margin-top: 0.25rem;"><i class="fa-solid fa-lock"></i> Scholar Authenticated</span>
-                </div>
-              </div>
-
-              <div class="hero-stats-badge" style="background: var(--bg-card); border: 1px solid var(--border-color);">
-                <i class="fa-solid fa-user-shield" style="font-size: 1.4rem; color: var(--brand-emerald);"></i>
-                <div>
-                  <div style="font-weight: 900; font-size: 1rem; color: var(--text-primary);">Protected Portal</div>
-                  <div style="font-size: 0.75rem; color: var(--text-secondary);">Authorized Access Only</div>
-                </div>
-              </div>
+          <!-- Bottom Full-Width Feature Highlights (Spread Evenly Across Card Base) -->
+          <div class="hero-features-bottom">
+            <div class="hf-item">
+              <div class="hf-icon blue"><i class="fa-solid fa-shield-halved"></i></div>
+              <div class="hf-text"><b>Verified Mentors</b><span>Industry leaders & professionals</span></div>
+            </div>
+            <div class="hf-item">
+              <div class="hf-icon purple"><i class="fa-solid fa-calendar-check"></i></div>
+              <div class="hf-text"><b>Structured 1-on-1 Sessions</b><span>Direct Career & Technical Roadmap Reviews</span></div>
+            </div>
+            <div class="hf-item">
+              <div class="hf-icon green"><i class="fa-solid fa-users"></i></div>
+              <div class="hf-text"><b>Purpose Driven</b><span>Connections that drive growth</span></div>
             </div>
           </div>
         </section>
 
-        <!-- How It Works Section -->
-        <section class="public-section" id="section-how-it-works">
-          <div class="public-section-header">
-            <h2 class="public-section-title">How the Mentorship Portal Works</h2>
-            <p class="public-section-sub">Three simple steps to connect with experienced leaders and accelerate your growth.</p>
-          </div>
+        <!-- How It Works Section Redesign (matching index_1.html) -->
+        <section class="public-section" id="section-how-it-works" style="text-align: center;">
+          <h2 style="font-size: 2.1rem; font-weight: 800; font-family: var(--font-display); color: var(--text-primary);">How the Mentorship Portal Works</h2>
+          <div style="width: 56px; height: 4px; background: var(--brand-violet, #7c5cff); border-radius: 2px; margin: 12px auto 14px;"></div>
+          <p style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 3rem;">Three simple steps to connect with experienced leaders and accelerate your growth.</p>
 
           <div class="how-it-works-grid">
             <div class="step-card">
-              <div class="step-number">01</div>
-              <h3 class="step-title">Authenticate</h3>
-              <p class="step-desc">Log in securely with your authorized Mastercard Foundation scholar credentials.</p>
+              <div class="step-num">01</div>
+              <div class="step-icon blue"><i class="fa-solid fa-magnifying-glass"></i></div>
+              <h3>Find Your Mentor</h3>
+              <p>Browse and connect with verified mentors who match your goals and interests.</p>
             </div>
 
             <div class="step-card">
-              <div class="step-number">02</div>
-              <h3 class="step-title">Connect</h3>
-              <p class="step-desc">Browse executive mentor bios, specializations, and available open time slots.</p>
+              <div class="step-num">02</div>
+              <div class="step-icon purple"><i class="fa-solid fa-calendar-days"></i></div>
+              <h3>Book a Session</h3>
+              <p>Schedule 1-on-1 sessions that fit your schedule and focus on your career development.</p>
             </div>
 
             <div class="step-card">
-              <div class="step-number">03</div>
-              <h3 class="step-title">Grow</h3>
-              <p class="step-desc">Book 1-on-1 guidance sessions, receive action tasks, and attend group masterclasses.</p>
+              <div class="step-num">03</div>
+              <div class="step-icon green"><i class="fa-solid fa-chart-line"></i></div>
+              <h3>Grow & Achieve</h3>
+              <p>Gain insights, receive guidance, and achieve your professional milestones.</p>
             </div>
           </div>
         </section>

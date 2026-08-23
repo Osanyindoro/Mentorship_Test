@@ -1386,7 +1386,297 @@ a {
   }
 }
 
-/* Hero Section */
+/* ==========================================================================
+   HOMEPAGE REDESIGN (matching requested screenshot & b6919543-9213-4885-afe7-86997af865b6.png)
+   ========================================================================== */
+.landing-hero-redesign {
+  position: relative;
+  background: linear-gradient(180deg, #0b1220 0%, #111a2e 100%);
+  padding: 56px 48px 90px;
+  overflow: visible;
+  border-radius: 32px;
+  border-bottom-left-radius: 60px 40px;
+  border-bottom-right-radius: 60px 40px;
+  margin-bottom: 4rem;
+  box-shadow: 0 20px 40px rgba(11, 18, 32, 0.25);
+}
+
+.landing-hero-redesign .hero-grid {
+  display: grid;
+  grid-template-columns: 0.95fr 1.25fr;
+  gap: 24px;
+  align-items: center;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.landing-hero-redesign .pill-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(124, 92, 255, 0.18);
+  border: 1px solid rgba(124, 92, 255, 0.45);
+  color: #c9c3ff;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 8px 16px;
+  border-radius: 999px;
+  margin-bottom: 24px;
+}
+
+.landing-hero-redesign h1 {
+  font-size: 48px;
+  line-height: 1.1;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+  font-family: var(--font-display);
+}
+
+.landing-hero-redesign h1 .grad {
+  background: linear-gradient(90deg, #5b8cff, #a78bfa);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.landing-hero-redesign p.lead {
+  margin-top: 20px;
+  color: #c3c8d6;
+  font-size: 16px;
+  line-height: 1.7;
+  max-width: 520px;
+}
+
+.landing-hero-redesign .hero-ctas {
+  display: flex;
+  gap: 14px;
+  margin-top: 28px;
+}
+
+.landing-hero-redesign .btn-primary {
+  background: var(--brand-primary, #2f5bff);
+  color: #ffffff;
+  border: none;
+  padding: 14px 24px;
+  border-radius: 999px;
+  font-size: 14.5px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(47, 91, 255, 0.4);
+  transition: all 0.2s ease;
+}
+
+.landing-hero-redesign .btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(47, 91, 255, 0.5);
+}
+
+.landing-hero-redesign .btn-ghost {
+  background: transparent;
+  color: #ffffff;
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  padding: 14px 24px;
+  border-radius: 999px;
+  font-size: 14.5px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.landing-hero-redesign .btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: #ffffff;
+}
+
+/* Bottom Full-Width Feature Highlights (Spread Evenly Across Card Base) */
+.hero-features-bottom {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2.5rem;
+  align-items: flex-start;
+  max-width: 1280px;
+  margin: 3rem auto 0;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.hero-features-bottom .hf-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.hero-features-bottom .hf-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.hero-features-bottom .hf-icon.blue { background: rgba(59, 102, 255, 0.2); color: #8fa4ff; border: 1px solid rgba(59, 102, 255, 0.3); }
+.hero-features-bottom .hf-icon.purple { background: rgba(124, 92, 255, 0.2); color: #a78bfa; border: 1px solid rgba(124, 92, 255, 0.3); }
+.hero-features-bottom .hf-icon.green { background: rgba(34, 197, 94, 0.18); color: #5fe0a3; border: 1px solid rgba(34, 197, 94, 0.3); }
+
+.hero-features-bottom .hf-text b {
+  display: block;
+  font-size: 0.95rem;
+  color: #ffffff;
+  font-weight: 800;
+  margin-bottom: 3px;
+  letter-spacing: -0.01em;
+}
+
+.hero-features-bottom .hf-text span {
+  font-size: 0.8rem;
+  color: #a7adba;
+  line-height: 1.45;
+}
+
+@media (max-width: 960px) {
+  .landing-hero-redesign {
+    padding: 2.2rem 1.4rem;
+    border-radius: 28px;
+    border-bottom-left-radius: 36px;
+    border-bottom-right-radius: 36px;
+    text-align: left;
+  }
+
+  .landing-hero-redesign .hero-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0 !important;
+    width: 100%;
+  }
+
+  .landing-hero-redesign .hero-left-content {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .landing-hero-redesign .pill-tag {
+    margin: 0 0 1.25rem 0;
+    font-size: 0.73rem;
+    padding: 6px 14px;
+    max-width: 100%;
+    white-space: normal;
+    text-align: left;
+    line-height: 1.4;
+  }
+
+  .landing-hero-redesign h1 {
+    font-size: 2.2rem;
+    line-height: 1.15;
+    text-align: left;
+    width: 100%;
+  }
+
+  .landing-hero-redesign p.lead {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin: 1.1rem 0 0 0;
+    text-align: left;
+    max-width: 100%;
+  }
+
+  .landing-hero-redesign .hero-ctas {
+    width: 100%;
+    justify-content: flex-start;
+    margin-top: 1.75rem;
+  }
+
+  .landing-hero-redesign .btn-primary {
+    width: 100%;
+    max-width: 100%;
+    justify-content: center;
+    padding: 14px 20px;
+    font-size: 0.95rem;
+  }
+
+  .hero-features-bottom {
+    display: none !important;
+  }
+
+  .hero-photo-wrap {
+    display: none !important;
+  }
+}
+
+/* Hero Photo Wrap (Seamless Background Blending) */
+.hero-photo-wrap.seamless {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  overflow: visible;
+  border-radius: 24px;
+}
+
+.hero-seamless-img {
+  width: 100%;
+  height: auto;
+  max-height: 520px;
+  object-fit: contain;
+  object-position: right center;
+  display: block;
+  border-radius: 0;
+  box-shadow: none;
+  border: none;
+  filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.35));
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 88%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 88%, transparent 100%);
+  transition: transform 0.4s ease;
+}
+
+.hero-seamless-img:hover {
+  transform: scale(1.015);
+}
+
+/* Step Card Icon Enhancements for How It Works Section */
+.step-num {
+  position: absolute;
+  top: 22px;
+  right: 22px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-muted);
+  background: var(--bg-hover);
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.step-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  margin-bottom: 1rem;
+}
+
+.step-icon.blue { background: rgba(47, 91, 255, 0.12); color: var(--brand-primary, #2f5bff); }
+.step-icon.purple { background: rgba(124, 92, 255, 0.12); color: var(--brand-violet, #7c5cff); }
+.step-icon.green { background: rgba(34, 197, 94, 0.12); color: #16a34a; }
+
+/* Hero Section (Legacy) */
 .landing-hero {
   display: grid;
   grid-template-columns: 1.1fr 0.9fr;
