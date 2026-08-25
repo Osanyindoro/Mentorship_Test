@@ -1418,9 +1418,15 @@ function renderMenteeSessionsList() {
 
                 <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
                   ${s.status === 'Completed' ? `
-                    <button class="btn-brand-primary btn-open-evaluation" data-id="${s.id}" data-role="associate" style="padding: 0.45rem 1rem; font-size: 0.82rem; border-radius: 8px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
-                      <i class="fa-solid fa-star"></i> ${s.associateRating ? 'Update Review' : '⭐ Rate & Review Mentor'}
-                    </button>
+                    ${s.associateRating ? `
+                      <span class="badge-tag badge-gold" style="font-size: 0.82rem; padding: 0.45rem 0.85rem; border-radius: 8px; font-weight: 800; background: rgba(245, 158, 11, 0.15); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.3); display: inline-flex; align-items: center; gap: 0.35rem;">
+                        <i class="fa-solid fa-star"></i> Review Submitted (${s.associateRating.stars}★)
+                      </span>
+                    ` : `
+                      <button class="btn-brand-primary btn-open-evaluation" data-id="${s.id}" data-role="associate" style="padding: 0.45rem 1rem; font-size: 0.82rem; border-radius: 8px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                        <i class="fa-solid fa-star"></i> ⭐ Rate & Review Mentor
+                      </button>
+                    `}
                     ${s.meetingLink ? `
                       <a href="${s.meetingLink}" target="_blank" class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 0.3rem; border: 1px solid var(--border-color); color: var(--text-secondary);">
                         <i class="fa-solid fa-video"></i> Meet Link
@@ -1658,9 +1664,15 @@ function renderMentorDashboard(mentor) {
                           <span class="badge-tag badge-green" style="font-size: 0.85rem; padding: 0.5rem 0.95rem; border-radius: 10px; display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 800;">
                             <i class="fa-solid fa-circle-check"></i> Conducted
                           </span>
-                          <button class="btn-brand-primary btn-open-evaluation" data-id="${s.id}" data-role="mentor" style="padding: 0.5rem 1rem; font-size: 0.82rem; border-radius: 10px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
-                            <i class="fa-solid fa-star"></i> ${s.mentorRating ? 'Update Evaluation' : 'Evaluate Associate'}
-                          </button>
+                          ${s.mentorRating ? `
+                            <span class="badge-tag badge-gold" style="font-size: 0.82rem; padding: 0.5rem 0.95rem; border-radius: 10px; display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 800; background: rgba(245, 158, 11, 0.15); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.3);">
+                              <i class="fa-solid fa-star"></i> Evaluation Submitted (${s.mentorRating.stars}★)
+                            </span>
+                          ` : `
+                            <button class="btn-brand-primary btn-open-evaluation" data-id="${s.id}" data-role="mentor" style="padding: 0.5rem 1rem; font-size: 0.82rem; border-radius: 10px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                              <i class="fa-solid fa-star"></i> Evaluate Associate
+                            </button>
+                          `}
                         </div>
                       ` : `
                         <button class="btn-secondary btn-mark-conducted" data-id="${s.id}" style="padding: 0.5rem 1rem; font-size: 0.85rem; border-radius: 10px; font-weight: 800; border: 1.5px solid var(--brand-emerald); color: var(--brand-emerald); background: rgba(5, 150, 105, 0.08); cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem;">
