@@ -1559,14 +1559,16 @@ function renderMentorDashboard(mentor) {
                   <div>
                     <div style="font-weight: 800; font-size: 1.15rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
                       <i class="fa-solid fa-user-graduate" style="color: var(--brand-primary); font-size: 1rem;"></i>
-                      ${s.associateName}
+                      <a class="btn-inspect-associate-profile" data-id="${s.associateId}" data-name="${s.associateName}" style="color: var(--brand-primary); text-decoration: none; cursor: pointer; border-bottom: 1.5px dashed var(--brand-primary);" title="Click to view Associate profile and past mentor ratings">
+                        ${s.associateName}
+                      </a>
                     </div>
                     <div style="font-size: 0.85rem; font-weight: 700; color: var(--brand-violet); margin-top: 0.2rem;">
                       ${title} <span style="color: var(--text-muted); font-weight: 400;">at</span> ${org}
                     </div>
                   </div>
-                  <span class="badge-tag ${s.status === 'Accepted' ? 'badge-green' : 'badge-gold'}" style="font-size: 0.8rem; padding: 0.35rem 0.85rem; border-radius: 20px;">
-                    ${s.status === 'Accepted' ? '<i class="fa-solid fa-circle-check"></i> Accepted' : '<i class="fa-solid fa-clock"></i> Pending Acceptance'}
+                  <span class="badge-tag ${s.status === 'Completed' ? 'badge-purple' : s.status === 'Accepted' ? 'badge-green' : 'badge-gold'}" style="font-size: 0.8rem; padding: 0.35rem 0.85rem; border-radius: 20px;">
+                    ${s.status === 'Completed' ? '<i class="fa-solid fa-circle-check"></i> Completed' : s.status === 'Accepted' ? '<i class="fa-solid fa-circle-check"></i> Accepted' : '<i class="fa-solid fa-clock"></i> Pending Acceptance'}
                   </span>
                 </div>
 
@@ -1622,16 +1624,16 @@ function renderMentorDashboard(mentor) {
                         <i class="fa-regular fa-calendar-plus" style="color: #4285F4;"></i> Add to Google Calendar
                       </a>
 
-                      <!-- Session Conducted / Completion Toggle -->
+                      <!-- Session Conducted / Completion Toggle (Stays Permanently ON Once Checked/Completed) -->
                       <div style="display: flex; align-items: center; gap: 0.5rem; background: var(--bg-hover); padding: 0.35rem 0.8rem; border-radius: 10px; border: 1px solid var(--border-color);">
-                        <label class="switch-toggle" style="position: relative; display: inline-block; width: 38px; height: 20px; margin: 0; cursor: pointer;">
-                          <input type="checkbox" class="cb-toggle-conducted" data-id="${s.id}" ${s.status === 'Completed' ? 'checked' : ''} style="opacity: 0; width: 0; height: 0;">
-                          <span class="slider-toggle" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: ${s.status === 'Completed' ? 'var(--brand-emerald)' : '#ccc'}; transition: .3s; border-radius: 34px;">
+                        <label class="switch-toggle" style="position: relative; display: inline-block; width: 38px; height: 20px; margin: 0; cursor: ${s.status === 'Completed' ? 'default' : 'pointer'};">
+                          <input type="checkbox" class="cb-toggle-conducted" data-id="${s.id}" ${s.status === 'Completed' ? 'checked disabled' : ''} style="opacity: 0; width: 0; height: 0;">
+                          <span class="slider-toggle" style="position: absolute; cursor: ${s.status === 'Completed' ? 'default' : 'pointer'}; top: 0; left: 0; right: 0; bottom: 0; background-color: ${s.status === 'Completed' ? 'var(--brand-emerald)' : '#ccc'}; transition: .3s; border-radius: 34px;">
                             <span style="position: absolute; height: 14px; width: 14px; left: ${s.status === 'Completed' ? '20px' : '3px'}; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%;"></span>
                           </span>
                         </label>
                         <span style="font-size: 0.78rem; font-weight: 800; color: ${s.status === 'Completed' ? 'var(--brand-emerald)' : 'var(--text-secondary)'};">
-                          ${s.status === 'Completed' ? 'Conducted' : 'Mark Conducted'}
+                          ${s.status === 'Completed' ? '✓ Conducted' : 'Mark Conducted'}
                         </span>
                       </div>
 
@@ -2756,6 +2758,87 @@ function renderModals() {
     `;
   }
 
+  if (state.activeModal === 'associate_profile' && state.inspectingAssociate) {
+    const a = state.inspectingAssociate;
+    const assocSessions = (state.sessions || []).filter(s => 
+      (s.associateId && String(s.associateId) === String(a.id)) || 
+      (s.associateName && s.associateName.toLowerCase() === a.name.toLowerCase())
+    );
+    const pastRatings = assocSessions.filter(s => s.mentorRating).map(s => ({
+      mentorName: s.mentorName,
+      date: s.date,
+      stars: s.mentorRating.stars,
+      engagement: s.mentorRating.engagement,
+      feedback: s.mentorRating.qualitativeFeedback || s.mentorRating.notes
+    }));
+
+    const avgScore = pastRatings.length > 0 ? (pastRatings.reduce((acc, r) => acc + r.stars, 0) / pastRatings.length).toFixed(1) : (a.rating || '5.0');
+
+    return `
+      <div class="modal-overlay">
+        <div class="modal-content-card" style="max-width: 600px; border-radius: 20px; padding: 2rem;">
+          <div class="modal-header-flex" style="margin-bottom: 1.25rem;">
+            <div>
+              <div class="modal-title" style="font-size: 1.35rem; font-weight: 800; font-family: var(--font-display);">${a.name}</div>
+              <p style="font-size: 0.86rem; color: var(--brand-violet); font-weight: 700; margin-top: 0.2rem;">
+                ${a.title || 'Scholar'} · ${a.institution || a.organization || 'Jobberman Partner Network'}
+              </p>
+            </div>
+            <button class="close-modal-btn btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+
+          <div class="card-header-flex" style="margin-bottom: 1.25rem; align-items: center;">
+            <img src="${a.avatar && a.avatar.startsWith('data:') ? a.avatar : (a.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80')}" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(a.name)}&background=2e1065&color=ffffff';" style="width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 3px solid var(--brand-primary);" />
+            <div>
+              <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
+                <span style="font-size: 1.15rem; font-weight: 800; color: var(--brand-gold);">★ ${avgScore} / 5.0</span>
+                <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted);">(${pastRatings.length} mentor review${pastRatings.length === 1 ? '' : 's'})</span>
+              </div>
+              <div style="font-size: 0.84rem; color: var(--text-secondary);">
+                <i class="fa-solid fa-envelope" style="margin-right: 0.3rem;"></i> ${a.email}
+              </div>
+            </div>
+          </div>
+
+          <div style="background: var(--bg-hover); padding: 1rem; border-radius: 12px; border: 1px solid var(--border-color); margin-bottom: 1.5rem;">
+            <div style="font-size: 0.76rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.35rem;">Associate Biography & Goals</div>
+            <p style="font-size: 0.88rem; color: var(--text-primary); line-height: 1.55; margin: 0;">${a.bio || 'Mastercard Foundation Associate dedicated to career growth, technical leadership, and continuous learning.'}</p>
+          </div>
+
+          <!-- PAST MENTOR RATINGS & EVALUATIONS -->
+          <div>
+            <div style="font-size: 0.85rem; font-weight: 800; color: var(--text-primary); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.4rem;">
+              <i class="fa-solid fa-star" style="color: var(--brand-gold);"></i> Past Mentor Ratings & Evaluations
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 0.75rem; max-height: 220px; overflow-y: auto;">
+              ${pastRatings.length > 0 ? pastRatings.map(r => `
+                <div style="background: var(--bg-surface-secondary); padding: 0.85rem; border-radius: 10px; border-left: 3px solid var(--brand-gold);">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem;">
+                    <span style="font-weight: 800; font-size: 0.85rem; color: var(--text-primary);">${r.mentorName}</span>
+                    <span style="font-size: 0.78rem; font-weight: 800; color: var(--brand-gold);">${'★'.repeat(r.stars)} (${r.stars}.0)</span>
+                  </div>
+                  <p style="font-size: 0.82rem; color: var(--text-secondary); margin: 0; font-style: italic; line-height: 1.4;">
+                    "${r.feedback || 'Outstanding engagement and preparation.'}"
+                  </p>
+                  ${r.engagement ? `
+                    <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.25rem;">
+                      Preparedness Level: <strong>${r.engagement}/5</strong> · ${r.date}
+                    </div>
+                  ` : ''}
+                </div>
+              `).join('') : `
+                <div style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.85rem; background: var(--bg-surface-secondary); border-radius: 10px;">
+                  No previous mentor evaluations on record yet.
+                </div>
+              `}
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   if (state.activeModal === 'edit_mentor_profile' && state.editingMentorProfile) {
     const m = state.editingMentorProfile;
     return `
@@ -3514,6 +3597,26 @@ function bindEvents() {
       state.selectedDomains = [];
       state.searchQuery = '';
       render();
+    });
+
+    // View Associate Profile Modal for Mentors
+    document.querySelectorAll('.btn-inspect-associate-profile').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const assocId = btn.dataset.id;
+        const assocName = btn.dataset.name;
+        const assoc = state.associates.find(a => String(a.id) === String(assocId) || (a.name && a.name.toLowerCase() === (assocName || '').toLowerCase())) || {
+          id: assocId,
+          name: assocName || 'Associate Scholar',
+          email: 'scholar@mcf-program.org',
+          institution: 'Jobberman Nigeria',
+          title: 'Mastercard Foundation Associate',
+          bio: 'Active scholar enrolled in the Mastercard Foundation Mentorship Program.'
+        };
+
+        state.inspectingAssociate = assoc;
+        state.activeModal = 'associate_profile';
+        render();
+      });
     });
 
     // View Mentor Profile Modal

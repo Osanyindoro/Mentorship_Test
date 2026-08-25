@@ -61,8 +61,8 @@ export const apiService = {
         const { data, error } = await Promise.race([fetchUserPromise, timeoutPromise]);
 
         if (data && !error) {
-          if (data.role && selectedRole && data.role !== selectedRole) {
-            throw new Error(`This account is registered as a ${data.role.toUpperCase()}. Please select "${data.role.charAt(0).toUpperCase() + data.role.slice(1)}" from the login dropdown.`);
+          if (data.role && selectedRole && data.role.toLowerCase() !== selectedRole.toLowerCase()) {
+            throw new Error(`Role Mismatch: This account is registered as a ${data.role.toUpperCase()}. You cannot log in under the "${selectedRole.toUpperCase()}" role.`);
           }
           if (data.password && data.password !== password) {
             throw new Error("Invalid email or password.");
@@ -95,11 +95,11 @@ export const apiService = {
         }
       } catch (err) {
         console.warn('[Supabase Auth Check]', err.message);
-        if (err.message && err.message.includes('Invalid email or password')) throw err;
+        if (err.message && (err.message.includes('Invalid email or password') || err.message.includes('Role Mismatch'))) throw err;
       }
     }
 
-    // Local Storage Mock Fallback
+    // Local Storage Mock Fallback with STRICT Role Validation
     const associates = getStoredAssociates();
     const mentors = getStoredMentors();
 
@@ -107,17 +107,35 @@ export const apiService = {
     const foundMentor = mentors.find(m => m.email.toLowerCase() === cleanEmail || (m.googleEmail && m.googleEmail.toLowerCase() === cleanEmail));
     const isAdmin = cleanEmail === 'admin@mcf-portal.org' || cleanEmail === 'admin@mcf.org';
 
-    let userAccount = null;
-    let actualRole = null;
-
     if (foundAssoc) {
-      userAccount = foundAssoc;
-      actualRole = 'associate';
+      if (selectedRole && selectedRole !== 'associate') {
+        throw new Error(`Role Mismatch: This account (${cleanEmail}) is registered as an ASSOCIATE. Please select "Associate (Scholar)" from the login role dropdown.`);
+      }
+      if (foundAssoc.password && foundAssoc.password !== password) {
+        throw new Error("Invalid email or password.");
+      }
+      const token = `mcf_token_${Date.now()}`;
+      const payload = { token, user: { ...foundAssoc, role: 'associate' } };
+      localStorage.setItem('mently_auth_token', token);
+      localStorage.setItem('mently_user', JSON.stringify(payload.user));
+      return payload;
     } else if (foundMentor) {
-      userAccount = foundMentor;
-      actualRole = 'mentor';
+      if (selectedRole && selectedRole !== 'mentor') {
+        throw new Error(`Role Mismatch: This account (${cleanEmail}) is registered as a MENTOR. Please select "Mentor" from the login role dropdown.`);
+      }
+      if (foundMentor.password && foundMentor.password !== password) {
+        throw new Error("Invalid email or password.");
+      }
+      const token = `mcf_token_${Date.now()}`;
+      const payload = { token, user: { ...foundMentor, role: 'mentor' } };
+      localStorage.setItem('mently_auth_token', token);
+      localStorage.setItem('mently_user', JSON.stringify(payload.user));
+      return payload;
     } else if (isAdmin) {
-      userAccount = {
+      if (selectedRole && selectedRole !== 'admin') {
+        throw new Error(`Role Mismatch: This account is an Administrator account. Please select "Program Administrator" from the dropdown.`);
+      }
+      const adminUser = {
         id: "ADM-001",
         role: "admin",
         name: "Program Administrator",
@@ -125,43 +143,14 @@ export const apiService = {
         institution: "Mastercard Foundation HQ",
         avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80"
       };
-      actualRole = 'admin';
+      const token = `mcf_token_${Date.now()}`;
+      const payload = { token, user: adminUser };
+      localStorage.setItem('mently_auth_token', token);
+      localStorage.setItem('mently_user', JSON.stringify(adminUser));
+      return payload;
     }
 
-    if (!userAccount) {
-      const newUser = {
-        id: selectedRole === 'associate' ? `MCF-2026-REG-${Math.floor(100 + Math.random() * 900)}` : `MEN-REG-${Math.floor(100 + Math.random() * 900)}`,
-        role: selectedRole,
-        name: cleanEmail.split('@')[0].replace('.', ' ').toUpperCase(),
-        email: cleanEmail,
-        institution: 'Jobberman Partner Network',
-        organization: 'Jobberman Partner Network',
-        title: selectedRole === 'associate' ? 'Mastercard Foundation Scholar' : 'Executive Mentor',
-        track: 'Software Engineering & AI',
-        domain: 'Software Engineering & AI',
-        bio: 'Active Mastercard Foundation portal member.',
-        avatar: selectedRole === 'associate' ? 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&w=600&q=80' : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80',
-        schedule: selectedRole === 'mentor' ? [{ id: Date.now(), date: '2026-08-22', time: '10:00 AM', isBooked: false, bookedBy: null }] : []
-      };
-      userAccount = newUser;
-      actualRole = selectedRole;
-
-      if (selectedRole === 'associate') {
-        associates.unshift(newUser);
-        saveStoredAssociates(associates);
-      } else if (selectedRole === 'mentor') {
-        mentors.unshift(newUser);
-        saveStoredMentors(mentors);
-      }
-    }
-
-    const token = `mcf_token_${Date.now()}`;
-    const responsePayload = { token, user: { ...userAccount, role: actualRole } };
-
-    localStorage.setItem('mently_auth_token', token);
-    localStorage.setItem('mently_user', JSON.stringify(responsePayload.user));
-
-    return responsePayload;
+    throw new Error("Account not found. Please check your email and selected role or contact support.");
   },
 
   async register({ selectedRole, name, email, password, gender, institutionOrOrg, title, trackOrDomain, bio, avatar }) {
