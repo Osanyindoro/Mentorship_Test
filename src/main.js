@@ -602,26 +602,30 @@ function renderPublicLandingPage() {
 
 function renderLandingMentorCard(m) {
   return `
-    <div class="mentor-card">
-      <div class="card-header-flex">
-        <img src="${m.avatar && m.avatar.startsWith('data:') ? m.avatar : (m.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80')}" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(m.name)}&background=2e1065&color=ffffff';" class="mentor-avatar-lg" />
+    <div class="mentor-card" style="display: flex; flex-direction: column; border-radius: 18px; padding: 1.5rem; border: 1px solid var(--border-color); background: var(--bg-surface); box-shadow: var(--shadow-sm); transition: all 0.25s ease;">
+      <div class="card-header-flex" style="display: flex; gap: 1.1rem; align-items: center; margin-bottom: 1rem;">
+        <img src="${m.avatar && m.avatar.startsWith('data:') ? m.avatar : (m.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80')}" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(m.name)}&background=2e1065&color=ffffff';" class="mentor-avatar-lg" style="width: 84px; height: 84px; border-radius: 50%; object-fit: cover; border: 3.5px solid var(--brand-primary); box-shadow: 0 4px 12px rgba(46,16,101,0.15); flex-shrink: 0;" />
         <div>
-          <div class="mentor-name">${m.name}</div>
-          <div class="mentor-title">${m.title}</div>
-          <div class="mentor-org">${m.organization}</div>
+          <div class="mentor-name" style="font-weight: 800; font-size: 1.18rem; color: var(--text-primary); margin-bottom: 0.2rem;">${m.name}</div>
+          <div class="mentor-title" style="font-size: 0.86rem; font-weight: 600; color: var(--text-secondary); line-height: 1.35; margin-bottom: 0.25rem;">${m.title}</div>
+          <div class="mentor-org" style="font-size: 0.82rem; font-weight: 800; color: var(--brand-primary);">${m.organization}</div>
         </div>
       </div>
 
-      <p class="mentor-bio-preview">${m.bio}</p>
+      <p class="mentor-bio-preview" style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.55; margin-bottom: 1.2rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">${m.bio}</p>
 
-      <div class="card-tags-flex">
-        <span class="badge-tag badge-blue"><i class="fa-solid fa-briefcase"></i> ${m.domain}</span>
-        <span class="badge-tag badge-gold"><i class="fa-solid fa-star"></i> ${m.rating} (${m.totalSessions} sessions)</span>
+      <div class="card-tags-flex" style="display: flex; flex-wrap: wrap; gap: 0.45rem; margin-bottom: 1.25rem;">
+        <span class="badge-tag badge-blue" style="font-weight: 700;"><i class="fa-solid fa-briefcase"></i> ${m.domain}</span>
+        <span class="badge-tag badge-gold" style="font-weight: 800;"><i class="fa-solid fa-star"></i> ${m.rating || '5.0'} (${m.totalSessions || 0} sessions)</span>
       </div>
 
-      <div class="card-footer" style="margin-top: 1.25rem;">
-        <button class="btn-brand-primary btn-inspect-profile" data-id="${m.id}" style="padding: 0.45rem 1rem; font-size: 0.82rem;">View Profile</button>
-        <button class="btn-brand-primary btn-landing-book" data-id="${m.id}" style="padding: 0.45rem 1rem; font-size: 0.82rem; background: var(--brand-violet);">Book Session</button>
+      <div class="card-footer" style="margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; gap: 0.75rem;">
+        <button class="btn-brand-primary btn-inspect-profile" data-id="${m.id}" style="padding: 0.55rem 1.15rem; font-size: 0.84rem; border-radius: 10px;">
+          <i class="fa-solid fa-user"></i> View Profile
+        </button>
+        <button class="btn-brand-primary btn-landing-book" data-id="${m.id}" style="padding: 0.55rem 1.15rem; font-size: 0.84rem; border-radius: 10px; background: var(--brand-violet);">
+          <i class="fa-regular fa-calendar-plus"></i> Book Session
+        </button>
       </div>
     </div>
   `;
@@ -1236,29 +1240,33 @@ function renderMenteeDiscovery() {
 }
 
 function renderMentorCard(mentor) {
-  const availableSlot = mentor.schedule.find(s => !s.isBooked);
+  const availableSlot = mentor.schedule && mentor.schedule.find ? mentor.schedule.find(s => !s.isBooked) : null;
   return `
-    <div class="mentor-card">
-      <div class="card-header-flex">
-        <img src="${mentor.avatar && mentor.avatar.startsWith('data:') ? mentor.avatar : (mentor.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80')}" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(mentor.name)}&background=2e1065&color=ffffff';" class="mentor-avatar-lg" />
+    <div class="mentor-card" style="display: flex; flex-direction: column; border-radius: 18px; padding: 1.5rem; border: 1px solid var(--border-color); background: var(--bg-surface); box-shadow: var(--shadow-sm); transition: all 0.25s ease;">
+      <div class="card-header-flex" style="display: flex; gap: 1.1rem; align-items: center; margin-bottom: 1rem;">
+        <img src="${mentor.avatar && mentor.avatar.startsWith('data:') ? mentor.avatar : (mentor.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80')}" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(mentor.name)}&background=2e1065&color=ffffff';" class="mentor-avatar-lg" style="width: 84px; height: 84px; border-radius: 50%; object-fit: cover; border: 3.5px solid var(--brand-primary); box-shadow: 0 4px 12px rgba(46,16,101,0.15); flex-shrink: 0;" />
         <div>
-          <div class="mentor-name">${mentor.name}</div>
-          <div class="mentor-title">${mentor.title}</div>
-          <div class="mentor-org">${mentor.organization}</div>
+          <div class="mentor-name" style="font-weight: 800; font-size: 1.18rem; color: var(--text-primary); margin-bottom: 0.2rem;">${mentor.name}</div>
+          <div class="mentor-title" style="font-size: 0.86rem; font-weight: 600; color: var(--text-secondary); line-height: 1.35; margin-bottom: 0.25rem;">${mentor.title}</div>
+          <div class="mentor-org" style="font-size: 0.82rem; font-weight: 800; color: var(--brand-primary);">${mentor.organization}</div>
         </div>
       </div>
 
-      <p class="mentor-bio-preview">${mentor.bio}</p>
+      <p class="mentor-bio-preview" style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.55; margin-bottom: 1.2rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">${mentor.bio}</p>
 
-      <div class="card-tags-flex">
-        <span class="badge-tag badge-blue"><i class="fa-solid fa-briefcase"></i> ${mentor.domain}</span>
-        <span class="badge-tag badge-gold"><i class="fa-solid fa-star"></i> ${mentor.rating} (${mentor.totalSessions} sessions)</span>
-        ${availableSlot ? `<span class="badge-tag badge-green"><i class="fa-regular fa-circle-check"></i> Available ${availableSlot.date}</span>` : ''}
+      <div class="card-tags-flex" style="display: flex; flex-wrap: wrap; gap: 0.45rem; margin-bottom: 1.25rem;">
+        <span class="badge-tag badge-blue" style="font-weight: 700;"><i class="fa-solid fa-briefcase"></i> ${mentor.domain}</span>
+        <span class="badge-tag badge-gold" style="font-weight: 800;"><i class="fa-solid fa-star"></i> ${mentor.rating || '5.0'} (${mentor.totalSessions || 0} sessions)</span>
+        ${availableSlot ? `<span class="badge-tag badge-green" style="font-weight: 700;"><i class="fa-regular fa-circle-check"></i> Available ${availableSlot.date}</span>` : ''}
       </div>
 
-      <div class="card-footer">
-        <button class="btn-brand-primary btn-inspect-profile" data-id="${mentor.id}" style="padding: 0.45rem 1rem; font-size: 0.82rem;">View Profile</button>
-        <button class="btn-brand-primary btn-book-slot" data-id="${mentor.id}" style="padding: 0.45rem 1rem; font-size: 0.82rem; background: var(--brand-violet);">Book 1-on-1</button>
+      <div class="card-footer" style="margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; gap: 0.75rem;">
+        <button class="btn-brand-primary btn-inspect-profile" data-id="${mentor.id}" style="padding: 0.55rem 1.15rem; font-size: 0.84rem; border-radius: 10px;">
+          <i class="fa-solid fa-user"></i> View Profile
+        </button>
+        <button class="btn-brand-primary btn-book-slot" data-id="${mentor.id}" style="padding: 0.55rem 1.15rem; font-size: 0.84rem; border-radius: 10px; background: var(--brand-violet);">
+          <i class="fa-regular fa-calendar-plus"></i> Book 1-on-1
+        </button>
       </div>
     </div>
   `;
