@@ -3983,13 +3983,26 @@ function bindEvents() {
         stars: Number(state.evalFormData.stars) || 5,
         qualitativeFeedback: qualitativeFeedback,
         engagement: Number(state.evalFormData.engagement) || 5,
-        objectiveAlignment: Number(state.evalFormData.objectiveAlignment) || 5
+        objectiveAlignment: Number(state.evalFormData.objectiveAlignment) || 5,
+        recordedAt: new Date().toISOString()
       };
+
+      // Immediately update in-memory session object so UI locks instantaneously
+      const targetSession = state.sessions.find(s => String(s.id) === String(sessionId));
+      if (targetSession) {
+        if (role === 'mentor') {
+          targetSession.mentorRating = evalData;
+        } else {
+          targetSession.associateRating = evalData;
+        }
+        targetSession.status = 'Completed';
+      }
 
       await apiService.submitEvaluation(sessionId, evalData, role);
       showToast('Evaluation & feedback submitted successfully! ⭐', 'fa-circle-check');
       state.activeModal = null;
       state.evaluatingSession = null;
+      state.notifications = await apiService.getNotifications();
       render();
       await initAppData();
     });
