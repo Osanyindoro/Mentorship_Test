@@ -613,6 +613,23 @@ export const apiService = {
       }
     }
 
+    // When marked as conducted, instantly notify the Associate to fill their post-session evaluation form
+    if (isCompleted && session) {
+      const notifs = getStoredNotifications();
+      notifs.unshift({
+        id: `NOTIF-${Date.now()}-EVAL-NUDGE`,
+        userId: session.associateId,
+        recipientName: session.associateName,
+        title: "Session Completed! Please Rate Your Mentor ⭐",
+        message: `${session.mentorName} marked your 1-on-1 session on ${session.date} as completed. Please fill out your short evaluation and star rating.`,
+        timestamp: "Just now",
+        type: "evaluation_nudge",
+        sessionId: session.id,
+        read: false
+      });
+      saveStoredNotifications(notifs);
+    }
+
     return session;
   },
 

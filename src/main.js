@@ -1051,8 +1051,37 @@ function renderMenteeHome(associate) {
   const engagedMentorIds = [...new Set(pastSessions.map(s => s.mentorId))];
   const engagedMentors = state.mentors.filter(m => engagedMentorIds.includes(m.id));
 
+  // Find completed sessions awaiting Associate evaluation
+  const pendingEvaluationSessions = state.sessions.filter(s => 
+    s.status === 'Completed' && 
+    !s.associateRating && 
+    ((s.associateId && String(s.associateId) === String(associate.id)) || (s.associateName && s.associateName.toLowerCase() === (associate.name || '').toLowerCase()))
+  );
+
   return `
     <div style="width: 100%;">
+      <!-- PENDING EVALUATION NUDGE BANNER FOR ASSOCIATES -->
+      ${pendingEvaluationSessions.length > 0 ? `
+        <div style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border: 2px solid #f59e0b; border-radius: 16px; padding: 1.25rem 1.5rem; margin-bottom: 1.75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.15);">
+          <div style="display: flex; align-items: center; gap: 1rem;">
+            <div style="width: 44px; height: 44px; border-radius: 50%; background: #f59e0b; color: white; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
+              <i class="fa-solid fa-star"></i>
+            </div>
+            <div>
+              <div style="font-weight: 800; font-size: 1.05rem; color: #92400e;">
+                Action Required: Submit Your Mentorship Evaluation (${pendingEvaluationSessions.length} Pending)
+              </div>
+              <div style="font-size: 0.85rem; color: #b45309;">
+                Your mentor has conducted your 1-on-1 session with <strong>${pendingEvaluationSessions[0].mentorName}</strong>. Please rate your experience!
+              </div>
+            </div>
+          </div>
+          <button class="btn-brand-primary btn-open-evaluation" data-id="${pendingEvaluationSessions[0].id}" data-role="associate" style="background: #d97706; border: none; padding: 0.65rem 1.25rem; font-size: 0.9rem; font-weight: 800; border-radius: 10px; box-shadow: 0 4px 10px rgba(217, 119, 6, 0.3);">
+            <i class="fa-solid fa-star"></i> Rate & Review Now
+          </button>
+        </div>
+      ` : ''}
+
       <!-- Hero Banner: Your Growth Journey Starts Here -->
       <div class="mently-hero-banner" style="background: linear-gradient(135deg, #1b0a3a 0%, #2e1065 100%); border-radius: 18px; padding: 2.25rem; color: #fff; margin-bottom: 2rem; box-shadow: 0 10px 30px rgba(46, 16, 101, 0.25); position: relative; overflow: hidden;">
         <div style="position: relative; z-index: 2;">
@@ -1624,24 +1653,20 @@ function renderMentorDashboard(mentor) {
                         <i class="fa-regular fa-calendar-plus" style="color: #4285F4;"></i> Add to Google Calendar
                       </a>
 
-                      <!-- Session Conducted / Completion Toggle (Stays Permanently ON Once Checked/Completed) -->
-                      <div style="display: flex; align-items: center; gap: 0.5rem; background: var(--bg-hover); padding: 0.35rem 0.8rem; border-radius: 10px; border: 1px solid var(--border-color);">
-                        <label class="switch-toggle" style="position: relative; display: inline-block; width: 38px; height: 20px; margin: 0; cursor: ${s.status === 'Completed' ? 'default' : 'pointer'};">
-                          <input type="checkbox" class="cb-toggle-conducted" data-id="${s.id}" ${s.status === 'Completed' ? 'checked disabled' : ''} style="opacity: 0; width: 0; height: 0;">
-                          <span class="slider-toggle" style="position: absolute; cursor: ${s.status === 'Completed' ? 'default' : 'pointer'}; top: 0; left: 0; right: 0; bottom: 0; background-color: ${s.status === 'Completed' ? 'var(--brand-emerald)' : '#ccc'}; transition: .3s; border-radius: 34px;">
-                            <span style="position: absolute; height: 14px; width: 14px; left: ${s.status === 'Completed' ? '20px' : '3px'}; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%;"></span>
-                          </span>
-                        </label>
-                        <span style="font-size: 0.78rem; font-weight: 800; color: ${s.status === 'Completed' ? 'var(--brand-emerald)' : 'var(--text-secondary)'};">
-                          ${s.status === 'Completed' ? '✓ Conducted' : 'Mark Conducted'}
-                        </span>
-                      </div>
-
                       ${s.status === 'Completed' ? `
-                        <button class="btn-brand-primary btn-open-evaluation" data-id="${s.id}" data-role="mentor" style="padding: 0.5rem 1rem; font-size: 0.82rem; border-radius: 10px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
-                          <i class="fa-solid fa-star"></i> ${s.mentorRating ? 'Update Evaluation' : 'Evaluate Associate'}
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                          <span class="badge-tag badge-green" style="font-size: 0.85rem; padding: 0.5rem 0.95rem; border-radius: 10px; display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 800;">
+                            <i class="fa-solid fa-circle-check"></i> Conducted
+                          </span>
+                          <button class="btn-brand-primary btn-open-evaluation" data-id="${s.id}" data-role="mentor" style="padding: 0.5rem 1rem; font-size: 0.82rem; border-radius: 10px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                            <i class="fa-solid fa-star"></i> ${s.mentorRating ? 'Update Evaluation' : 'Evaluate Associate'}
+                          </button>
+                        </div>
+                      ` : `
+                        <button class="btn-secondary btn-mark-conducted" data-id="${s.id}" style="padding: 0.5rem 1rem; font-size: 0.85rem; border-radius: 10px; font-weight: 800; border: 1.5px solid var(--brand-emerald); color: var(--brand-emerald); background: rgba(5, 150, 105, 0.08); cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem;">
+                          <i class="fa-solid fa-square-check"></i> Mark Conducted
                         </button>
-                      ` : ''}
+                      `}
                     `}
                   </div>
                 </div>
@@ -3818,6 +3843,35 @@ function bindEvents() {
         showToast(`🎉 Google Meet created! Session accepted for ${assocName}.`, 'fa-video');
         render();
         await initAppData();
+      });
+    });
+
+    // Mark Session as Conducted Button (Mentor)
+    document.querySelectorAll('.btn-mark-conducted').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const sessionId = btn.dataset.id;
+        const session = state.sessions.find(s => String(s.id) === String(sessionId));
+
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Updating...`;
+
+        await apiService.toggleSessionCompletion(sessionId, true);
+
+        if (session) {
+          session.status = 'Completed';
+          state.evaluatingSession = session;
+          state.evaluatingRole = 'mentor';
+          state.evalFormData = {
+            stars: session.mentorRating?.stars || 5,
+            engagement: session.mentorRating?.engagement || 5,
+            objectiveAlignment: 5,
+            qualitativeFeedback: session.mentorRating?.qualitativeFeedback || session.mentorRating?.notes || ''
+          };
+          state.activeModal = 'session_evaluation';
+          showToast('Session marked as conducted! Please submit your evaluation.', 'fa-star');
+        }
+
+        render();
       });
     });
 
