@@ -243,11 +243,13 @@ export const apiService = {
 
   async getMentors() {
     const supabase = getSupabaseClient();
+    let mentorsList = [];
+
     if (supabase) {
       try {
         const { data, error } = await supabase.from('users').select('*').eq('role', 'mentor');
         if (data && data.length > 0 && !error) {
-          return data.map(u => ({
+          mentorsList = data.map(u => ({
             id: u.id,
             role: 'mentor',
             name: u.name || '',
@@ -274,7 +276,24 @@ export const apiService = {
         console.warn('[Supabase Mentors Fetch]', err.message);
       }
     }
-    return getStoredMentors();
+
+    if (mentorsList.length === 0) {
+      mentorsList = getStoredMentors();
+    }
+
+    // Deduplicate mentors strictly by email and normalized name to eliminate any duplicate entries
+    const seenKeys = new Set();
+    const uniqueMentors = [];
+
+    for (const m of mentorsList) {
+      const key = (m.email ? m.email.toLowerCase().trim() : '') || (m.name ? m.name.toLowerCase().trim() : m.id);
+      if (!seenKeys.has(key)) {
+        seenKeys.add(key);
+        uniqueMentors.push(m);
+      }
+    }
+
+    return uniqueMentors;
   },
 
   async getSessions() {
