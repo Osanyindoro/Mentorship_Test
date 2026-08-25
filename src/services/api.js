@@ -387,7 +387,10 @@ export const apiService = {
             objective: s.objective || '',
             status: s.status || 'Pending',
             meetingLink: s.meetingLink || s.meeting_link || s.meetingUrl || '',
-            createdAt: s.created_at || s.createdAt || ''
+            createdAt: s.created_at || s.createdAt || '',
+            associateRating: s.associate_rating || s.associateRating || null,
+            mentorRating: s.mentor_rating || s.mentorRating || null,
+            completedAt: s.completed_at || s.completedAt || null
           }));
         }
       } catch (err) {
@@ -586,6 +589,118 @@ export const apiService = {
         message: `${session.mentorName} accepted your 1-on-1 session for ${session.date} at ${session.time}. Google Meet link generated.`,
         timestamp: "Just now",
         type: "acceptance",
+        read: false
+      });
+      saveStoredNotifications(notifs);
+    }
+
+    return session;
+  },
+
+  async toggleSessionCompletion(sessionId, isCompleted) {
+    const sessions = getStoredSessions();
+    const session = sessions.find(s => s.id === sessionId);
+    const newStatus = isCompleted ? 'Completed' : 'Accepted';
+    const completedAt = isCompleted ? new Date().toISOString() : null;
+
+    if (session) {
+      session.status = newStatus;
+      session.completedAt = completedAt;
+      saveStoredSessions(sessions);
+    }
+
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        await supabase
+          .from('sessions')
+          .update({ 
+            status: newStatus,
+            completed_at: completedAt
+          })
+          .eq('id', sessionId);
+      } catch (err) {
+        console.warn('[Supabase Toggle Session Completion]', err.message);
+      }
+    }
+
+    return session;
+  },
+
+  async submitEvaluation(sessionId, evalPayload, role) {
+    // evalPayload: { stars: number, qualitativeFeedback: string, engagement: number, objectiveAlignment: number }
+    const sessions = getStoredSessions();
+    const session = sessions.find(s => s.id === sessionId);
+    const timestamp = new Date().toISOString();
+
+    const formattedEval = {
+      ...evalPayload,
+      recordedAt: timestamp
+    };
+
+    if (session) {
+      if (role === 'mentor') {
+        session.mentorRating = formattedEval;
+      } else {
+        session.associateRating = formattedEval;
+      }
+      session.status = 'Completed';
+      saveStoredSessions(sessions);
+    }
+
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        const updateData = { status: 'Completed' };
+        if (role === 'mentor') {
+          updateData.mentor_rating = formattedEval;
+        } else {
+          updateData.associate_rating = formattedEval;
+        }
+        await supabase.from('sessions').update(updateData).eq('id', sessionId);
+
+        // Recalculate average rating for the evaluated target
+        if (role === 'associate' && session && session.mentorId) {
+          // Associate rated the mentor -> update mentor's average rating in 'users'
+          const { data: mentorSessions } = await supabase.from('sessions').select('associate_rating').eq('mentor_id', session.mentorId);
+          if (mentorSessions && mentorSessions.length > 0) {
+            const ratings = mentorSessions.map(s => s.associate_rating?.stars).filter(Boolean);
+            if (ratings.length > 0) {
+              const avg = Number((ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1));
+              await supabase.from('users').update({ rating: avg, total_sessions: ratings.length }).eq('id', session.mentorId);
+            }
+          }
+        } else if (role === 'mentor' && session && session.associateId) {
+          // Mentor rated the associate -> update associate's rating in 'users'
+          const { data: assocSessions } = await supabase.from('sessions').select('mentor_rating').eq('associate_id', session.associateId);
+          if (assocSessions && assocSessions.length > 0) {
+            const ratings = assocSessions.map(s => s.mentor_rating?.stars).filter(Boolean);
+            if (ratings.length > 0) {
+              const avg = Number((ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1));
+              await supabase.from('users').update({ rating: avg }).eq('id', session.associateId);
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('[Supabase Submit Evaluation]', err.message);
+      }
+    }
+
+    // Trigger in-app notification
+    if (session) {
+      const notifs = getStoredNotifications();
+      const recipientId = role === 'mentor' ? session.associateId : session.mentorId;
+      const rName = role === 'mentor' ? session.associateName : session.mentorName;
+      const reviewer = role === 'mentor' ? session.mentorName : session.associateName;
+
+      notifs.unshift({
+        id: `NOTIF-${Date.now()}-REV`,
+        userId: recipientId,
+        recipientName: rName,
+        title: "Session Feedback Received! ⭐",
+        message: `${reviewer} submitted their evaluation for your 1-on-1 session (${evalPayload.stars} Stars).`,
+        timestamp: "Just now",
+        type: "feedback",
         read: false
       });
       saveStoredNotifications(notifs);
