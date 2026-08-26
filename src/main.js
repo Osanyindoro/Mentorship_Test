@@ -1050,10 +1050,24 @@ function renderRoleView(associate, mentor) {
 // MENTEE VIEWS
 // --------------------------------------------------------------------------
 function renderMenteeHome(associate) {
-  const upcomingSessions = state.sessions.filter(s => s.status === 'Accepted');
-  const pastSessions = state.sessions.filter(s => s.status === 'Completed' || s.associateId === associate.id || s.associateName === associate.name);
-  const engagedMentorIds = [...new Set(pastSessions.map(s => s.mentorId))];
-  const engagedMentors = state.mentors.filter(m => engagedMentorIds.includes(m.id));
+  const assocName = (associate.name || '').toLowerCase().trim();
+  const assocId = String(associate.id || '').toLowerCase().trim();
+
+  const mySessions = state.sessions.filter(s => 
+    (s.associateId && String(s.associateId).toLowerCase().trim() === assocId) || 
+    (s.associateName && s.associateName.toLowerCase().trim() === assocName)
+  );
+
+  const upcomingSessions = mySessions.filter(s => s.status === 'Accepted');
+  
+  // Find distinct mentors previously engaged
+  const engagedMentorNames = new Set(mySessions.map(s => (s.mentorName || '').toLowerCase().trim()).filter(Boolean));
+  const engagedMentorIds = new Set(mySessions.map(s => String(s.mentorId || '').toLowerCase().trim()).filter(Boolean));
+
+  const engagedMentors = state.mentors.filter(m => 
+    engagedMentorIds.has(String(m.id || '').toLowerCase().trim()) || 
+    engagedMentorNames.has((m.name || '').toLowerCase().trim())
+  );
 
   // Find completed sessions awaiting Associate evaluation
   const pendingEvaluationSessions = state.sessions.filter(s => 
@@ -1169,8 +1183,10 @@ function renderMenteeHome(associate) {
             ${engagedMentors.map(m => renderMentorCard(m)).join('')}
           </div>
         ` : `
-          <div class="cards-grid">
-            ${state.mentors.slice(0, 2).map(m => renderMentorCard(m)).join('')}
+          <div style="background: var(--bg-surface-secondary); padding: 2rem; border-radius: 16px; border: 1px dashed var(--border-color); text-align: center; color: var(--text-secondary);">
+            <div style="font-weight: 800; font-size: 1rem; color: var(--text-primary); margin-bottom: 0.35rem;">No Mentors Engaged Yet</div>
+            <p style="font-size: 0.86rem; margin-bottom: 1rem;">Explore our directory to book your first 1-on-1 career guidance session!</p>
+            <button class="btn-brand-primary" id="btnHeroFindMentors" style="padding: 0.5rem 1.25rem; font-size: 0.85rem;"><i class="fa-solid fa-compass"></i> Find Mentors</button>
           </div>
         `}
       </div>
