@@ -76,12 +76,20 @@ const state = {
   },
 
   // Modal State
-  activeModal: null,                 // null | 'booking' | 'mentor_profile' | 'group_create' | 'task_create' | 'admin_cap' | 'edit_mentor_profile'
+  activeModal: null,                 // null | 'booking' | 'mentor_profile' | 'group_create' | 'task_create' | 'admin_cap' | 'edit_mentor_profile' | 'session_evaluation'
   bookingMentor: null,
   inspectingMentor: null,
   inspectingSession: null,
   editingCapMentor: null,
   editingMentorProfile: null,
+  evaluatingSession: null,
+  evaluatingRole: null,              // 'mentor' | 'associate'
+  evalFormData: {
+    stars: 5,
+    engagement: 5,
+    objectiveAlignment: 5,
+    qualitativeFeedback: ''
+  },
 
   bookingData: {
     date: null,
@@ -563,26 +571,30 @@ function renderPublicLandingPage() {
 
 function renderLandingMentorCard(m) {
   return `
-    <div class="mentor-card">
-      <div class="card-header-flex">
-        <img src="${m.avatar && m.avatar.startsWith('data:') ? m.avatar : (m.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80')}" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(m.name)}&background=2e1065&color=ffffff';" class="mentor-avatar-lg" />
+    <div class="mentor-card" style="display: flex; flex-direction: column; border-radius: 18px; padding: 1.5rem; border: 1px solid var(--border-color); background: var(--bg-surface); box-shadow: var(--shadow-sm); transition: all 0.25s ease;">
+      <div class="card-header-flex" style="display: flex; gap: 1.1rem; align-items: center; margin-bottom: 1rem;">
+        <img src="${m.avatar && m.avatar.startsWith('data:') ? m.avatar : (m.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80')}" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(m.name)}&background=2e1065&color=ffffff';" class="mentor-avatar-lg" style="width: 84px; height: 84px; border-radius: 50%; object-fit: cover; border: 3.5px solid var(--brand-primary); box-shadow: 0 4px 12px rgba(46,16,101,0.15); flex-shrink: 0;" />
         <div>
-          <div class="mentor-name">${m.name}</div>
-          <div class="mentor-title">${m.title}</div>
-          <div class="mentor-org">${m.organization}</div>
+          <div class="mentor-name" style="font-weight: 800; font-size: 1.18rem; color: var(--text-primary); margin-bottom: 0.2rem;">${m.name}</div>
+          <div class="mentor-title" style="font-size: 0.86rem; font-weight: 600; color: var(--text-secondary); line-height: 1.35; margin-bottom: 0.25rem;">${m.title}</div>
+          <div class="mentor-org" style="font-size: 0.82rem; font-weight: 800; color: var(--brand-primary);">${m.organization}</div>
         </div>
       </div>
 
-      <p class="mentor-bio-preview">${m.bio}</p>
+      <p class="mentor-bio-preview" style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.55; margin-bottom: 1.2rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">${m.bio}</p>
 
-      <div class="card-tags-flex">
-        <span class="badge-tag badge-blue"><i class="fa-solid fa-briefcase"></i> ${m.domain}</span>
-        <span class="badge-tag badge-gold"><i class="fa-solid fa-star"></i> ${m.rating} (${m.totalSessions} sessions)</span>
+      <div class="card-tags-flex" style="display: flex; flex-wrap: wrap; gap: 0.45rem; margin-bottom: 1.25rem;">
+        <span class="badge-tag badge-blue" style="font-weight: 700;"><i class="fa-solid fa-briefcase"></i> ${m.domain}</span>
+        <span class="badge-tag badge-gold" style="font-weight: 800;"><i class="fa-solid fa-star"></i> ${m.rating || '5.0'} (${m.totalSessions || 0} sessions)</span>
       </div>
 
-      <div class="card-footer" style="margin-top: 1.25rem;">
-        <button class="btn-brand-primary btn-inspect-profile" data-id="${m.id}" style="padding: 0.45rem 1rem; font-size: 0.82rem;">View Profile</button>
-        <button class="btn-brand-primary btn-landing-book" data-id="${m.id}" style="padding: 0.45rem 1rem; font-size: 0.82rem; background: var(--brand-violet);">Book Session</button>
+      <div class="card-footer" style="margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; gap: 0.75rem;">
+        <button class="btn-brand-primary btn-inspect-profile" data-id="${m.id}" style="padding: 0.55rem 1.15rem; font-size: 0.84rem; border-radius: 10px;">
+          <i class="fa-solid fa-user"></i> View Profile
+        </button>
+        <button class="btn-brand-primary btn-landing-book" data-id="${m.id}" style="padding: 0.55rem 1.15rem; font-size: 0.84rem; border-radius: 10px; background: var(--brand-violet);">
+          <i class="fa-regular fa-calendar-plus"></i> Book Session
+        </button>
       </div>
     </div>
   `;
@@ -1007,13 +1019,56 @@ function renderRoleView(associate, mentor) {
 // MENTEE VIEWS
 // --------------------------------------------------------------------------
 function renderMenteeHome(associate) {
-  const upcomingSessions = state.sessions.filter(s => s.status === 'Accepted');
-  const pastSessions = state.sessions.filter(s => s.status === 'Completed' || s.associateId === associate.id || s.associateName === associate.name);
-  const engagedMentorIds = [...new Set(pastSessions.map(s => s.mentorId))];
-  const engagedMentors = state.mentors.filter(m => engagedMentorIds.includes(m.id));
+  const assocName = (associate.name || '').toLowerCase().trim();
+  const assocId = String(associate.id || '').toLowerCase().trim();
+
+  const mySessions = state.sessions.filter(s => 
+    (s.associateId && String(s.associateId).toLowerCase().trim() === assocId) || 
+    (s.associateName && s.associateName.toLowerCase().trim() === assocName)
+  );
+
+  const upcomingSessions = mySessions.filter(s => s.status === 'Accepted');
+  
+  // Find distinct mentors previously engaged
+  const engagedMentorNames = new Set(mySessions.map(s => (s.mentorName || '').toLowerCase().trim()).filter(Boolean));
+  const engagedMentorIds = new Set(mySessions.map(s => String(s.mentorId || '').toLowerCase().trim()).filter(Boolean));
+
+  const engagedMentors = state.mentors.filter(m => 
+    engagedMentorIds.has(String(m.id || '').toLowerCase().trim()) || 
+    engagedMentorNames.has((m.name || '').toLowerCase().trim())
+  );
+
+  // Find completed sessions awaiting Associate evaluation
+  const pendingEvaluationSessions = state.sessions.filter(s => 
+    s.status === 'Completed' && 
+    !s.associateRating && 
+    ((s.associateId && String(s.associateId) === String(associate.id)) || (s.associateName && s.associateName.toLowerCase() === (associate.name || '').toLowerCase()))
+  );
 
   return `
     <div style="width: 100%;">
+      <!-- PENDING EVALUATION NUDGE BANNER FOR ASSOCIATES -->
+      ${pendingEvaluationSessions.length > 0 ? `
+        <div style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border: 2px solid #f59e0b; border-radius: 16px; padding: 1.25rem 1.5rem; margin-bottom: 1.75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.15);">
+          <div style="display: flex; align-items: center; gap: 1rem;">
+            <div style="width: 44px; height: 44px; border-radius: 50%; background: #f59e0b; color: white; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
+              <i class="fa-solid fa-star"></i>
+            </div>
+            <div>
+              <div style="font-weight: 800; font-size: 1.05rem; color: #92400e;">
+                Action Required: Submit Your Mentorship Evaluation (${pendingEvaluationSessions.length} Pending)
+              </div>
+              <div style="font-size: 0.85rem; color: #b45309;">
+                Your mentor has conducted your 1-on-1 session with <strong>${pendingEvaluationSessions[0].mentorName}</strong>. Please rate your experience!
+              </div>
+            </div>
+          </div>
+          <button class="btn-brand-primary btn-open-evaluation" data-id="${pendingEvaluationSessions[0].id}" data-role="associate" style="background: #d97706; border: none; padding: 0.65rem 1.25rem; font-size: 0.9rem; font-weight: 800; border-radius: 10px; box-shadow: 0 4px 10px rgba(217, 119, 6, 0.3);">
+            <i class="fa-solid fa-star"></i> Rate & Review Now
+          </button>
+        </div>
+      ` : ''}
+
       <!-- Hero Banner: Your Growth Journey Starts Here -->
       <div class="mently-hero-banner" style="background: linear-gradient(135deg, #1b0a3a 0%, #2e1065 100%); border-radius: 18px; padding: 2.25rem; color: #fff; margin-bottom: 2rem; box-shadow: 0 10px 30px rgba(46, 16, 101, 0.25); position: relative; overflow: hidden;">
         <div style="position: relative; z-index: 2;">
@@ -1097,8 +1152,10 @@ function renderMenteeHome(associate) {
             ${engagedMentors.map(m => renderMentorCard(m)).join('')}
           </div>
         ` : `
-          <div class="cards-grid">
-            ${state.mentors.slice(0, 2).map(m => renderMentorCard(m)).join('')}
+          <div style="background: var(--bg-surface-secondary); padding: 2rem; border-radius: 16px; border: 1px dashed var(--border-color); text-align: center; color: var(--text-secondary);">
+            <div style="font-weight: 800; font-size: 1rem; color: var(--text-primary); margin-bottom: 0.35rem;">No Mentors Engaged Yet</div>
+            <p style="font-size: 0.86rem; margin-bottom: 1rem;">Explore our directory to book your first 1-on-1 career guidance session!</p>
+            <button class="btn-brand-primary" id="btnHeroFindMentors" style="padding: 0.5rem 1.25rem; font-size: 0.85rem;"><i class="fa-solid fa-compass"></i> Find Mentors</button>
           </div>
         `}
       </div>
@@ -1168,7 +1225,7 @@ function renderMenteeDiscovery() {
 }
 
 function renderMentorCard(mentor) {
-  const availableSlot = mentor.schedule ? mentor.schedule.find(s => !s.isBooked) : null;
+  const availableSlot = mentor.schedule && mentor.schedule.find ? mentor.schedule.find(s => !s.isBooked) : null;
   const avatarUrl = mentor.avatar && mentor.avatar.startsWith('data:') 
     ? mentor.avatar 
     : (mentor.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(mentor.name)}&size=600&background=2551d9&color=ffffff&bold=true&format=png`);
@@ -1346,15 +1403,42 @@ function renderMenteeSessionsList() {
                 <strong>Objective:</strong> ${s.objective}
               </div>
 
-              <div class="card-footer" style="flex-wrap: wrap; gap: 0.75rem;">
-                <div style="font-size: 0.82rem; color: var(--text-muted); font-weight: 700;">
-                  <i class="fa-regular fa-clock"></i> ${s.date} at ${s.time} (${s.duration || '1 Hour'})
+              <div class="card-footer" style="flex-wrap: wrap; gap: 0.75rem; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+                  <div style="font-size: 0.82rem; color: var(--text-muted); font-weight: 700;">
+                    <i class="fa-regular fa-clock"></i> ${s.date} at ${s.time} (${s.duration || '1 Hour'})
+                  </div>
+                  ${s.associateRating ? `
+                    <span style="font-size: 0.8rem; font-weight: 800; color: var(--brand-gold); background: rgba(245, 158, 11, 0.1); padding: 0.25rem 0.6rem; border-radius: 20px; display: inline-flex; align-items: center; gap: 0.3rem;">
+                      <i class="fa-solid fa-star"></i> You rated: ${s.associateRating.stars}/5
+                    </span>
+                  ` : ''}
+                  ${s.mentorRating ? `
+                    <span style="font-size: 0.8rem; font-weight: 800; color: var(--brand-emerald); background: rgba(16, 185, 129, 0.1); padding: 0.25rem 0.6rem; border-radius: 20px; display: inline-flex; align-items: center; gap: 0.3rem;">
+                      <i class="fa-solid fa-medal"></i> Mentor rated you: ${s.mentorRating.stars}/5
+                    </span>
+                  ` : ''}
                 </div>
 
                 <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-                  ${s.status === 'Accepted' && s.meetingLink ? `
+                  ${s.status === 'Completed' ? `
+                    ${s.associateRating ? `
+                      <span class="badge-tag badge-gold" style="font-size: 0.82rem; padding: 0.45rem 0.85rem; border-radius: 8px; font-weight: 800; background: rgba(245, 158, 11, 0.15); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.3); display: inline-flex; align-items: center; gap: 0.35rem;">
+                        <i class="fa-solid fa-star"></i> Review Submitted (${s.associateRating.stars}★)
+                      </span>
+                    ` : `
+                      <button class="btn-brand-primary btn-open-evaluation" data-id="${s.id}" data-role="associate" style="padding: 0.45rem 1rem; font-size: 0.82rem; border-radius: 8px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                        <i class="fa-solid fa-star"></i> ⭐ Rate & Review Mentor
+                      </button>
+                    `}
+                    ${s.meetingLink ? `
+                      <a href="${s.meetingLink}" target="_blank" class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 0.3rem; border: 1px solid var(--border-color); color: var(--text-secondary);">
+                        <i class="fa-solid fa-video"></i> Meet Link
+                      </a>
+                    ` : ''}
+                  ` : s.status === 'Accepted' && s.meetingLink ? `
                     <a href="${s.meetingLink}" target="_blank" class="btn-brand-primary" style="padding: 0.4rem 0.9rem; font-size: 0.8rem;">
-                      <i class="fa-solid fa-video"></i> ${isGoogleMeet ? 'Join Google Meet' : isZoho ? 'Join Zoho Meet' : 'Join Meeting'}
+                      <i class="fa-solid fa-video"></i> ${isGoogleMeet ? 'Join Google Meet' : 'Join Meeting'}
                     </a>
                     <a href="${calUrl}" target="_blank" class="btn-secondary" style="padding: 0.4rem 0.85rem; font-size: 0.8rem; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 700; border: 1px solid var(--border-color); color: var(--text-primary);">
                       <i class="fa-regular fa-calendar-plus" style="color: #4285F4;"></i> Add to Google Calendar
@@ -1514,14 +1598,16 @@ function renderMentorDashboard(mentor) {
                   <div>
                     <div style="font-weight: 800; font-size: 1.15rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
                       <i class="fa-solid fa-user-graduate" style="color: var(--brand-primary); font-size: 1rem;"></i>
-                      ${s.associateName}
+                      <a class="btn-inspect-associate-profile" data-id="${s.associateId}" data-name="${s.associateName}" style="color: var(--brand-primary); text-decoration: none; cursor: pointer; border-bottom: 1.5px dashed var(--brand-primary);" title="Click to view Associate profile and past mentor ratings">
+                        ${s.associateName}
+                      </a>
                     </div>
                     <div style="font-size: 0.85rem; font-weight: 700; color: var(--brand-violet); margin-top: 0.2rem;">
                       ${title} <span style="color: var(--text-muted); font-weight: 400;">at</span> ${org}
                     </div>
                   </div>
-                  <span class="badge-tag ${s.status === 'Accepted' ? 'badge-green' : 'badge-gold'}" style="font-size: 0.8rem; padding: 0.35rem 0.85rem; border-radius: 20px;">
-                    ${s.status === 'Accepted' ? '<i class="fa-solid fa-circle-check"></i> Accepted' : '<i class="fa-solid fa-clock"></i> Pending Acceptance'}
+                  <span class="badge-tag ${s.status === 'Completed' ? 'badge-purple' : s.status === 'Accepted' ? 'badge-green' : 'badge-gold'}" style="font-size: 0.8rem; padding: 0.35rem 0.85rem; border-radius: 20px;">
+                    ${s.status === 'Completed' ? '<i class="fa-solid fa-circle-check"></i> Completed' : s.status === 'Accepted' ? '<i class="fa-solid fa-circle-check"></i> Accepted' : '<i class="fa-solid fa-clock"></i> Pending Acceptance'}
                   </span>
                 </div>
 
@@ -1546,13 +1632,25 @@ function renderMentorDashboard(mentor) {
                   <p style="font-size: 0.88rem; color: var(--text-primary); line-height: 1.55; margin: 0; white-space: pre-wrap;">${s.objective}</p>
                 </div>
 
-                <!-- Footer with Action Buttons -->
-                <div class="card-footer" style="padding-top: 0.8rem; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
-                  <span style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted);">
-                    <i class="fa-regular fa-clock"></i> Duration: ${s.duration || '1 Hour'}
-                  </span>
+                <!-- Footer with Action Buttons & Completion Toggle -->
+                <div class="card-footer" style="padding-top: 1rem; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                  <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                    <span style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted);">
+                      <i class="fa-regular fa-clock"></i> Duration: ${s.duration || '1 Hour'}
+                    </span>
+                    ${s.mentorRating ? `
+                      <span style="font-size: 0.8rem; font-weight: 800; color: var(--brand-gold); background: rgba(245, 158, 11, 0.1); padding: 0.25rem 0.6rem; border-radius: 20px; display: inline-flex; align-items: center; gap: 0.3rem;">
+                        <i class="fa-solid fa-star"></i> You rated: ${s.mentorRating.stars}/5
+                      </span>
+                    ` : ''}
+                    ${s.associateRating ? `
+                      <span style="font-size: 0.8rem; font-weight: 800; color: var(--brand-emerald); background: rgba(16, 185, 129, 0.1); padding: 0.25rem 0.6rem; border-radius: 20px; display: inline-flex; align-items: center; gap: 0.3rem;">
+                        <i class="fa-solid fa-check"></i> Associate rated: ${s.associateRating.stars}/5
+                      </span>
+                    ` : ''}
+                  </div>
 
-                  <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+                  <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
                     ${s.status === 'Pending' ? `
                       <button class="btn-brand-primary btn-accept-session" data-id="${s.id}" style="padding: 0.5rem 1.1rem; font-size: 0.85rem; border-radius: 10px;">
                         <i class="fa-solid fa-calendar-check"></i> Accept & Generate Google Meet Link
@@ -1564,6 +1662,27 @@ function renderMentorDashboard(mentor) {
                       <a href="${calUrl}" target="_blank" class="btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem; border-radius: 10px; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 700; border: 1px solid var(--border-color); color: var(--text-primary);">
                         <i class="fa-regular fa-calendar-plus" style="color: #4285F4;"></i> Add to Google Calendar
                       </a>
+
+                      ${s.status === 'Completed' ? `
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                          <span class="badge-tag badge-green" style="font-size: 0.85rem; padding: 0.5rem 0.95rem; border-radius: 10px; display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 800;">
+                            <i class="fa-solid fa-circle-check"></i> Conducted
+                          </span>
+                          ${s.mentorRating ? `
+                            <span class="badge-tag badge-gold" style="font-size: 0.82rem; padding: 0.5rem 0.95rem; border-radius: 10px; display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 800; background: rgba(245, 158, 11, 0.15); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.3);">
+                              <i class="fa-solid fa-star"></i> Evaluation Submitted (${s.mentorRating.stars}★)
+                            </span>
+                          ` : `
+                            <button class="btn-brand-primary btn-open-evaluation" data-id="${s.id}" data-role="mentor" style="padding: 0.5rem 1rem; font-size: 0.82rem; border-radius: 10px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                              <i class="fa-solid fa-star"></i> Evaluate Associate
+                            </button>
+                          `}
+                        </div>
+                      ` : `
+                        <button class="btn-secondary btn-mark-conducted" data-id="${s.id}" style="padding: 0.5rem 1rem; font-size: 0.85rem; border-radius: 10px; font-weight: 800; border: 1.5px solid var(--brand-emerald); color: var(--brand-emerald); background: rgba(5, 150, 105, 0.08); cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem;">
+                          <i class="fa-solid fa-square-check"></i> Mark Conducted
+                        </button>
+                      `}
                     `}
                   </div>
                 </div>
@@ -1908,13 +2027,16 @@ function renderAdminAnalytics() {
       <!-- FILTER TAB PILLS -->
       <div style="display: flex; gap: 0.75rem; overflow-x: auto; padding-bottom: 0.5rem; margin-bottom: 1.5rem; border-bottom: 2px solid var(--border-color);">
         <button class="btn-admin-kpi-pill ${activeTable === 'mentees' ? 'active-pill' : ''}" data-table="mentees" style="padding: 0.6rem 1.25rem; font-size: 0.88rem; font-weight: 800; border-radius: 20px; border: none; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; ${activeTable === 'mentees' ? 'background: var(--brand-primary); color: white;' : 'background: var(--bg-hover); color: var(--text-secondary);'}">
-          <i class="fa-solid fa-user-graduate"></i> Mentees Roster (4,120)
+          <i class="fa-solid fa-user-graduate"></i> Mentees Roster (${menteesCount})
         </button>
         <button class="btn-admin-kpi-pill ${activeTable === 'mentors' ? 'active-pill' : ''}" data-table="mentors" style="padding: 0.6rem 1.25rem; font-size: 0.88rem; font-weight: 800; border-radius: 20px; border: none; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; ${activeTable === 'mentors' ? 'background: #059669; color: white;' : 'background: var(--bg-hover); color: var(--text-secondary);'}">
-          <i class="fa-solid fa-user-tie"></i> Active Mentors (38)
+          <i class="fa-solid fa-user-tie"></i> Active Mentors (${state.mentors.length})
         </button>
         <button class="btn-admin-kpi-pill ${activeTable === 'sessions' ? 'active-pill' : ''}" data-table="sessions" style="padding: 0.6rem 1.25rem; font-size: 0.88rem; font-weight: 800; border-radius: 20px; border: none; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; ${activeTable === 'sessions' ? 'background: #6b21a8; color: white;' : 'background: var(--bg-hover); color: var(--text-secondary);'}">
-          <i class="fa-solid fa-video"></i> Sessions Log (184)
+          <i class="fa-solid fa-video"></i> Sessions Log (${sessionsCount})
+        </button>
+        <button class="btn-admin-kpi-pill ${activeTable === 'feedback' ? 'active-pill' : ''}" data-table="feedback" style="padding: 0.6rem 1.25rem; font-size: 0.88rem; font-weight: 800; border-radius: 20px; border: none; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; ${activeTable === 'feedback' ? 'background: #f59e0b; color: white;' : 'background: var(--bg-hover); color: var(--text-secondary);'}">
+          <i class="fa-solid fa-star"></i> Evaluation & Ratings (${state.sessions.filter(s => s.mentorRating || s.associateRating).length})
         </button>
         <button class="btn-admin-kpi-pill ${activeTable === 'attendance' ? 'active-pill' : ''}" data-table="attendance" style="padding: 0.6rem 1.25rem; font-size: 0.88rem; font-weight: 800; border-radius: 20px; border: none; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; ${activeTable === 'attendance' ? 'background: #d97706; color: white;' : 'background: var(--bg-hover); color: var(--text-secondary);'}">
           <i class="fa-solid fa-chart-line"></i> Attendance Audit (96.4%)
@@ -1930,6 +2052,9 @@ function renderAdminAnalytics() {
 }
 
 function renderAdminSelectedTable(activeTable) {
+  if (activeTable === 'feedback') {
+    return renderAdminFeedbackTable();
+  }
   if (activeTable === 'mentees') {
     const q = (state.adminMenteeSearchQuery || '').toLowerCase().trim();
     const mockMenteesList = [
@@ -2050,11 +2175,161 @@ function renderAdminSelectedTable(activeTable) {
   return '';
 }
 
+function renderAdminFeedbackTable() {
+  const evaluatedSessions = (state.sessions || []).filter(s => s.mentorRating || s.associateRating || s.status === 'Completed');
+  
+  // Calculate average scores
+  const allAssocStars = evaluatedSessions.map(s => s.associateRating?.stars).filter(Boolean);
+  const avgAssocGiven = allAssocStars.length > 0 ? (allAssocStars.reduce((a,b)=>a+b,0)/allAssocStars.length).toFixed(1) : '5.0';
+  
+  const allMentorStars = evaluatedSessions.map(s => s.mentorRating?.stars).filter(Boolean);
+  const avgMentorGiven = allMentorStars.length > 0 ? (allMentorStars.reduce((a,b)=>a+b,0)/allMentorStars.length).toFixed(1) : '5.0';
+
+  return `
+    <div class="mentor-card" style="padding: 1.75rem;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <h3 style="font-weight: 800; font-size: 1.2rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
+            <i class="fa-solid fa-star" style="color: var(--brand-gold);"></i> 1-on-1 Mentorship Evaluation & Feedback Analytics
+          </h3>
+          <p style="font-size: 0.85rem; color: var(--text-secondary);">Comprehensive quantitative ratings (1-5 stars) and qualitative feedback collected post-session.</p>
+        </div>
+
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+          <div style="background: var(--bg-hover); padding: 0.6rem 1.1rem; border-radius: 12px; border: 1px solid var(--border-color); text-align: center;">
+            <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted);">Mentor Satisfaction</div>
+            <div style="font-size: 1.25rem; font-weight: 800; color: var(--brand-gold);">★ ${avgAssocGiven} / 5.0</div>
+          </div>
+          <div style="background: var(--bg-hover); padding: 0.6rem 1.1rem; border-radius: 12px; border: 1px solid var(--border-color); text-align: center;">
+            <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted);">Associate Preparedness</div>
+            <div style="font-size: 1.25rem; font-weight: 800; color: var(--brand-emerald);">★ ${avgMentorGiven} / 5.0</div>
+          </div>
+          <button class="btn-brand-primary btn-export-csv" data-table="feedback" style="padding: 0.6rem 1.2rem; font-size: 0.85rem; border-radius: 10px; height: fit-content; align-self: center;">
+            <i class="fa-solid fa-download"></i> Export Feedback CSV
+          </button>
+        </div>
+      </div>
+
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem;">
+          <thead>
+            <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-secondary);">
+              <th style="padding: 0.85rem;">Session / Date</th>
+              <th style="padding: 0.85rem;">Mentor</th>
+              <th style="padding: 0.85rem;">Associate</th>
+              <th style="padding: 0.85rem;">Associate Rating of Mentor</th>
+              <th style="padding: 0.85rem;">Mentor Rating of Associate</th>
+              <th style="padding: 0.85rem;">Session Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${evaluatedSessions.length > 0 ? evaluatedSessions.map(s => `
+              <tr style="border-bottom: 1px solid var(--border-color); vertical-align: top;">
+                <td style="padding: 1rem 0.85rem;">
+                  <div style="font-weight: 800; color: var(--text-primary);">${s.id}</div>
+                  <div style="font-size: 0.78rem; color: var(--text-muted);">${s.date} @ ${s.time}</div>
+                </td>
+                <td style="padding: 1rem 0.85rem;">
+                  <div style="font-weight: 800;">${s.mentorName}</div>
+                  <div style="font-size: 0.78rem; color: var(--text-secondary);">${s.mentorDomain || ''}</div>
+                </td>
+                <td style="padding: 1rem 0.85rem;">
+                  <div style="font-weight: 800;">${s.associateName}</div>
+                  <div style="font-size: 0.78rem; color: var(--brand-violet);">${s.associateTitle || s.associateOrg || 'Scholar'}</div>
+                </td>
+                <td style="padding: 1rem 0.85rem; max-width: 250px;">
+                  ${s.associateRating ? `
+                    <div style="font-weight: 800; color: var(--brand-gold); margin-bottom: 0.25rem;">
+                      ${'★'.repeat(s.associateRating.stars || 5)}${'☆'.repeat(5 - (s.associateRating.stars || 5))} (${s.associateRating.stars}.0)
+                    </div>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary); font-style: italic; line-height: 1.4;">
+                      "${s.associateRating.qualitativeFeedback || s.associateRating.feedback || 'No written remarks'}"
+                    </div>
+                    ${s.associateRating.objectiveAlignment ? `
+                      <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.25rem;">
+                        Objective Alignment: <strong>${s.associateRating.objectiveAlignment}/5</strong>
+                      </div>
+                    ` : ''}
+                  ` : `<span style="color: var(--text-muted); font-size: 0.8rem; font-style: italic;">Awaiting Associate Review</span>`}
+                </td>
+                <td style="padding: 1rem 0.85rem; max-width: 250px;">
+                  ${s.mentorRating ? `
+                    <div style="font-weight: 800; color: var(--brand-emerald); margin-bottom: 0.25rem;">
+                      ${'★'.repeat(s.mentorRating.stars || 5)}${'☆'.repeat(5 - (s.mentorRating.stars || 5))} (${s.mentorRating.stars}.0)
+                    </div>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary); font-style: italic; line-height: 1.4;">
+                      "${s.mentorRating.qualitativeFeedback || s.mentorRating.notes || 'No written remarks'}"
+                    </div>
+                    ${s.mentorRating.engagement ? `
+                      <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.25rem;">
+                        Engagement & Prep: <strong>${s.mentorRating.engagement}/5</strong>
+                      </div>
+                    ` : ''}
+                  ` : `<span style="color: var(--text-muted); font-size: 0.8rem; font-style: italic;">Awaiting Mentor Evaluation</span>`}
+                </td>
+                <td style="padding: 1rem 0.85rem;">
+                  <span class="badge-tag ${s.status === 'Completed' ? 'badge-green' : 'badge-gold'}" style="font-size: 0.78rem;">
+                    ${s.status}
+                  </span>
+                </td>
+              </tr>
+            `).join('') : `
+              <tr>
+                <td colspan="6" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+                  No sessions have been evaluated yet. When mentors toggle sessions as completed, submitted evaluations will appear here.
+                </td>
+              </tr>
+            `}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
 function exportAdminTableToCSV(activeTable) {
   let filename = `Mastercard_Mentorship_${activeTable}_${state.adminMonthFilter}.csv`;
   let rows = [];
 
-  if (activeTable === 'mentees') {
+  if (activeTable === 'feedback') {
+    filename = `Mastercard_Mentorship_Evaluation_Feedback_Export_${new Date().toISOString().split('T')[0]}.csv`;
+    rows.push([
+      'Session ID',
+      'Date',
+      'Time',
+      'Mentor Name',
+      'Mentor Domain',
+      'Associate Name',
+      'Associate Job Title',
+      'Associate Host Org',
+      'Associate Rating (Stars)',
+      'Associate Objective Alignment (1-5)',
+      'Associate Qualitative Review',
+      'Mentor Rating (Stars)',
+      'Associate Preparedness Score (1-5)',
+      'Mentor Qualitative Feedback',
+      'Session Status'
+    ]);
+    state.sessions.forEach(s => {
+      rows.push([
+        s.id,
+        s.date,
+        s.time,
+        s.mentorName,
+        s.mentorDomain || '',
+        s.associateName,
+        s.associateTitle || '',
+        s.associateOrg || '',
+        s.associateRating?.stars || '',
+        s.associateRating?.objectiveAlignment || '',
+        s.associateRating?.qualitativeFeedback || s.associateRating?.feedback || '',
+        s.mentorRating?.stars || '',
+        s.mentorRating?.engagement || '',
+        s.mentorRating?.qualitativeFeedback || s.mentorRating?.notes || '',
+        s.status
+      ]);
+    });
+  } else if (activeTable === 'mentees') {
     rows.push(['Associate Name', 'Email Address', 'Host Organization', 'Job Title / Specialization', 'Cohort', 'Status']);
     const mockList = [
       ['Bolaji Akinjole', 'bakinjole@jobberman.com', 'Jobberman Nigeria', 'M&E Specialist', '2024-2026', 'Verified Active'],
@@ -2408,6 +2683,85 @@ function renderModals() {
     `;
   }
 
+  if (state.activeModal === 'session_evaluation' && state.evaluatingSession) {
+    const s = state.evaluatingSession;
+    const isMentor = state.evaluatingRole === 'mentor';
+    const targetName = isMentor ? s.associateName : s.mentorName;
+    const targetRoleDesc = isMentor ? `Associate (${s.associateTitle || 'Scholar'})` : `Mentor (${s.mentorDomain || 'Executive Mentor'})`;
+    const currentRating = isMentor ? s.mentorRating : s.associateRating;
+
+    const stars = state.evalFormData.stars || (currentRating ? currentRating.stars : 5);
+    const secondaryRating = isMentor 
+      ? (state.evalFormData.engagement || (currentRating ? currentRating.engagement : 5))
+      : (state.evalFormData.objectiveAlignment || (currentRating ? currentRating.objectiveAlignment : 5));
+    const feedback = state.evalFormData.qualitativeFeedback !== undefined 
+      ? state.evalFormData.qualitativeFeedback 
+      : (currentRating ? currentRating.qualitativeFeedback : '');
+
+    return `
+      <div class="modal-overlay">
+        <div class="modal-content-card" style="max-width: 580px; border-radius: 20px; padding: 2rem;">
+          <div class="modal-header-flex" style="margin-bottom: 1.25rem;">
+            <div>
+              <div class="modal-title" style="font-size: 1.35rem; font-weight: 800; font-family: var(--font-display);">
+                ${isMentor ? 'Mentor Evaluation: Rate Associate' : 'Associate Review: Rate Mentor'}
+              </div>
+              <p style="font-size: 0.86rem; color: var(--text-secondary); margin-top: 0.2rem;">
+                Session with <strong>${targetName}</strong> (${targetRoleDesc}) on ${s.date}
+              </p>
+            </div>
+            <button class="close-modal-btn btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+
+          <form id="formSubmitSessionEvaluation">
+            <!-- 1. OVERALL STAR RATING (QUANTITATIVE) -->
+            <div style="background: var(--bg-hover); padding: 1.25rem; border-radius: 14px; margin-bottom: 1.25rem; text-align: center; border: 1px solid var(--border-color);">
+              <label class="form-label" style="font-weight: 800; font-size: 0.95rem; margin-bottom: 0.5rem; display: block;">
+                Overall Session Rating <span style="color: #dc2626;">*</span>
+              </label>
+              <div class="star-rating-widget" style="display: inline-flex; gap: 0.5rem; font-size: 2rem; cursor: pointer;">
+                ${[1, 2, 3, 4, 5].map(starNum => `
+                  <i class="fa-solid fa-star btn-star-pick ${starNum <= stars ? 'selected' : ''}" 
+                     data-star="${starNum}" 
+                     style="color: ${starNum <= stars ? 'var(--brand-gold)' : '#cbd5e1'}; transition: transform 0.15s ease;"></i>
+                `).join('')}
+              </div>
+              <div style="font-size: 0.85rem; font-weight: 800; color: var(--brand-violet); margin-top: 0.35rem;">
+                ${stars === 5 ? '⭐⭐⭐⭐⭐ Exceptional (5.0)' : stars === 4 ? '⭐⭐⭐⭐ Great (4.0)' : stars === 3 ? '⭐⭐⭐ Good (3.0)' : stars === 2 ? '⭐⭐ Fair (2.0)' : '⭐ Needs Improvement (1.0)'}
+              </div>
+            </div>
+
+            <!-- 2. SECONDARY COMPETENCE METRIC -->
+            <div class="form-group" style="margin-bottom: 1.25rem;">
+              <label class="form-label" style="font-weight: 800; font-size: 0.86rem; display: flex; justify-content: space-between; align-items: center;">
+                <span>${isMentor ? 'Associate Preparedness & Engagement Level' : 'Objective Alignment & Value Added by Mentor'} <span style="color: #dc2626;">*</span></span>
+                <span style="color: var(--brand-primary); font-weight: 800;" id="secondaryRatingLabel">${secondaryRating} / 5</span>
+              </label>
+              <input type="range" min="1" max="5" step="1" value="${secondaryRating}" id="inputSecondaryMetric" style="width: 100%; accent-color: var(--brand-primary); cursor: pointer;" />
+              <div style="display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-muted); margin-top: 0.2rem;">
+                <span>1 - Low</span>
+                <span>3 - Moderate</span>
+                <span>5 - Outstanding</span>
+              </div>
+            </div>
+
+            <!-- 3. MANDATORY QUALITATIVE FEEDBACK (QUALITATIVE) -->
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+              <label class="form-label" style="font-weight: 800; font-size: 0.86rem;">
+                ${isMentor ? 'Qualitative Feedback & Recommendations for Associate' : 'Detailed Review & Key Takeaways from Mentor'} <span style="color: #dc2626;">*</span>
+              </label>
+              <textarea class="form-textarea" rows="4" id="inputQualitativeFeedback" required placeholder="${isMentor ? 'Share constructive feedback on their communication, project direction, action plan, and areas for improvement...' : 'Describe how this mentorship session helped you, specific advice provided, and what you will execute next...'}" style="border-radius: 12px; padding: 0.8rem 1rem; font-size: 0.88rem; line-height: 1.5;">${feedback}</textarea>
+            </div>
+
+            <button type="submit" class="btn-brand-primary" id="btnSaveEvaluationSubmit" style="width: 100%; justify-content: center; padding: 0.85rem; font-size: 0.95rem; border-radius: 12px;">
+              <i class="fa-solid fa-floppy-disk"></i> Submit Evaluation & Feedback
+            </button>
+          </form>
+        </div>
+      </div>
+    `;
+  }
+
   if (state.activeModal === 'mentor_profile' && state.inspectingMentor) {
     const m = state.inspectingMentor;
     return `
@@ -2440,6 +2794,87 @@ function renderModals() {
             ${m.expertise.map(e => `<span class="badge-tag badge-blue">${e}</span>`).join('')}
           </div>
           <button class="btn-brand-primary btn-book-slot" data-id="${m.id}" style="width: 100%; justify-content: center;">Book Session Now</button>
+        </div>
+      </div>
+    `;
+  }
+
+  if (state.activeModal === 'associate_profile' && state.inspectingAssociate) {
+    const a = state.inspectingAssociate;
+    const assocSessions = (state.sessions || []).filter(s => 
+      (s.associateId && String(s.associateId) === String(a.id)) || 
+      (s.associateName && s.associateName.toLowerCase() === a.name.toLowerCase())
+    );
+    const pastRatings = assocSessions.filter(s => s.mentorRating).map(s => ({
+      mentorName: s.mentorName,
+      date: s.date,
+      stars: s.mentorRating.stars,
+      engagement: s.mentorRating.engagement,
+      feedback: s.mentorRating.qualitativeFeedback || s.mentorRating.notes
+    }));
+
+    const avgScore = pastRatings.length > 0 ? (pastRatings.reduce((acc, r) => acc + r.stars, 0) / pastRatings.length).toFixed(1) : (a.rating || '5.0');
+
+    return `
+      <div class="modal-overlay">
+        <div class="modal-content-card" style="max-width: 600px; border-radius: 20px; padding: 2rem;">
+          <div class="modal-header-flex" style="margin-bottom: 1.25rem;">
+            <div>
+              <div class="modal-title" style="font-size: 1.35rem; font-weight: 800; font-family: var(--font-display);">${a.name}</div>
+              <p style="font-size: 0.86rem; color: var(--brand-violet); font-weight: 700; margin-top: 0.2rem;">
+                ${a.title || 'Scholar'} · ${a.institution || a.organization || 'Jobberman Partner Network'}
+              </p>
+            </div>
+            <button class="close-modal-btn btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+
+          <div class="card-header-flex" style="margin-bottom: 1.25rem; align-items: center;">
+            <img src="${a.avatar && a.avatar.startsWith('data:') ? a.avatar : (a.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80')}" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(a.name)}&background=2e1065&color=ffffff';" style="width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 3px solid var(--brand-primary);" />
+            <div>
+              <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
+                <span style="font-size: 1.15rem; font-weight: 800; color: var(--brand-gold);">★ ${avgScore} / 5.0</span>
+                <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted);">(${pastRatings.length} mentor review${pastRatings.length === 1 ? '' : 's'})</span>
+              </div>
+              <div style="font-size: 0.84rem; color: var(--text-secondary);">
+                <i class="fa-solid fa-envelope" style="margin-right: 0.3rem;"></i> ${a.email}
+              </div>
+            </div>
+          </div>
+
+          <div style="background: var(--bg-hover); padding: 1rem; border-radius: 12px; border: 1px solid var(--border-color); margin-bottom: 1.5rem;">
+            <div style="font-size: 0.76rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.35rem;">Associate Biography & Goals</div>
+            <p style="font-size: 0.88rem; color: var(--text-primary); line-height: 1.55; margin: 0;">${a.bio || 'Mastercard Foundation Associate dedicated to career growth, technical leadership, and continuous learning.'}</p>
+          </div>
+
+          <!-- PAST MENTOR RATINGS & EVALUATIONS -->
+          <div>
+            <div style="font-size: 0.85rem; font-weight: 800; color: var(--text-primary); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.4rem;">
+              <i class="fa-solid fa-star" style="color: var(--brand-gold);"></i> Past Mentor Ratings & Evaluations
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 0.75rem; max-height: 220px; overflow-y: auto;">
+              ${pastRatings.length > 0 ? pastRatings.map(r => `
+                <div style="background: var(--bg-surface-secondary); padding: 0.85rem; border-radius: 10px; border-left: 3px solid var(--brand-gold);">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem;">
+                    <span style="font-weight: 800; font-size: 0.85rem; color: var(--text-primary);">${r.mentorName}</span>
+                    <span style="font-size: 0.78rem; font-weight: 800; color: var(--brand-gold);">${'★'.repeat(r.stars)} (${r.stars}.0)</span>
+                  </div>
+                  <p style="font-size: 0.82rem; color: var(--text-secondary); margin: 0; font-style: italic; line-height: 1.4;">
+                    "${r.feedback || 'Outstanding engagement and preparation.'}"
+                  </p>
+                  ${r.engagement ? `
+                    <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.25rem;">
+                      Preparedness Level: <strong>${r.engagement}/5</strong> · ${r.date}
+                    </div>
+                  ` : ''}
+                </div>
+              `).join('') : `
+                <div style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.85rem; background: var(--bg-surface-secondary); border-radius: 10px;">
+                  No previous mentor evaluations on record yet.
+                </div>
+              `}
+            </div>
+          </div>
         </div>
       </div>
     `;
@@ -3269,6 +3704,26 @@ function bindEvents() {
       render();
     });
 
+    // View Associate Profile Modal for Mentors
+    document.querySelectorAll('.btn-inspect-associate-profile').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const assocId = btn.dataset.id;
+        const assocName = btn.dataset.name;
+        const assoc = state.associates.find(a => String(a.id) === String(assocId) || (a.name && a.name.toLowerCase() === (assocName || '').toLowerCase())) || {
+          id: assocId,
+          name: assocName || 'Associate Scholar',
+          email: 'scholar@mcf-program.org',
+          institution: 'Jobberman Nigeria',
+          title: 'Mastercard Foundation Associate',
+          bio: 'Active scholar enrolled in the Mastercard Foundation Mentorship Program.'
+        };
+
+        state.inspectingAssociate = assoc;
+        state.activeModal = 'associate_profile';
+        render();
+      });
+    });
+
     // View Mentor Profile Modal
     document.querySelectorAll('.btn-inspect-profile').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -3469,6 +3924,155 @@ function bindEvents() {
         render();
         await initAppData();
       });
+    });
+
+    // Mark Session as Conducted Button (Mentor)
+    document.querySelectorAll('.btn-mark-conducted').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const sessionId = btn.dataset.id;
+        const session = state.sessions.find(s => String(s.id) === String(sessionId));
+
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Updating...`;
+
+        await apiService.toggleSessionCompletion(sessionId, true);
+
+        if (session) {
+          session.status = 'Completed';
+          state.evaluatingSession = session;
+          state.evaluatingRole = 'mentor';
+          state.evalFormData = {
+            stars: session.mentorRating?.stars || 5,
+            engagement: session.mentorRating?.engagement || 5,
+            objectiveAlignment: 5,
+            qualitativeFeedback: session.mentorRating?.qualitativeFeedback || session.mentorRating?.notes || ''
+          };
+          state.activeModal = 'session_evaluation';
+          showToast('Session marked as conducted! Please submit your evaluation.', 'fa-star');
+        }
+
+        render();
+      });
+    });
+
+    // Toggle Session Completion (Conducted On/Off)
+    document.querySelectorAll('.cb-toggle-conducted').forEach(cb => {
+      cb.addEventListener('change', async () => {
+        const sessionId = cb.dataset.id;
+        const isChecked = cb.checked;
+        const session = state.sessions.find(s => String(s.id) === String(sessionId));
+
+        await apiService.toggleSessionCompletion(sessionId, isChecked);
+
+        if (isChecked && session) {
+          // Immediately pop evaluation modal for mentor
+          state.evaluatingSession = session;
+          state.evaluatingRole = 'mentor';
+          state.evalFormData = {
+            stars: session.mentorRating?.stars || 5,
+            engagement: session.mentorRating?.engagement || 5,
+            objectiveAlignment: 5,
+            qualitativeFeedback: session.mentorRating?.qualitativeFeedback || session.mentorRating?.notes || ''
+          };
+          state.activeModal = 'session_evaluation';
+          showToast('Session marked as conducted! Please submit your evaluation.', 'fa-star');
+        } else {
+          showToast('Session status updated.', 'fa-circle-check');
+        }
+
+        render();
+      });
+    });
+
+    // Open Evaluation Modal Directly (from Mentor or Associate Dashboard)
+    document.querySelectorAll('.btn-open-evaluation').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const sessionId = btn.dataset.id;
+        const role = btn.dataset.role || 'mentor';
+        const session = state.sessions.find(s => String(s.id) === String(sessionId));
+
+        if (session) {
+          state.evaluatingSession = session;
+          state.evaluatingRole = role;
+          const currentRating = role === 'mentor' ? session.mentorRating : session.associateRating;
+          state.evalFormData = {
+            stars: currentRating?.stars || 5,
+            engagement: currentRating?.engagement || 5,
+            objectiveAlignment: currentRating?.objectiveAlignment || 5,
+            qualitativeFeedback: currentRating?.qualitativeFeedback || currentRating?.feedback || currentRating?.notes || ''
+          };
+          state.activeModal = 'session_evaluation';
+          render();
+        }
+      });
+    });
+
+    // Star Rating Click Picker inside Evaluation Modal
+    document.querySelectorAll('.btn-star-pick').forEach(starEl => {
+      starEl.addEventListener('click', () => {
+        const chosenStar = parseInt(starEl.dataset.star, 10);
+        state.evalFormData.stars = chosenStar;
+        const textarea = document.getElementById('inputQualitativeFeedback');
+        if (textarea) state.evalFormData.qualitativeFeedback = textarea.value;
+        render();
+      });
+    });
+
+    // Secondary Metric Range Input Change
+    const rangeInput = document.getElementById('inputSecondaryMetric');
+    if (rangeInput) {
+      rangeInput.addEventListener('input', (e) => {
+        const val = parseInt(e.target.value, 10);
+        if (state.evaluatingRole === 'mentor') {
+          state.evalFormData.engagement = val;
+        } else {
+          state.evalFormData.objectiveAlignment = val;
+        }
+        const lbl = document.getElementById('secondaryRatingLabel');
+        if (lbl) lbl.textContent = `${val} / 5`;
+      });
+    }
+
+    // Submit Session Evaluation Form Handler
+    document.getElementById('formSubmitSessionEvaluation')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const feedbackInput = document.getElementById('inputQualitativeFeedback');
+      const qualitativeFeedback = feedbackInput ? feedbackInput.value.trim() : '';
+
+      if (!qualitativeFeedback || qualitativeFeedback.length < 5) {
+        showToast('Please provide detailed qualitative feedback remarks (min 5 characters).', 'fa-circle-exclamation');
+        return;
+      }
+
+      const sessionId = state.evaluatingSession?.id;
+      const role = state.evaluatingRole || 'mentor';
+
+      const evalData = {
+        stars: Number(state.evalFormData.stars) || 5,
+        qualitativeFeedback: qualitativeFeedback,
+        engagement: Number(state.evalFormData.engagement) || 5,
+        objectiveAlignment: Number(state.evalFormData.objectiveAlignment) || 5,
+        recordedAt: new Date().toISOString()
+      };
+
+      // Immediately update in-memory session object so UI locks instantaneously
+      const targetSession = state.sessions.find(s => String(s.id) === String(sessionId));
+      if (targetSession) {
+        if (role === 'mentor') {
+          targetSession.mentorRating = evalData;
+        } else {
+          targetSession.associateRating = evalData;
+        }
+        targetSession.status = 'Completed';
+      }
+
+      await apiService.submitEvaluation(sessionId, evalData, role);
+      showToast('Evaluation & feedback submitted successfully! ⭐', 'fa-circle-check');
+      state.activeModal = null;
+      state.evaluatingSession = null;
+      state.notifications = await apiService.getNotifications();
+      render();
+      await initAppData();
     });
 
     // Mentor Edit Profile

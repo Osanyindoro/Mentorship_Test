@@ -61,8 +61,8 @@ export const apiService = {
         const { data, error } = await Promise.race([fetchUserPromise, timeoutPromise]);
 
         if (data && !error) {
-          if (data.role && selectedRole && data.role !== selectedRole) {
-            throw new Error(`This account is registered as a ${data.role.toUpperCase()}. Please select "${data.role.charAt(0).toUpperCase() + data.role.slice(1)}" from the login dropdown.`);
+          if (data.role && selectedRole && data.role.toLowerCase() !== selectedRole.toLowerCase()) {
+            throw new Error(`Role Mismatch: This account is registered as a ${data.role.toUpperCase()}. You cannot log in under the "${selectedRole.toUpperCase()}" role.`);
           }
           if (data.password && data.password !== password) {
             throw new Error("Invalid email or password.");
@@ -95,11 +95,11 @@ export const apiService = {
         }
       } catch (err) {
         console.warn('[Supabase Auth Check]', err.message);
-        if (err.message && err.message.includes('Invalid email or password')) throw err;
+        if (err.message && (err.message.includes('Invalid email or password') || err.message.includes('Role Mismatch'))) throw err;
       }
     }
 
-    // Local Storage Mock Fallback
+    // Local Storage Mock Fallback with STRICT Role Validation
     const associates = getStoredAssociates();
     const mentors = getStoredMentors();
 
@@ -107,17 +107,35 @@ export const apiService = {
     const foundMentor = mentors.find(m => m.email.toLowerCase() === cleanEmail || (m.googleEmail && m.googleEmail.toLowerCase() === cleanEmail));
     const isAdmin = cleanEmail === 'admin@mcf-portal.org' || cleanEmail === 'admin@mcf.org';
 
-    let userAccount = null;
-    let actualRole = null;
-
     if (foundAssoc) {
-      userAccount = foundAssoc;
-      actualRole = 'associate';
+      if (selectedRole && selectedRole !== 'associate') {
+        throw new Error(`Role Mismatch: This account (${cleanEmail}) is registered as an ASSOCIATE. Please select "Associate (Scholar)" from the login role dropdown.`);
+      }
+      if (foundAssoc.password && foundAssoc.password !== password) {
+        throw new Error("Invalid email or password.");
+      }
+      const token = `mcf_token_${Date.now()}`;
+      const payload = { token, user: { ...foundAssoc, role: 'associate' } };
+      localStorage.setItem('mently_auth_token', token);
+      localStorage.setItem('mently_user', JSON.stringify(payload.user));
+      return payload;
     } else if (foundMentor) {
-      userAccount = foundMentor;
-      actualRole = 'mentor';
+      if (selectedRole && selectedRole !== 'mentor') {
+        throw new Error(`Role Mismatch: This account (${cleanEmail}) is registered as a MENTOR. Please select "Mentor" from the login role dropdown.`);
+      }
+      if (foundMentor.password && foundMentor.password !== password) {
+        throw new Error("Invalid email or password.");
+      }
+      const token = `mcf_token_${Date.now()}`;
+      const payload = { token, user: { ...foundMentor, role: 'mentor' } };
+      localStorage.setItem('mently_auth_token', token);
+      localStorage.setItem('mently_user', JSON.stringify(payload.user));
+      return payload;
     } else if (isAdmin) {
-      userAccount = {
+      if (selectedRole && selectedRole !== 'admin') {
+        throw new Error(`Role Mismatch: This account is an Administrator account. Please select "Program Administrator" from the dropdown.`);
+      }
+      const adminUser = {
         id: "ADM-001",
         role: "admin",
         name: "Program Administrator",
@@ -125,43 +143,14 @@ export const apiService = {
         institution: "Mastercard Foundation HQ",
         avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80"
       };
-      actualRole = 'admin';
+      const token = `mcf_token_${Date.now()}`;
+      const payload = { token, user: adminUser };
+      localStorage.setItem('mently_auth_token', token);
+      localStorage.setItem('mently_user', JSON.stringify(adminUser));
+      return payload;
     }
 
-    if (!userAccount) {
-      const newUser = {
-        id: selectedRole === 'associate' ? `MCF-2026-REG-${Math.floor(100 + Math.random() * 900)}` : `MEN-REG-${Math.floor(100 + Math.random() * 900)}`,
-        role: selectedRole,
-        name: cleanEmail.split('@')[0].replace('.', ' ').toUpperCase(),
-        email: cleanEmail,
-        institution: 'Jobberman Partner Network',
-        organization: 'Jobberman Partner Network',
-        title: selectedRole === 'associate' ? 'Mastercard Foundation Scholar' : 'Executive Mentor',
-        track: 'Software Engineering & AI',
-        domain: 'Software Engineering & AI',
-        bio: 'Active Mastercard Foundation portal member.',
-        avatar: selectedRole === 'associate' ? 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&w=600&q=80' : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80',
-        schedule: selectedRole === 'mentor' ? [{ id: Date.now(), date: '2026-08-22', time: '10:00 AM', isBooked: false, bookedBy: null }] : []
-      };
-      userAccount = newUser;
-      actualRole = selectedRole;
-
-      if (selectedRole === 'associate') {
-        associates.unshift(newUser);
-        saveStoredAssociates(associates);
-      } else if (selectedRole === 'mentor') {
-        mentors.unshift(newUser);
-        saveStoredMentors(mentors);
-      }
-    }
-
-    const token = `mcf_token_${Date.now()}`;
-    const responsePayload = { token, user: { ...userAccount, role: actualRole } };
-
-    localStorage.setItem('mently_auth_token', token);
-    localStorage.setItem('mently_user', JSON.stringify(responsePayload.user));
-
-    return responsePayload;
+    throw new Error("Account not found. Please check your email and selected role or contact support.");
   },
 
   async register({ selectedRole, name, email, password, gender, institutionOrOrg, title, trackOrDomain, bio, avatar }) {
@@ -254,11 +243,13 @@ export const apiService = {
 
   async getMentors() {
     const supabase = getSupabaseClient();
+    let mentorsList = [];
+
     if (supabase) {
       try {
         const { data, error } = await supabase.from('users').select('*').eq('role', 'mentor');
         if (data && data.length > 0 && !error) {
-          return data.map(u => ({
+          mentorsList = data.map(u => ({
             id: u.id,
             role: 'mentor',
             name: u.name || '',
@@ -285,7 +276,24 @@ export const apiService = {
         console.warn('[Supabase Mentors Fetch]', err.message);
       }
     }
-    return getStoredMentors();
+
+    if (mentorsList.length === 0) {
+      mentorsList = getStoredMentors();
+    }
+
+    // Deduplicate mentors strictly by email and normalized name to eliminate any duplicate entries
+    const seenKeys = new Set();
+    const uniqueMentors = [];
+
+    for (const m of mentorsList) {
+      const key = (m.email ? m.email.toLowerCase().trim() : '') || (m.name ? m.name.toLowerCase().trim() : m.id);
+      if (!seenKeys.has(key)) {
+        seenKeys.add(key);
+        uniqueMentors.push(m);
+      }
+    }
+
+    return uniqueMentors;
   },
 
   async getSessions() {
@@ -387,7 +395,10 @@ export const apiService = {
             objective: s.objective || '',
             status: s.status || 'Pending',
             meetingLink: s.meetingLink || s.meeting_link || s.meetingUrl || '',
-            createdAt: s.created_at || s.createdAt || ''
+            createdAt: s.created_at || s.createdAt || '',
+            associateRating: s.associate_rating || s.associateRating || null,
+            mentorRating: s.mentor_rating || s.mentorRating || null,
+            completedAt: s.completed_at || s.completedAt || null
           }));
         }
       } catch (err) {
@@ -586,6 +597,135 @@ export const apiService = {
         message: `${session.mentorName} accepted your 1-on-1 session for ${session.date} at ${session.time}. Google Meet link generated.`,
         timestamp: "Just now",
         type: "acceptance",
+        read: false
+      });
+      saveStoredNotifications(notifs);
+    }
+
+    return session;
+  },
+
+  async toggleSessionCompletion(sessionId, isCompleted) {
+    const sessions = getStoredSessions();
+    const session = sessions.find(s => s.id === sessionId);
+    const newStatus = isCompleted ? 'Completed' : 'Accepted';
+    const completedAt = isCompleted ? new Date().toISOString() : null;
+
+    if (session) {
+      session.status = newStatus;
+      session.completedAt = completedAt;
+      saveStoredSessions(sessions);
+    }
+
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        await supabase
+          .from('sessions')
+          .update({ 
+            status: newStatus,
+            completed_at: completedAt
+          })
+          .eq('id', sessionId);
+      } catch (err) {
+        console.warn('[Supabase Toggle Session Completion]', err.message);
+      }
+    }
+
+    // When marked as conducted, instantly notify the Associate to fill their post-session evaluation form
+    if (isCompleted && session) {
+      const notifs = getStoredNotifications();
+      notifs.unshift({
+        id: `NOTIF-${Date.now()}-EVAL-NUDGE`,
+        userId: session.associateId,
+        recipientName: session.associateName,
+        title: "Session Completed! Please Rate Your Mentor ⭐",
+        message: `${session.mentorName} marked your 1-on-1 session on ${session.date} as completed. Please fill out your short evaluation and star rating.`,
+        timestamp: "Just now",
+        type: "evaluation_nudge",
+        sessionId: session.id,
+        read: false
+      });
+      saveStoredNotifications(notifs);
+    }
+
+    return session;
+  },
+
+  async submitEvaluation(sessionId, evalPayload, role) {
+    // evalPayload: { stars: number, qualitativeFeedback: string, engagement: number, objectiveAlignment: number }
+    const sessions = getStoredSessions();
+    const session = sessions.find(s => s.id === sessionId);
+    const timestamp = new Date().toISOString();
+
+    const formattedEval = {
+      ...evalPayload,
+      recordedAt: timestamp
+    };
+
+    if (session) {
+      if (role === 'mentor') {
+        session.mentorRating = formattedEval;
+      } else {
+        session.associateRating = formattedEval;
+      }
+      session.status = 'Completed';
+      saveStoredSessions(sessions);
+    }
+
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        const updateData = { status: 'Completed' };
+        if (role === 'mentor') {
+          updateData.mentor_rating = formattedEval;
+        } else {
+          updateData.associate_rating = formattedEval;
+        }
+        await supabase.from('sessions').update(updateData).eq('id', sessionId);
+
+        // Recalculate average rating for the evaluated target
+        if (role === 'associate' && session && session.mentorId) {
+          // Associate rated the mentor -> update mentor's average rating in 'users'
+          const { data: mentorSessions } = await supabase.from('sessions').select('associate_rating').eq('mentor_id', session.mentorId);
+          if (mentorSessions && mentorSessions.length > 0) {
+            const ratings = mentorSessions.map(s => s.associate_rating?.stars).filter(Boolean);
+            if (ratings.length > 0) {
+              const avg = Number((ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1));
+              await supabase.from('users').update({ rating: avg, total_sessions: ratings.length }).eq('id', session.mentorId);
+            }
+          }
+        } else if (role === 'mentor' && session && session.associateId) {
+          // Mentor rated the associate -> update associate's rating in 'users'
+          const { data: assocSessions } = await supabase.from('sessions').select('mentor_rating').eq('associate_id', session.associateId);
+          if (assocSessions && assocSessions.length > 0) {
+            const ratings = assocSessions.map(s => s.mentor_rating?.stars).filter(Boolean);
+            if (ratings.length > 0) {
+              const avg = Number((ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1));
+              await supabase.from('users').update({ rating: avg }).eq('id', session.associateId);
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('[Supabase Submit Evaluation]', err.message);
+      }
+    }
+
+    // Trigger in-app notification
+    if (session) {
+      const notifs = getStoredNotifications();
+      const recipientId = role === 'mentor' ? session.associateId : session.mentorId;
+      const rName = role === 'mentor' ? session.associateName : session.mentorName;
+      const reviewer = role === 'mentor' ? session.mentorName : session.associateName;
+
+      notifs.unshift({
+        id: `NOTIF-${Date.now()}-REV`,
+        userId: recipientId,
+        recipientName: rName,
+        title: "Session Feedback Received! ⭐",
+        message: `${reviewer} submitted their evaluation for your 1-on-1 session (${evalPayload.stars} Stars).`,
+        timestamp: "Just now",
+        type: "feedback",
         read: false
       });
       saveStoredNotifications(notifs);
