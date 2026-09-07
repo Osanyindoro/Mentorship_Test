@@ -6,8 +6,8 @@ import { apiService } from './services/api.js';
 
 // Route Helper Functions
 function getInitialRoute() {
-  const path = window.location.pathname;
-  if (path === '/login') return '/login';
+  const path = window.location.pathname.toLowerCase();
+  if (path === '/login' || path === '/associate/login' || path === '/mentor/login' || path === '/admin/login') return '/login';
   if (path === '/set-password') return '/set-password';
   if (path === '/associate') return '/associate';
   if (path === '/mentor') return '/mentor';
@@ -780,31 +780,32 @@ function renderLoginPage() {
                 </div>
               </form>
             ` : `
-              <!-- LOGIN FORM -->
+              <!-- SMART UNIVERSAL LOGIN FORM (Auto-Detect Role) -->
               <form id="loginAuthForm">
                 
-                <!-- FIELD 1: PROFILE TYPE -->
-                <div class="form-group">
-                  <label class="form-label" for="loginRole">Login as</label>
-                  <select class="form-select" id="loginRole" required style="border-radius: 10px; padding: 0.7rem 1rem;">
-                    <option value="" ${!form.selectedRole ? 'selected' : ''}>Select profile</option>
-                    <option value="associate" ${form.selectedRole === 'associate' ? 'selected' : ''}>Associate</option>
-                    <option value="mentor" ${form.selectedRole === 'mentor' ? 'selected' : ''}>Mentor</option>
-                    <option value="admin" ${form.selectedRole === 'admin' ? 'selected' : ''}>Admin</option>
-                  </select>
-                </div>
+                ${window.location.pathname.toLowerCase().includes('admin') ? `
+                  <div style="background: rgba(37, 99, 235, 0.08); border: 1px solid rgba(37, 99, 235, 0.25); border-radius: 10px; padding: 0.65rem 0.9rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.6rem; font-size: 0.85rem; color: var(--brand-primary); font-weight: 700;">
+                    <i class="fa-solid fa-shield-halved" style="font-size: 1.1rem;"></i>
+                    <span>Executive Program Administrator Sign In</span>
+                  </div>
+                ` : window.location.pathname.toLowerCase().includes('mentor') ? `
+                  <div style="background: rgba(124, 58, 237, 0.08); border: 1px solid rgba(124, 58, 237, 0.25); border-radius: 10px; padding: 0.65rem 0.9rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.6rem; font-size: 0.85rem; color: var(--brand-violet); font-weight: 700;">
+                    <i class="fa-solid fa-chalkboard-user" style="font-size: 1.1rem;"></i>
+                    <span>Mentor Executive Sign In</span>
+                  </div>
+                ` : ''}
 
-                <!-- FIELD 2: EMAIL ADDRESS -->
+                <!-- FIELD 1: EMAIL ADDRESS -->
                 <div class="form-group">
                   <label class="form-label" for="loginEmail">Email Address</label>
-                  <input type="email" class="form-input" id="loginEmail" placeholder="Enter your email address" value="${form.email}" autocomplete="email" required style="border-radius: 10px; padding: 0.7rem 1rem;" />
+                  <input type="email" class="form-input" id="loginEmail" placeholder="Enter your registered email" value="${form.email}" autocomplete="email" required style="border-radius: 10px; padding: 0.75rem 1rem; font-size: 0.92rem;" />
                 </div>
 
-                <!-- FIELD 3: PASSWORD -->
+                <!-- FIELD 2: PASSWORD -->
                 <div class="form-group">
                   <label class="form-label" for="loginPassword">Password</label>
                   <div class="password-input-wrapper">
-                    <input type="${form.showPassword ? 'text' : 'password'}" class="form-input" id="loginPassword" placeholder="Enter your password" value="${form.password}" autocomplete="current-password" required style="border-radius: 10px; padding: 0.7rem 1rem;" />
+                    <input type="${form.showPassword ? 'text' : 'password'}" class="form-input" id="loginPassword" placeholder="Enter your password" value="${form.password}" autocomplete="current-password" required style="border-radius: 10px; padding: 0.75rem 1rem; font-size: 0.92rem;" />
                     <button type="button" class="btn-toggle-password" id="btnTogglePassword" aria-label="Toggle password visibility">
                       <i class="fa-regular ${form.showPassword ? 'fa-eye-slash' : 'fa-eye'}"></i>
                     </button>
@@ -816,7 +817,7 @@ function renderLoginPage() {
                 </div>
 
                 <button type="submit" class="btn-brand-primary login-submit-btn" id="btnSubmitLogin" ${form.isSubmitting ? 'disabled' : ''}>
-                  ${form.isSubmitting ? `<i class="fa-solid fa-circle-notch fa-spin"></i> Signing in...` : 'LOGIN'}
+                  ${form.isSubmitting ? `<i class="fa-solid fa-circle-notch fa-spin"></i> Signing in...` : '<i class="fa-solid fa-arrow-right-to-bracket"></i> LOG IN'}
                 </button>
 
                 <div style="text-align: center; margin-top: 1.25rem; font-size: 0.88rem; color: var(--text-secondary);">
@@ -3484,15 +3485,9 @@ function bindEvents() {
       loginFormEl.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        const role = state.loginForm.selectedRole || document.getElementById('loginRole')?.value;
-        const email = state.loginForm.email || document.getElementById('loginEmail')?.value;
-        const password = state.loginForm.password || document.getElementById('loginPassword')?.value;
+        const email = (state.loginForm.email || document.getElementById('loginEmail')?.value || '').trim();
+        const password = state.loginForm.password || document.getElementById('loginPassword')?.value || '';
 
-        if (!role) {
-          state.loginForm.errorMessage = 'Please select how you want to log in.';
-          render();
-          return;
-        }
         if (!email || !email.includes('@')) {
           state.loginForm.errorMessage = 'Please enter a valid email address.';
           render();
@@ -3510,7 +3505,6 @@ function bindEvents() {
           render();
 
           const authResult = await apiService.login({
-            selectedRole: role,
             email,
             password
           });

@@ -32,11 +32,8 @@ export const apiService = {
     window.location.href = '/login';
   },
 
-  // Authentication API Layer
+  // Authentication API Layer (Smart Universal Auto-Detect + Role-Aware)
   async login({ selectedRole, email, password }) {
-    if (!selectedRole) {
-      throw new Error("Please select how you want to log in.");
-    }
     const cleanEmail = (email || '').trim().toLowerCase();
     if (!cleanEmail || !cleanEmail.includes('@')) {
       throw new Error("Please enter a valid email address.");
@@ -55,21 +52,19 @@ export const apiService = {
           .maybeSingle();
 
         const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Supabase auth timeout')), 3000)
+          setTimeout(() => reject(new Error('Supabase auth timeout')), 3500)
         );
 
         const { data, error } = await Promise.race([fetchUserPromise, timeoutPromise]);
 
         if (data && !error) {
-          if (data.role && selectedRole && data.role.toLowerCase() !== selectedRole.toLowerCase()) {
-            throw new Error(`Role Mismatch: This account is registered as a ${data.role.toUpperCase()}. You cannot log in under the "${selectedRole.toUpperCase()}" role.`);
-          }
           if (data.password && data.password !== password) {
             throw new Error("Invalid email or password.");
           }
+          const userRole = (data.role || 'associate').toLowerCase();
           const userObj = {
             id: data.id,
-            role: data.role,
+            role: userRole,
             name: data.name,
             email: data.email,
             password: data.password || '',
@@ -77,11 +72,11 @@ export const apiService = {
             must_reset_password: data.must_reset_password || false,
             institution: data.institution || data.organization || 'Mastercard Foundation Partner',
             organization: data.organization || data.institution || 'Jobberman Partner Network',
-            title: data.title || 'Scholar',
+            title: data.title || (userRole === 'mentor' ? 'Executive Mentor' : userRole === 'admin' ? 'Program Administrator' : 'Scholar'),
             track: data.track || data.domain || 'Software Engineering & AI',
             domain: data.domain || data.track || 'Software Engineering & AI',
             bio: data.bio || '',
-            avatar: data.avatar || 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&w=600&q=80',
+            avatar: data.avatar || (userRole === 'mentor' ? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80' : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80'),
             schedule: data.schedule || [],
             monthlyCap: data.monthly_cap || data.monthlyCap || 15,
             sessionsUsedThisMonth: data.sessions_used || data.sessionsUsedThisMonth || 0,
@@ -95,22 +90,19 @@ export const apiService = {
         }
       } catch (err) {
         console.warn('[Supabase Auth Check]', err.message);
-        if (err.message && (err.message.includes('Invalid email or password') || err.message.includes('Role Mismatch'))) throw err;
+        if (err.message && err.message.includes('Invalid email or password')) throw err;
       }
     }
 
-    // Local Storage Mock Fallback with STRICT Role Validation
+    // Local Storage Mock Fallback with Universal Auto-Detect
     const associates = getStoredAssociates();
     const mentors = getStoredMentors();
 
     const foundAssoc = associates.find(a => a.email.toLowerCase() === cleanEmail);
     const foundMentor = mentors.find(m => m.email.toLowerCase() === cleanEmail || (m.googleEmail && m.googleEmail.toLowerCase() === cleanEmail));
-    const isAdmin = cleanEmail === 'admin@mcf-portal.org' || cleanEmail === 'admin@mcf.org';
+    const isAdmin = cleanEmail === 'admin@mcf-portal.org' || cleanEmail === 'admin@mcf.org' || cleanEmail === 'bakinjole@jobberman.com';
 
     if (foundAssoc) {
-      if (selectedRole && selectedRole !== 'associate') {
-        throw new Error(`Role Mismatch: This account (${cleanEmail}) is registered as an ASSOCIATE. Please select "Associate (Scholar)" from the login role dropdown.`);
-      }
       if (foundAssoc.password && foundAssoc.password !== password) {
         throw new Error("Invalid email or password.");
       }
@@ -120,9 +112,6 @@ export const apiService = {
       localStorage.setItem('mently_user', JSON.stringify(payload.user));
       return payload;
     } else if (foundMentor) {
-      if (selectedRole && selectedRole !== 'mentor') {
-        throw new Error(`Role Mismatch: This account (${cleanEmail}) is registered as a MENTOR. Please select "Mentor" from the login role dropdown.`);
-      }
       if (foundMentor.password && foundMentor.password !== password) {
         throw new Error("Invalid email or password.");
       }
@@ -132,9 +121,6 @@ export const apiService = {
       localStorage.setItem('mently_user', JSON.stringify(payload.user));
       return payload;
     } else if (isAdmin) {
-      if (selectedRole && selectedRole !== 'admin') {
-        throw new Error(`Role Mismatch: This account is an Administrator account. Please select "Program Administrator" from the dropdown.`);
-      }
       const adminUser = {
         id: "ADM-001",
         role: "admin",
@@ -150,7 +136,7 @@ export const apiService = {
       return payload;
     }
 
-    throw new Error("Account not found. Please check your email and selected role or contact support.");
+    throw new Error("Account not found. Please verify your email and password or register a new profile.");
   },
 
   async register({ selectedRole, name, email, password, gender, institutionOrOrg, title, trackOrDomain, bio, avatar }) {
