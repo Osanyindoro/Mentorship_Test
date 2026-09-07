@@ -1001,7 +1001,7 @@ function renderRoleView(associate, mentor) {
     if (state.associateTab === 'mentors') return renderMenteeDiscovery();
     if (state.associateTab === 'group_sessions') return renderGroupSessionsList();
     if (state.associateTab === 'tasks') return renderMenteeTasksList();
-    if (state.associateTab === 'sessions') return renderMenteeSessionsList();
+    if (state.associateTab === 'sessions') return renderMenteeSessionsList(activeUserAssoc);
     if (state.associateTab === 'profile') return renderMenteeProfile(activeUserAssoc);
   } else if (role === 'mentor') {
     if (state.mentorTab === 'dashboard') return renderMentorDashboard(activeUserMentor);
@@ -1379,13 +1379,33 @@ function getGoogleCalendarUrl(session) {
   }
 }
 
-function renderMenteeSessionsList() {
+function renderMenteeSessionsList(associate) {
+  const activeAssoc = associate || (state.currentUser && state.currentUser.role === 'associate' ? state.currentUser : state.associates[state.currentAssociateIndex] || {});
+  const assocId = String(activeAssoc.id || '').toLowerCase().trim();
+  const assocName = String(activeAssoc.name || '').toLowerCase().trim();
+  const assocEmail = String(activeAssoc.email || '').toLowerCase().trim();
+
+  const mySessions = state.sessions.filter(s => {
+    const sId = String(s.associateId || s.associate_id || '').toLowerCase().trim();
+    const sName = String(s.associateName || s.associate_name || '').toLowerCase().trim();
+    return (assocId && sId === assocId) || (assocName && sName === assocName);
+  });
+
   return `
     <div class="content-area" style="width: 100%;">
-      <h2 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; margin-bottom: 1.5rem;">My Scheduled Sessions</h2>
+      <h2 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; margin-bottom: 1.5rem;">My Scheduled Sessions (${mySessions.length})</h2>
 
       <div style="display: flex; flex-direction: column; gap: 1.25rem;">
-        ${state.sessions.map(s => {
+        ${mySessions.length === 0 ? `
+          <div class="mentor-card" style="text-align: center; padding: 3rem 1.5rem; color: var(--text-muted);">
+            <i class="fa-regular fa-calendar-xmark" style="font-size: 2.2rem; color: var(--brand-primary); margin-bottom: 0.75rem; display: block;"></i>
+            <div style="font-weight: 800; font-size: 1.1rem; color: var(--text-primary); margin-bottom: 0.35rem;">No Scheduled Sessions Yet</div>
+            <p style="font-size: 0.88rem; max-width: 440px; margin: 0 auto 1.25rem;">Browse our verified executive mentors and book your first 1-on-1 mentorship session today.</p>
+            <button class="btn-brand-primary" id="btnHeroFindMentors" style="padding: 0.6rem 1.4rem; font-size: 0.88rem;">
+              <i class="fa-solid fa-compass"></i> Find Mentors
+            </button>
+          </div>
+        ` : mySessions.map(s => {
           const isGoogleMeet = s.meetingLink && s.meetingLink.includes('meet.google.com');
           const isZoho = s.meetingLink && s.meetingLink.includes('zoho');
           const calUrl = getGoogleCalendarUrl(s);
@@ -1397,7 +1417,9 @@ function renderMenteeSessionsList() {
                   <div style="font-weight: 800; font-size: 1.1rem;">1-on-1 Session with ${s.mentorName}</div>
                   <div style="font-size: 0.85rem; color: var(--text-secondary);">${s.mentorDomain}</div>
                 </div>
-                <span class="badge-tag ${s.status === 'Accepted' ? 'badge-green' : 'badge-gold'}">${s.status}</span>
+                <span class="badge-tag ${s.status === 'Completed' ? 'badge-purple' : s.status === 'Accepted' ? 'badge-green' : 'badge-gold'}">
+                  ${s.status === 'Completed' ? '<i class="fa-solid fa-circle-check"></i> Conducted' : s.status === 'Accepted' ? '<i class="fa-solid fa-circle-check"></i> Accepted' : '<i class="fa-solid fa-clock"></i> Pending Acceptance'}
+                </span>
               </div>
 
               <div style="font-size: 0.86rem; color: var(--text-secondary); margin-bottom: 1rem;">
