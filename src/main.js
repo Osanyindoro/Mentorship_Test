@@ -154,7 +154,7 @@ function showToast(message, icon = 'fa-circle-check') {
 
   setTimeout(() => {
     toast.style.opacity = '0';
-    toast.style.transform = 'translateY(10px)';
+    toast.style.transform = 'translateY(-10px)';
     setTimeout(() => toast.remove(), 300);
   }, 4000);
 }
