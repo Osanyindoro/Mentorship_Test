@@ -205,6 +205,7 @@ export const apiService = {
             email: u.email || '',
             password: u.password || '',
             gender: u.gender || '',
+            status: u.status || 'Active',
             must_reset_password: u.must_reset_password || false,
             phone: u.phone || '+234 801 000 0000',
             institution: u.institution || u.organization || 'Jobberman Nigeria',
@@ -235,28 +236,34 @@ export const apiService = {
       try {
         const { data, error } = await supabase.from('users').select('*').eq('role', 'mentor');
         if (data && data.length > 0 && !error) {
-          mentorsList = data.map(u => ({
-            id: u.id,
-            role: 'mentor',
-            name: u.name || '',
-            email: u.email || '',
-            password: u.password || '',
-            gender: u.gender || '',
-            organization: u.organization || u.institution || 'Jobberman Partner Network',
-            institution: u.institution || u.organization || 'Jobberman Partner Network',
-            title: u.title || 'Executive Mentor',
-            domain: u.domain || u.track || 'Software Engineering & AI',
-            track: u.track || u.domain || 'Software Engineering & AI',
-            bio: u.bio || '',
-            avatar: u.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80',
-            rating: u.rating || 5.0,
-            totalSessions: u.total_sessions || u.totalSessions || 25,
-            monthlyCap: u.monthly_cap || u.monthlyCap || 15,
-            sessionsUsedThisMonth: u.sessions_used || u.sessionsUsedThisMonth || 0,
-            expertise: u.expertise || ["Career Guidance", "Leadership Strategy"],
-            socialLinks: u.social_links || u.socialLinks || { linkedin: "https://linkedin.com" },
-            schedule: u.schedule || []
-          }));
+          const LEGACY_DUMMY_IDS = new Set(['MEN-101', 'MEN-102', 'MEN-103', 'MEN-104', 'MEN-REG-281']);
+          const LEGACY_DUMMY_NAMES = new Set(['Dr. Samuel Osei', 'Nia Temilade', 'Prof. Kenneth Kiprono', 'Fatima El-Mansouri']);
+
+          mentorsList = data
+            .filter(u => !LEGACY_DUMMY_IDS.has(u.id) && !LEGACY_DUMMY_NAMES.has(u.name))
+            .map(u => ({
+              id: u.id,
+              role: 'mentor',
+              name: u.name || '',
+              email: u.email || '',
+              password: u.password || '',
+              gender: u.gender || '',
+              status: u.status || 'Active',
+              organization: u.organization || u.institution || 'Jobberman Partner Network',
+              institution: u.institution || u.organization || 'Jobberman Partner Network',
+              title: u.title || 'Executive Mentor',
+              domain: u.domain || u.track || 'Software Engineering & AI',
+              track: u.track || u.domain || 'Software Engineering & AI',
+              bio: u.bio || '',
+              avatar: u.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80',
+              rating: u.rating || 5.0,
+              totalSessions: u.total_sessions || u.totalSessions || 25,
+              monthlyCap: u.monthly_cap || u.monthlyCap || 15,
+              sessionsUsedThisMonth: u.sessions_used || u.sessionsUsedThisMonth || 0,
+              expertise: u.expertise || ["Career Guidance", "Leadership Strategy"],
+              socialLinks: u.social_links || u.socialLinks || { linkedin: "https://linkedin.com" },
+              schedule: u.schedule || []
+            }));
         }
       } catch (err) {
         console.warn('[Supabase Mentors Fetch]', err.message);
