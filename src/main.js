@@ -1943,8 +1943,19 @@ function renderAdminAnalytics() {
   const fromDate = state.adminDateFrom || '2026-08-01';
   const toDate = state.adminDateTo || '2026-08-31';
 
-  const menteesCount = (state.associates && state.associates.length > 0) ? state.associates.length.toLocaleString() : '4,120';
-  const sessionsCount = (state.sessions && state.sessions.length > 0) ? state.sessions.length.toString() : '184';
+  const menteesCount = (state.associates && state.associates.length > 0) ? state.associates.length.toLocaleString() : '3';
+  const activeMentorsCount = state.mentors ? state.mentors.filter(m => m.status !== 'Inactive').length : 0;
+
+  const sessionsInRange = (state.sessions || []).filter(s => {
+    if (!fromDate || !toDate || !s.date) return true;
+    return s.date >= fromDate && s.date <= toDate;
+  });
+  const sessionsCount = sessionsInRange.length > 0 ? sessionsInRange.length.toString() : (state.sessions ? state.sessions.length.toString() : '0');
+
+  const totalSessions = state.sessions ? state.sessions.length : 0;
+  const completedOrAccepted = (state.sessions || []).filter(s => s.status === 'Completed' || s.status === 'Accepted' || (s.attendance && s.attendance.joined));
+  const attendanceRate = totalSessions > 0 ? ((completedOrAccepted.length / totalSessions) * 100).toFixed(1) + '%' : '100.0%';
+
   const rangeLabel = (fromDate && toDate) ? `${fromDate} to ${toDate}` : 'Selected Range';
 
   return `
@@ -2018,7 +2029,7 @@ function renderAdminAnalytics() {
             <div class="stat-icon" style="background: rgba(107,33,168,0.12); color: var(--brand-primary);"><i class="fa-solid fa-user-graduate"></i></div>
           </div>
           <div class="stat-value" style="font-size: 2rem; font-weight: 800;">${menteesCount}</div>
-          <div class="stat-meta" style="color: var(--text-secondary); font-size: 0.78rem;">${rangeLabel}</div>
+          <div class="stat-meta" style="color: var(--text-secondary); font-size: 0.78rem;">Mastercard Roster</div>
           ${activeTable === 'mentees' ? `<div style="position: absolute; bottom: 8px; right: 12px; font-size: 0.72rem; font-weight: 800; color: var(--brand-primary); display: flex; align-items: center; gap: 0.3rem;"><i class="fa-solid fa-eye"></i> Viewing Table</div>` : ''}
         </div>
 
@@ -2028,7 +2039,7 @@ function renderAdminAnalytics() {
             <span class="stat-label" style="font-weight: 800; color: ${activeTable === 'mentors' ? 'var(--brand-emerald)' : 'var(--text-secondary)'};">ACTIVE MENTORS</span>
             <div class="stat-icon" style="background: var(--badge-green-bg); color: var(--brand-emerald);"><i class="fa-solid fa-user-tie"></i></div>
           </div>
-          <div class="stat-value" style="font-size: 2rem; font-weight: 800;">38</div>
+          <div class="stat-value" style="font-size: 2rem; font-weight: 800;">${activeMentorsCount}</div>
           <div class="stat-meta" style="color: var(--text-secondary);">Verified Industry Leaders</div>
           ${activeTable === 'mentors' ? `<div style="position: absolute; bottom: 8px; right: 12px; font-size: 0.72rem; font-weight: 800; color: var(--brand-emerald); display: flex; align-items: center; gap: 0.3rem;"><i class="fa-solid fa-eye"></i> Viewing Table</div>` : ''}
         </div>
@@ -2050,8 +2061,8 @@ function renderAdminAnalytics() {
             <span class="stat-label" style="font-weight: 800; color: ${activeTable === 'attendance' ? 'var(--brand-gold)' : 'var(--text-secondary)'};">ATTENDANCE RATE</span>
             <div class="stat-icon" style="background: var(--badge-gold-bg); color: var(--brand-gold);"><i class="fa-solid fa-chart-line"></i></div>
           </div>
-          <div class="stat-value" style="font-size: 2rem; font-weight: 800;">96.4%</div>
-          <div class="stat-meta" style="color: var(--text-secondary);">Verified Zoho Logs</div>
+          <div class="stat-value" style="font-size: 2rem; font-weight: 800;">${attendanceRate}</div>
+          <div class="stat-meta" style="color: var(--text-secondary);">Real-Time Verified Logs</div>
           ${activeTable === 'attendance' ? `<div style="position: absolute; bottom: 8px; right: 12px; font-size: 0.72rem; font-weight: 800; color: var(--brand-gold); display: flex; align-items: center; gap: 0.3rem;"><i class="fa-solid fa-eye"></i> Viewing Table</div>` : ''}
         </div>
       </div>

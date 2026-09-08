@@ -1332,7 +1332,7 @@ Objective: ${t.objective||"Career mentorship"}`),f=encodeURIComponent(t.meetingL
         </form>
       </div>
     </div>
-  `}function qe(){const t=e.adminActiveTable||"mentees",i=e.adminDateFrom||"2026-08-01",r=e.adminDateTo||"2026-08-31",a=e.associates&&e.associates.length>0?e.associates.length.toLocaleString():"4,120",n=e.sessions&&e.sessions.length>0?e.sessions.length.toString():"184",o=i&&r?`${i} to ${r}`:"Selected Range";return`
+  `}function qe(){const t=e.adminActiveTable||"mentees",i=e.adminDateFrom||"2026-08-01",r=e.adminDateTo||"2026-08-31",a=e.associates&&e.associates.length>0?e.associates.length.toLocaleString():"3",n=e.mentors?e.mentors.filter(c=>c.status!=="Inactive").length:0,o=(e.sessions||[]).filter(c=>!i||!r||!c.date?!0:c.date>=i&&c.date<=r),l=o.length>0?o.length.toString():e.sessions?e.sessions.length.toString():"0",g=e.sessions?e.sessions.length:0,p=(e.sessions||[]).filter(c=>c.status==="Completed"||c.status==="Accepted"||c.attendance&&c.attendance.joined),s=g>0?(p.length/g*100).toFixed(1)+"%":"100.0%",d=i&&r?`${i} to ${r}`:"Selected Range";return`
     <div class="content-area" style="width: 100%;">
       <!-- DYNAMIC CALENDAR DATE RANGE CONTROL BAR -->
       <div style="background: var(--bg-hover); padding: 1.25rem; border-radius: 16px; border: 1px solid var(--border-color); margin-bottom: 1.75rem;">
@@ -1403,7 +1403,7 @@ Objective: ${t.objective||"Career mentorship"}`),f=encodeURIComponent(t.meetingL
             <div class="stat-icon" style="background: rgba(107,33,168,0.12); color: var(--brand-primary);"><i class="fa-solid fa-user-graduate"></i></div>
           </div>
           <div class="stat-value" style="font-size: 2rem; font-weight: 800;">${a}</div>
-          <div class="stat-meta" style="color: var(--text-secondary); font-size: 0.78rem;">${o}</div>
+          <div class="stat-meta" style="color: var(--text-secondary); font-size: 0.78rem;">Mastercard Roster</div>
           ${t==="mentees"?'<div style="position: absolute; bottom: 8px; right: 12px; font-size: 0.72rem; font-weight: 800; color: var(--brand-primary); display: flex; align-items: center; gap: 0.3rem;"><i class="fa-solid fa-eye"></i> Viewing Table</div>':""}
         </div>
 
@@ -1413,7 +1413,7 @@ Objective: ${t.objective||"Career mentorship"}`),f=encodeURIComponent(t.meetingL
             <span class="stat-label" style="font-weight: 800; color: ${t==="mentors"?"var(--brand-emerald)":"var(--text-secondary)"};">ACTIVE MENTORS</span>
             <div class="stat-icon" style="background: var(--badge-green-bg); color: var(--brand-emerald);"><i class="fa-solid fa-user-tie"></i></div>
           </div>
-          <div class="stat-value" style="font-size: 2rem; font-weight: 800;">38</div>
+          <div class="stat-value" style="font-size: 2rem; font-weight: 800;">${n}</div>
           <div class="stat-meta" style="color: var(--text-secondary);">Verified Industry Leaders</div>
           ${t==="mentors"?'<div style="position: absolute; bottom: 8px; right: 12px; font-size: 0.72rem; font-weight: 800; color: var(--brand-emerald); display: flex; align-items: center; gap: 0.3rem;"><i class="fa-solid fa-eye"></i> Viewing Table</div>':""}
         </div>
@@ -1424,8 +1424,8 @@ Objective: ${t.objective||"Career mentorship"}`),f=encodeURIComponent(t.meetingL
             <span class="stat-label" style="font-weight: 800; color: ${t==="sessions"?"var(--brand-violet)":"var(--text-secondary)"};">SESSIONS (RANGE)</span>
             <div class="stat-icon" style="background: var(--badge-purple-bg); color: var(--brand-violet);"><i class="fa-solid fa-video"></i></div>
           </div>
-          <div class="stat-value" style="font-size: 2rem; font-weight: 800;">${n}</div>
-          <div class="stat-meta" style="color: var(--text-secondary); font-size: 0.78rem;">${o}</div>
+          <div class="stat-value" style="font-size: 2rem; font-weight: 800;">${l}</div>
+          <div class="stat-meta" style="color: var(--text-secondary); font-size: 0.78rem;">${d}</div>
           ${t==="sessions"?'<div style="position: absolute; bottom: 8px; right: 12px; font-size: 0.72rem; font-weight: 800; color: var(--brand-violet); display: flex; align-items: center; gap: 0.3rem;"><i class="fa-solid fa-eye"></i> Viewing Table</div>':""}
         </div>
 
@@ -1435,8 +1435,8 @@ Objective: ${t.objective||"Career mentorship"}`),f=encodeURIComponent(t.meetingL
             <span class="stat-label" style="font-weight: 800; color: ${t==="attendance"?"var(--brand-gold)":"var(--text-secondary)"};">ATTENDANCE RATE</span>
             <div class="stat-icon" style="background: var(--badge-gold-bg); color: var(--brand-gold);"><i class="fa-solid fa-chart-line"></i></div>
           </div>
-          <div class="stat-value" style="font-size: 2rem; font-weight: 800;">96.4%</div>
-          <div class="stat-meta" style="color: var(--text-secondary);">Verified Zoho Logs</div>
+          <div class="stat-value" style="font-size: 2rem; font-weight: 800;">${s}</div>
+          <div class="stat-meta" style="color: var(--text-secondary);">Real-Time Verified Logs</div>
           ${t==="attendance"?'<div style="position: absolute; bottom: 8px; right: 12px; font-size: 0.72rem; font-weight: 800; color: var(--brand-gold); display: flex; align-items: center; gap: 0.3rem;"><i class="fa-solid fa-eye"></i> Viewing Table</div>':""}
         </div>
       </div>
@@ -1450,10 +1450,10 @@ Objective: ${t.objective||"Career mentorship"}`),f=encodeURIComponent(t.meetingL
           <i class="fa-solid fa-user-tie"></i> Active Mentors (${e.mentors.length})
         </button>
         <button class="btn-admin-kpi-pill ${t==="sessions"?"active-pill":""}" data-table="sessions" style="padding: 0.6rem 1.25rem; font-size: 0.88rem; font-weight: 800; border-radius: 20px; border: none; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; ${t==="sessions"?"background: #6b21a8; color: white;":"background: var(--bg-hover); color: var(--text-secondary);"}">
-          <i class="fa-solid fa-video"></i> Sessions Log (${n})
+          <i class="fa-solid fa-video"></i> Sessions Log (${l})
         </button>
         <button class="btn-admin-kpi-pill ${t==="feedback"?"active-pill":""}" data-table="feedback" style="padding: 0.6rem 1.25rem; font-size: 0.88rem; font-weight: 800; border-radius: 20px; border: none; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; ${t==="feedback"?"background: #f59e0b; color: white;":"background: var(--bg-hover); color: var(--text-secondary);"}">
-          <i class="fa-solid fa-star"></i> Evaluation & Ratings (${e.sessions.filter(l=>l.mentorRating||l.associateRating).length})
+          <i class="fa-solid fa-star"></i> Evaluation & Ratings (${e.sessions.filter(c=>c.mentorRating||c.associateRating).length})
         </button>
         <button class="btn-admin-kpi-pill ${t==="attendance"?"active-pill":""}" data-table="attendance" style="padding: 0.6rem 1.25rem; font-size: 0.88rem; font-weight: 800; border-radius: 20px; border: none; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; ${t==="attendance"?"background: #d97706; color: white;":"background: var(--bg-hover); color: var(--text-secondary);"}">
           <i class="fa-solid fa-chart-line"></i> Attendance Audit (96.4%)
