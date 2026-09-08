@@ -2331,3 +2331,25 @@ a {
   flex-shrink: 0;
   background: var(--bg-card);
 }
+
+/* Form Micro-Validation & Inline Error Feedback */
+.form-input.is-invalid, .form-select.is-invalid, textarea.is-invalid {
+  border-color: var(--brand-rose, #E11D48) !important;
+  box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.15) !important;
+  background-color: rgba(225, 29, 72, 0.03) !important;
+}
+
+.field-error-text {
+  color: var(--brand-rose, #E11D48);
+  font-size: 0.78rem;
+  font-weight: 700;
+  margin-top: 0.35rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  animation: fadeIn 0.2s ease;
+}
+
+[data-theme="dark"] .form-input.is-invalid, [data-theme="dark"] .form-select.is-invalid, [data-theme="dark"] textarea.is-invalid {
+  background-color: rgba(225, 29, 72, 0.1) !important;
+}

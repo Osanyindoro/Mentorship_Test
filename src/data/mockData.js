@@ -470,92 +470,138 @@ const STORAGE_KEY_ASSOCIATES = "mently_associates_v5";
 const STORAGE_KEY_MENTORS = "mently_mentors_v6_real_profiles";
 const STORAGE_KEY_THEME = "mently_theme_v5";
 
+// Safe LocalStorage setItem with QuotaExceededError fallback
+function safeSetLocalStorage(key, data) {
+  try {
+    const jsonStr = typeof data === 'string' ? data : JSON.stringify(data);
+    localStorage.setItem(key, jsonStr);
+  } catch (err) {
+    console.warn(`[LocalStorage Quota Safeguard] Failed to save key "${key}":`, err.message);
+    if (err.name === 'QuotaExceededError' || err.code === 22) {
+      try {
+        // Strip heavy base64 avatar images if quota exceeded
+        if (Array.isArray(data)) {
+          const sanitized = data.map(item => {
+            if (item && item.avatar && item.avatar.startsWith('data:image/')) {
+              return { ...item, avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80' };
+            }
+            return item;
+          });
+          localStorage.setItem(key, JSON.stringify(sanitized));
+        }
+      } catch (innerErr) {
+        console.error('[LocalStorage Fatal Error] Cannot clear quota:', innerErr.message);
+      }
+    }
+  }
+}
+
 export function getStoredSessions() {
   const data = localStorage.getItem(STORAGE_KEY_SESSIONS);
   if (!data) {
-    localStorage.setItem(STORAGE_KEY_SESSIONS, JSON.stringify(INITIAL_SESSIONS));
+    safeSetLocalStorage(STORAGE_KEY_SESSIONS, INITIAL_SESSIONS);
     return INITIAL_SESSIONS;
   }
-  return JSON.parse(data);
+  try {
+    return JSON.parse(data);
+  } catch (e) {
+    return INITIAL_SESSIONS;
+  }
 }
 
 export function saveStoredSessions(sessions) {
-  localStorage.setItem(STORAGE_KEY_SESSIONS, JSON.stringify(sessions));
+  safeSetLocalStorage(STORAGE_KEY_SESSIONS, sessions);
 }
 
 export function getStoredGroupSessions() {
   const data = localStorage.getItem(STORAGE_KEY_GROUP_SESSIONS);
   if (!data) {
-    localStorage.setItem(STORAGE_KEY_GROUP_SESSIONS, JSON.stringify(INITIAL_GROUP_SESSIONS));
+    safeSetLocalStorage(STORAGE_KEY_GROUP_SESSIONS, INITIAL_GROUP_SESSIONS);
     return INITIAL_GROUP_SESSIONS;
   }
-  return JSON.parse(data);
+  try {
+    return JSON.parse(data);
+  } catch (e) {
+    return INITIAL_GROUP_SESSIONS;
+  }
 }
 
 export function saveStoredGroupSessions(groupSessions) {
-  localStorage.setItem(STORAGE_KEY_GROUP_SESSIONS, JSON.stringify(groupSessions));
+  safeSetLocalStorage(STORAGE_KEY_GROUP_SESSIONS, groupSessions);
 }
 
 export function getStoredTasks() {
   const data = localStorage.getItem(STORAGE_KEY_TASKS);
   if (!data) {
-    localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(INITIAL_TASKS));
+    safeSetLocalStorage(STORAGE_KEY_TASKS, INITIAL_TASKS);
     return INITIAL_TASKS;
   }
-  return JSON.parse(data);
+  try {
+    return JSON.parse(data);
+  } catch (e) {
+    return INITIAL_TASKS;
+  }
 }
 
 export function saveStoredTasks(tasks) {
-  localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(tasks));
+  safeSetLocalStorage(STORAGE_KEY_TASKS, tasks);
 }
 
 export function getStoredNotifications() {
   const data = localStorage.getItem(STORAGE_KEY_NOTIFICATIONS);
   if (!data) {
-    localStorage.setItem(STORAGE_KEY_NOTIFICATIONS, JSON.stringify(INITIAL_NOTIFICATIONS));
+    safeSetLocalStorage(STORAGE_KEY_NOTIFICATIONS, INITIAL_NOTIFICATIONS);
     return INITIAL_NOTIFICATIONS;
   }
-  return JSON.parse(data);
+  try {
+    return JSON.parse(data);
+  } catch (e) {
+    return INITIAL_NOTIFICATIONS;
+  }
 }
 
 export function saveStoredNotifications(notifications) {
-  localStorage.setItem(STORAGE_KEY_NOTIFICATIONS, JSON.stringify(notifications));
+  safeSetLocalStorage(STORAGE_KEY_NOTIFICATIONS, notifications);
 }
 
 export function getStoredAssociates() {
   const data = localStorage.getItem(STORAGE_KEY_ASSOCIATES);
   if (!data) {
-    localStorage.setItem(STORAGE_KEY_ASSOCIATES, JSON.stringify(INITIAL_ASSOCIATES));
+    safeSetLocalStorage(STORAGE_KEY_ASSOCIATES, INITIAL_ASSOCIATES);
     return INITIAL_ASSOCIATES;
   }
-  return JSON.parse(data);
+  try {
+    return JSON.parse(data);
+  } catch (e) {
+    return INITIAL_ASSOCIATES;
+  }
 }
 
 export function saveStoredAssociates(associates) {
-  localStorage.setItem(STORAGE_KEY_ASSOCIATES, JSON.stringify(associates));
+  safeSetLocalStorage(STORAGE_KEY_ASSOCIATES, associates);
 }
 
 export function getStoredMentors() {
   const data = localStorage.getItem(STORAGE_KEY_MENTORS);
   if (!data) {
-    localStorage.setItem(STORAGE_KEY_MENTORS, JSON.stringify(INITIAL_MENTORS));
+    safeSetLocalStorage(STORAGE_KEY_MENTORS, INITIAL_MENTORS);
     return INITIAL_MENTORS;
   }
   try {
     const parsed = JSON.parse(data);
     if (!Array.isArray(parsed) || parsed.length < 11 || parsed.some(m => m.id === 'MEN-101' || m.name === 'Dr. Samuel Osei')) {
-      localStorage.setItem(STORAGE_KEY_MENTORS, JSON.stringify(INITIAL_MENTORS));
+      safeSetLocalStorage(STORAGE_KEY_MENTORS, INITIAL_MENTORS);
       return INITIAL_MENTORS;
     }
     return parsed;
   } catch (e) {
-    localStorage.setItem(STORAGE_KEY_MENTORS, JSON.stringify(INITIAL_MENTORS));
+    safeSetLocalStorage(STORAGE_KEY_MENTORS, INITIAL_MENTORS);
     return INITIAL_MENTORS;
   }
 }
 
 export function saveStoredMentors(mentors) {
-  localStorage.setItem(STORAGE_KEY_MENTORS, JSON.stringify(mentors));
+  safeSetLocalStorage(STORAGE_KEY_MENTORS, mentors);
 }
 
 export function getStoredTheme() {
@@ -563,5 +609,5 @@ export function getStoredTheme() {
 }
 
 export function saveStoredTheme(theme) {
-  localStorage.setItem(STORAGE_KEY_THEME, theme);
+  safeSetLocalStorage(STORAGE_KEY_THEME, theme);
 }

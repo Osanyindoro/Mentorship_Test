@@ -3,6 +3,9 @@ import jobbermanLogo from './assets/jobberman-logo.png';
 import heroBannerNew from './assets/hero-banner-new.png';
 import { getStoredTheme, saveStoredTheme, getStoredAssociates, saveStoredAssociates, getStoredMentors, saveStoredMentors } from './data/mockData.js';
 import { apiService } from './services/api.js';
+import { getTodayISO, getStartOfMonthISO, getEndOfMonthISO, getLast30DaysISO, getThisWeekStartISO } from './utils/dateHelpers.js';
+import { compressImageFile as compressAvatar } from './utils/imageCompressor.js';
+import { showToast as displayToast } from './utils/toast.js';
 
 // Route Helper Functions
 function getInitialRoute() {
@@ -30,9 +33,9 @@ const state = {
   adminTab: 'analytics',              // 'analytics' | 'mentors' | 'sessions'
   adminActiveTable: 'mentees',         // 'mentees' | 'mentors' | 'sessions' | 'attendance'
   adminMenteeSearchQuery: '',
-  adminMonthFilter: 'august_2026',    // legacy fallback
-  adminDateFrom: '2026-08-01',       // Dynamic Start Date (YYYY-MM-DD)
-  adminDateTo: '2026-08-31',         // Dynamic End Date (YYYY-MM-DD)
+  adminMonthFilter: 'current_month',
+  adminDateFrom: getStartOfMonthISO(),// Dynamic Start Date (YYYY-MM-01)
+  adminDateTo: getEndOfMonthISO(),    // Dynamic End Date (YYYY-MM-LastDay)
   adminDatePreset: 'this_month',      // 'custom' | 'today' | 'this_week' | 'this_month' | 'last_30' | 'all_time'
   adminSessionMentorFilter: 'ALL',   // 'ALL' or mentor ID/name
   adminSessionSearchQuery: '',
@@ -1216,9 +1219,15 @@ function renderMenteeDiscovery() {
           ${filteredMentors.map(m => renderMentorCard(m)).join('')}
         </div>
       ` : `
-        <div style="text-align: center; padding: 4rem 1rem; color: var(--text-muted);">
-          <i class="fa-solid fa-user-slash" style="font-size: 2.5rem; margin-bottom: 1rem;"></i>
-          <div style="font-weight: 800; font-size: 1.1rem;">No mentors found matching your filters.</div>
+        <div style="text-align: center; padding: 4rem 1.5rem; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); max-width: 500px; margin: 2rem auto;">
+          <div style="width: 60px; height: 60px; border-radius: 50%; background: var(--badge-blue-bg); color: var(--brand-primary); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; margin: 0 auto 1.25rem;">
+            <i class="fa-solid fa-filter-circle-xmark"></i>
+          </div>
+          <h3 style="font-family: var(--font-display); font-weight: 800; font-size: 1.2rem; color: var(--text-primary); margin-bottom: 0.5rem;">No Mentors Found</h3>
+          <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 1.5rem; line-height: 1.5;">No mentor profiles match your current domain, keyword search, or availability filters.</p>
+          <button id="btnClearDiscoveryFilters" class="btn-brand-primary" style="padding: 0.65rem 1.4rem; font-size: 0.88rem; font-weight: 800; border-radius: 50px;">
+            <i class="fa-solid fa-rotate-left"></i> Clear All Filters & Reset Search
+          </button>
         </div>
       `}
     </div>
@@ -3181,51 +3190,11 @@ function renderModals() {
   return '';
 }
 
-// Image File Validator & Canvas Compressor (~25KB DataURL)
+// Image File Validator & Canvas Compressor
 function compressImageFile(file, callback) {
-  if (!file) return;
-  const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
-  if (!validTypes.includes(file.type)) {
-    showToast('Please select a valid image (JPG, PNG, WEBP).', 'fa-triangle-exclamation');
-    return;
-  }
-  if (file.size > 5 * 1024 * 1024) {
-    showToast('File size must be under 5MB.', 'fa-triangle-exclamation');
-    return;
-  }
-
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const maxDim = 300;
-      let width = img.width;
-      let height = img.height;
-
-      if (width > height) {
-        if (width > maxDim) {
-          height = Math.round((height * maxDim) / width);
-          width = maxDim;
-        }
-      } else {
-        if (height > maxDim) {
-          width = Math.round((width * maxDim) / height);
-          height = maxDim;
-        }
-      }
-
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0, width, height);
-
-      const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.75);
-      callback(compressedDataUrl);
-    };
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
+  compressAvatar(file, callback, (errMsg) => {
+    showToast(errMsg, 'fa-triangle-exclamation');
+  });
 }
 
 // --------------------------------------------------------------------------
@@ -3694,13 +3663,45 @@ function bindEvents() {
       render();
     });
 
-    // Notifications
+    // Notifications Engine Handlers
     document.getElementById('btnToggleNotifications')?.addEventListener('click', () => {
       state.isNotificationOpen = !state.isNotificationOpen;
       render();
     });
     document.getElementById('btnCloseNotifications')?.addEventListener('click', () => {
       state.isNotificationOpen = false;
+      render();
+    });
+
+    document.getElementById('btnMarkAllNotificationsRead')?.addEventListener('click', () => {
+      state.notifications.forEach(n => n.read = true);
+      try {
+        saveStoredNotifications(state.notifications);
+      } catch (e) {}
+      showToast('All notifications marked as read.', 'fa-check-double');
+      render();
+    });
+
+    document.querySelectorAll('.btn-mark-notif-read').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const idx = parseInt(btn.dataset.idx, 10);
+        if (state.notifications[idx]) {
+          state.notifications[idx].read = true;
+          try {
+            saveStoredNotifications(state.notifications);
+          } catch (e) {}
+          render();
+        }
+      });
+    });
+
+    document.getElementById('btnClearAllNotifications')?.addEventListener('click', () => {
+      state.notifications = [];
+      try {
+        saveStoredNotifications(state.notifications);
+      } catch (e) {}
+      showToast('Notifications cleared.', 'fa-trash-can');
       render();
     });
 
@@ -3714,11 +3715,17 @@ function bindEvents() {
       });
     });
 
-    document.getElementById('btnClearFilters')?.addEventListener('click', () => {
+    const resetAllFilters = () => {
       state.selectedDomains = [];
       state.searchQuery = '';
+      state.landingDomainFilter = 'All';
+      state.selectedSessionType = 'all';
+      state.onlyAvailableThisWeek = false;
       render();
-    });
+    };
+
+    document.getElementById('btnClearFilters')?.addEventListener('click', resetAllFilters);
+    document.getElementById('btnClearDiscoveryFilters')?.addEventListener('click', resetAllFilters);
 
     // View Associate Profile Modal for Mentors
     document.querySelectorAll('.btn-inspect-associate-profile').forEach(btn => {
@@ -3805,23 +3812,47 @@ function bindEvents() {
       const assocTitle = titleInput ? titleInput.value.trim() : (activeAssoc.title || '');
       const assocOrg = orgInput ? orgInput.value.trim() : (activeAssoc.organization || activeAssoc.institution || '');
 
+      // Reset micro-validation states
+      [objInput, titleInput, orgInput].forEach(inp => {
+        if (inp) {
+          inp.classList.remove('is-invalid');
+          const existingErr = inp.parentNode.querySelector('.field-error-text');
+          if (existingErr) existingErr.remove();
+        }
+      });
+
       if (!date || !time) {
         showToast('Please select one of the mentor\'s available open time slots.', 'fa-circle-exclamation');
         return;
       }
 
+      let hasError = false;
       if (!assocTitle) {
-        showToast('Please specify your current job title/role.', 'fa-circle-exclamation');
-        return;
+        if (titleInput) {
+          titleInput.classList.add('is-invalid');
+          titleInput.insertAdjacentHTML('afterend', '<div class="field-error-text"><i class="fa-solid fa-triangle-exclamation"></i> Please enter your job title/role.</div>');
+        }
+        hasError = true;
       }
 
       if (!assocOrg) {
-        showToast('Please specify your host organization.', 'fa-circle-exclamation');
-        return;
+        if (orgInput) {
+          orgInput.classList.add('is-invalid');
+          orgInput.insertAdjacentHTML('afterend', '<div class="field-error-text"><i class="fa-solid fa-triangle-exclamation"></i> Please enter your organization.</div>');
+        }
+        hasError = true;
       }
 
       if (!objective || objective.length < 10) {
-        showToast('Please enter a detailed reason and agenda for the mentorship session (min 10 characters).', 'fa-circle-exclamation');
+        if (objInput) {
+          objInput.classList.add('is-invalid');
+          objInput.insertAdjacentHTML('afterend', '<div class="field-error-text"><i class="fa-solid fa-triangle-exclamation"></i> Please detail your session objective (at least 10 characters).</div>');
+        }
+        hasError = true;
+      }
+
+      if (hasError) {
+        showToast('Please complete all required fields.', 'fa-triangle-exclamation');
         return;
       }
 
@@ -4215,8 +4246,31 @@ function bindEvents() {
 
       const cleanText = editorEl ? editorEl.textContent.trim() : description.replace(/<[^>]*>?/gm, '').trim();
 
-      if (!title || !cleanText || !date) {
-        showToast('Please fill out all required fields (title, description, date).', 'fa-circle-exclamation');
+      const titleInput = document.getElementById('createGroupTitle');
+      if (titleInput) {
+        titleInput.classList.remove('is-invalid');
+        const err = titleInput.parentNode.querySelector('.field-error-text');
+        if (err) err.remove();
+      }
+
+      let hasError = false;
+      if (!title || title.trim().length === 0) {
+        if (titleInput) {
+          titleInput.classList.add('is-invalid');
+          titleInput.insertAdjacentHTML('afterend', '<div class="field-error-text"><i class="fa-solid fa-triangle-exclamation"></i> Masterclass title is required.</div>');
+        }
+        hasError = true;
+      }
+
+      if (!cleanText || cleanText.length < 5) {
+        if (editorEl) {
+          editorEl.classList.add('is-invalid');
+        }
+        hasError = true;
+      }
+
+      if (hasError) {
+        showToast('Please complete all required fields (title & description).', 'fa-triangle-exclamation');
         return;
       }
 
@@ -4361,20 +4415,23 @@ function bindEvents() {
       btn.addEventListener('click', () => {
         const preset = btn.dataset.preset;
         state.adminDatePreset = preset;
-        const todayStr = '2026-08-16';
+        const todayStr = getTodayISO();
 
         if (preset === 'this_month') {
-          state.adminDateFrom = '2026-08-01';
-          state.adminDateTo = '2026-08-31';
+          state.adminDateFrom = getStartOfMonthISO();
+          state.adminDateTo = getEndOfMonthISO();
+        } else if (preset === 'today') {
+          state.adminDateFrom = todayStr;
+          state.adminDateTo = todayStr;
         } else if (preset === 'last_30') {
-          state.adminDateFrom = '2026-07-17';
-          state.adminDateTo = '2026-08-16';
+          state.adminDateFrom = getLast30DaysISO();
+          state.adminDateTo = todayStr;
         } else if (preset === 'this_week') {
-          state.adminDateFrom = '2026-08-10';
-          state.adminDateTo = '2026-08-16';
+          state.adminDateFrom = getThisWeekStartISO();
+          state.adminDateTo = todayStr;
         } else if (preset === 'all_time') {
-          state.adminDateFrom = '2026-01-01';
-          state.adminDateTo = '2026-12-31';
+          state.adminDateFrom = '2024-01-01';
+          state.adminDateTo = `${new Date().getFullYear()}-12-31`;
         }
         render();
       });
