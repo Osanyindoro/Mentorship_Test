@@ -318,6 +318,30 @@ export const INITIAL_MENTORS = [
       { date: "2026-08-21", time: "09:00 AM", isBooked: false },
       { date: "2026-08-25", time: "01:30 PM", isBooked: false }
     ]
+  },
+  {
+    id: "MEN-REG-281",
+    googleEmail: "osanyindorovictor@gmail.com",
+    name: "Victor Osanyindoro",
+    email: "osanyindorovictor@gmail.com",
+    phone: "+234 801 000 0002",
+    title: "MERL Officer & Data Strategy Specialist",
+    organization: "Jobberman Nigeria",
+    domain: "Monitoring Evaluation Research & Learning (MERL)",
+    bio: "MERL Officer at Jobberman, leading monitoring, evaluation, research, and data strategy across the Mastercard Foundation Mentorship Programme.",
+    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80",
+    rating: 4.95,
+    totalSessions: 18,
+    monthlyCap: 15,
+    sessionsUsedThisMonth: 4,
+    status: "Active",
+    expertise: ["MERL Strategy", "Data Analytics", "Programme Evaluation", "Research Design"],
+    interests: ["Data-Driven Decision Making", "Youth Employment Strategy"],
+    socialLinks: { linkedin: "https://linkedin.com/in/victorosanyindoro" },
+    schedule: [
+      { date: "2026-08-20", time: "02:30 PM", isBooked: false },
+      { date: "2026-08-22", time: "10:00 AM", isBooked: false }
+    ]
   }
 ];
 

@@ -236,7 +236,7 @@ export const apiService = {
       try {
         const { data, error } = await supabase.from('users').select('*').eq('role', 'mentor');
         if (data && data.length > 0 && !error) {
-          const LEGACY_DUMMY_IDS = new Set(['MEN-101', 'MEN-102', 'MEN-103', 'MEN-104', 'MEN-REG-281']);
+          const LEGACY_DUMMY_IDS = new Set(['MEN-101', 'MEN-102', 'MEN-103', 'MEN-104']);
           const LEGACY_DUMMY_NAMES = new Set(['Dr. Samuel Osei', 'Nia Temilade', 'Prof. Kenneth Kiprono', 'Fatima El-Mansouri']);
 
           mentorsList = data
