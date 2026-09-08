@@ -1031,8 +1031,8 @@ function renderMenteeHome(associate) {
     (s.associateName && s.associateName.toLowerCase().trim() === assocName)
   );
 
-  const upcomingSessions = mySessions.filter(s => s.status === 'Accepted');
-  
+  const upcomingSessions = mySessions.filter(s => s.status === 'Accepted' || s.status === 'Pending');
+
   // Find distinct mentors previously engaged
   const engagedMentorNames = new Set(mySessions.map(s => (s.mentorName || '').toLowerCase().trim()).filter(Boolean));
   const engagedMentorIds = new Set(mySessions.map(s => String(s.mentorId || '').toLowerCase().trim()).filter(Boolean));
@@ -1121,17 +1121,27 @@ function renderMenteeHome(associate) {
         ${upcomingSessions.length > 0 ? `
           <div style="display: flex; flex-direction: column; gap: 1rem;">
             ${upcomingSessions.map(s => `
-              <div class="mentor-card" style="border-left: 4px solid var(--brand-emerald); padding: 1.5rem;">
+              <div class="mentor-card" style="border-left: 4px solid ${s.status === 'Accepted' ? 'var(--brand-emerald)' : '#f59e0b'}; padding: 1.5rem;">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
                   <div>
-                    <span class="badge-tag badge-green" style="margin-bottom: 0.5rem; display: inline-block;">Confirmed 1-on-1 Session</span>
+                    <span class="badge-tag ${s.status === 'Accepted' ? 'badge-green' : 'badge-gold'}" style="margin-bottom: 0.5rem; display: inline-block;">
+                      ${s.status === 'Accepted' ? '<i class="fa-solid fa-circle-check"></i> Confirmed 1-on-1 Session' : '<i class="fa-solid fa-clock"></i> Pending Mentor Acceptance'}
+                    </span>
                     <h3 style="font-weight: 800; font-size: 1.15rem;">Session with ${s.mentorName}</h3>
                     <p style="font-size: 0.88rem; color: var(--text-secondary);">${s.mentorDomain}</p>
                   </div>
-                  <a href="${s.meetingLink}" target="_blank" class="btn-brand-primary" style="padding: 0.6rem 1.25rem; font-size: 0.88rem;"><i class="fa-solid fa-video"></i> Join Zoho Meeting</a>
+                  ${s.status === 'Accepted' && s.meetingLink ? `
+                    <a href="${s.meetingLink}" target="_blank" class="btn-brand-primary" style="padding: 0.6rem 1.25rem; font-size: 0.88rem;">
+                      <i class="fa-solid fa-video"></i> ${s.meetingLink.includes('google.com') ? 'Join Google Meet' : 'Join Meeting'}
+                    </a>
+                  ` : `
+                    <span style="font-size: 0.82rem; color: #d97706; font-weight: 700; background: rgba(245,158,11,0.12); padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid rgba(245,158,11,0.3); display: inline-flex; align-items: center; gap: 0.4rem;">
+                      <i class="fa-solid fa-hourglass-half"></i> Awaiting Mentor Acceptance
+                    </span>
+                  `}
                 </div>
                 <div style="font-size: 0.86rem; color: var(--text-secondary); background: var(--bg-hover); padding: 0.75rem 1rem; border-radius: 8px;">
-                  <i class="fa-regular fa-clock"></i> <strong>Scheduled:</strong> ${s.date} at ${s.time} (${s.duration})<br/>
+                  <i class="fa-regular fa-clock"></i> <strong>Scheduled:</strong> ${s.date} at ${s.time} (${s.duration || '1 Hour'})<br/>
                   <i class="fa-solid fa-bullseye"></i> <strong>Objective:</strong> ${s.objective}
                 </div>
               </div>
