@@ -29,36 +29,36 @@ const associates = [
 
 const mentors = [
   {
-    id: "MEN-101",
-    name: "Dr. Samuel Osei",
-    email: "samuel.osei@mcf-mentors.org",
-    title: "Principal AI Scientist & Former Google Research Lead",
-    organization: "DeepMind / CMU Africa Faculty",
-    domain: "Software Engineering & AI",
-    bio: "15+ years experience in Artificial Intelligence and NLP for African languages.",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80",
-    rating: 4.9,
-    totalSessions: 42,
-    expertise: ["AI / Machine Learning", "PhD Advice", "Tech Career Roadmap"],
+    id: "MEN-2026-001",
+    name: "Andre Garbutt",
+    email: "andre.garbutt@mcf-mentors.org",
+    title: "Founder & Lead Trainer | HR & Learning Consultant",
+    organization: "Hands-On Excellence Academy / WAVE",
+    domain: "Workforce Development, Talent Management & HR Strategy",
+    bio: "HR Consultant, Learning & Development Professional, and Corporate Trainer with over a decade of experience.",
+    avatar: "/assets/mentors/andre_garbutt.jpg",
+    rating: 4.95,
+    totalSessions: 24,
+    expertise: ["Workforce Development", "Talent Management", "Employability Training"],
     schedule: [
-      { id: 1, date: "2026-08-18", time: "10:00 AM", isBooked: false, bookedBy: null },
-      { id: 2, date: "2026-08-18", time: "02:30 PM", isBooked: true, bookedBy: "Amina Kwame" }
+      { id: 1, date: "2026-08-20", time: "10:00 AM", isBooked: false, bookedBy: null },
+      { id: 2, date: "2026-08-22", time: "02:00 PM", isBooked: true, bookedBy: "Amina Kwame" }
     ]
   },
   {
-    id: "MEN-102",
-    name: "Nia Temilade",
-    email: "nia.temilade@mcf-mentors.org",
-    title: "VP of Product Management & Venture Partner",
-    organization: "Paystack / Flutterwave Mentor Network",
-    domain: "Fintech & Product",
-    bio: "Product strategist who scaled payments infrastructure across 6 African countries.",
-    avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=600&q=80",
+    id: "MEN-2026-002",
+    name: "Awele Elueze",
+    email: "awele.elueze@mcf-mentors.org",
+    title: "Group Head of Human Resources | CIPD (UK) Certified",
+    organization: "Alerzo Limited (Ex-EY & Saroafrica International)",
+    domain: "Strategic HR Transformation, Performance Management & Executive Leadership",
+    bio: "Seasoned HR executive and CIPD-certified strategist currently serving as Group Head of HR at Alerzo Limited.",
+    avatar: "/assets/mentors/awele_elueze.jpg",
     rating: 5.0,
-    totalSessions: 38,
-    expertise: ["Product Strategy", "Fintech Leadership", "Interview Prep"],
+    totalSessions: 32,
+    expertise: ["HR Transformation", "Performance Management", "Executive Coaching"],
     schedule: [
-      { id: 3, date: "2026-08-19", time: "09:00 AM", isBooked: false, bookedBy: null }
+      { id: 3, date: "2026-08-21", time: "11:00 AM", isBooked: false, bookedBy: null }
     ]
   }
 ];
@@ -68,13 +68,13 @@ const sessions = [
     id: "SES-8801",
     associateId: "MCF-2026-089",
     associateName: "Amina Kwame",
-    mentorId: "MEN-101",
-    mentorName: "Dr. Samuel Osei",
-    mentorDomain: "Software Engineering & AI",
-    date: "2026-08-18",
-    time: "02:30 PM",
+    mentorId: "MEN-2026-001",
+    mentorName: "Andre Garbutt",
+    mentorDomain: "Workforce Development, Talent Management & HR Strategy",
+    date: "2026-08-20",
+    time: "02:00 PM",
     duration: "1 Hour",
-    objective: "Review PhD statement of purpose for AI programs.",
+    objective: "Review workforce development strategy and employability roadmap for African scholars.",
     consentToRecord: true,
     status: "Accepted",
     meetingLink: "https://meet.zoho.com/mcf-mentorship-ses-8801"
@@ -84,12 +84,12 @@ const sessions = [
 const groupSessions = [
   {
     id: "GSES-301",
-    mentorId: "MEN-101",
-    mentorName: "Dr. Samuel Osei",
-    title: "AI Research Masterclass: Publishing in Top Conferences",
-    description: "Learn how to structure your research, choose target venues, and write compelling conference papers.",
-    domain: "Software Engineering & AI",
-    date: "2026-08-25",
+    mentorId: "MEN-2026-001",
+    mentorName: "Andre Garbutt",
+    title: "Workforce Readiness & Talent Strategy Masterclass",
+    description: "An intensive masterclass covering employability skills, talent management, and standing out in competitive global career opportunities.",
+    domain: "Workforce Development, Talent Management & HR Strategy",
+    date: "2026-08-22",
     time: "04:00 PM - 05:00 PM",
     duration: "60 mins",
     maxCapacity: 20,
@@ -113,7 +113,7 @@ const notifications = [
   {
     id: "NOTIF-1",
     title: "Session Confirmed",
-    message: "Your mentorship session with Dr. Samuel Osei has been confirmed for Aug 18.",
+    message: "Your mentorship session with Andre Garbutt has been confirmed for Aug 20.",
     timestamp: "10 mins ago",
     read: false
   }

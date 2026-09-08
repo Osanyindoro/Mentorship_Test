@@ -98,18 +98,17 @@ db.serialize(() => {
       // Seed Mentor User & Mentor Record
       db.run(`
         INSERT INTO users (id, role, email, password_hash, name, institution_or_org, title, track_or_domain, bio, avatar)
-        VALUES ('MEN-101', 'mentor', 'samuel.osei@mcf-mentors.org', ?, 'Dr. Samuel Osei', 'DeepMind / CMU Africa Faculty', 'Principal AI Scientist & Former Google Research Lead', 'Software Engineering & AI', '15+ years experience in Artificial Intelligence and NLP.', '/assets/mentor_samuel.jpg')
+        VALUES ('MEN-2026-001', 'mentor', 'andre.garbutt@mcf-mentors.org', ?, 'Andre Garbutt', 'Hands-On Excellence Academy / WAVE', 'Founder & Lead Trainer | HR & Learning Consultant', 'Workforce Development, Talent Management & HR Strategy', 'HR Consultant, Learning & Development Professional with over a decade of experience.', '/assets/mentors/andre_garbutt.jpg')
       `, [defaultPasswordHash]);
 
       db.run(`
         INSERT INTO mentors (id, name, email, title, organization, domain, bio, avatar, rating, total_sessions, expertise_json)
-        VALUES ('MEN-101', 'Dr. Samuel Osei', 'samuel.osei@mcf-mentors.org', 'Principal AI Scientist & Former Google Research Lead', 'DeepMind / CMU Africa Faculty', 'Software Engineering & AI', '15+ years experience in AI, NLP for African languages.', '/assets/mentor_samuel.jpg', 4.9, 42, ?)
-      `, [JSON.stringify(["AI / Machine Learning", "PhD Application Advice", "Tech Career Roadmap"])]);
+        VALUES ('MEN-2026-001', 'Andre Garbutt', 'andre.garbutt@mcf-mentors.org', 'Founder & Lead Trainer | HR & Learning Consultant', 'Hands-On Excellence Academy / WAVE', 'Workforce Development, Talent Management & HR Strategy', 'HR Consultant, Learning & Development Professional with over a decade of experience.', '/assets/mentors/andre_garbutt.jpg', 4.95, 24, ?)
+      `, [JSON.stringify(["Workforce Development", "Talent Management", "Employability Training"])]);
 
       // Seed Slots
-      db.run(`INSERT INTO schedule_slots (mentor_id, date, time, is_booked) VALUES ('MEN-101', '2026-08-18', '10:00 AM', 0)`);
-      db.run(`INSERT INTO schedule_slots (mentor_id, date, time, is_booked) VALUES ('MEN-101', '2026-08-18', '02:30 PM', 0)`);
-      db.run(`INSERT INTO schedule_slots (mentor_id, date, time, is_booked) VALUES ('MEN-101', '2026-08-20', '11:00 AM', 0)`);
+      db.run(`INSERT INTO schedule_slots (mentor_id, date, time, is_booked) VALUES ('MEN-2026-001', '2026-08-20', '10:00 AM', 0)`);
+      db.run(`INSERT INTO schedule_slots (mentor_id, date, time, is_booked) VALUES ('MEN-2026-001', '2026-08-22', '02:00 PM', 0)`);
     }
   });
 });

@@ -13,36 +13,36 @@ try {
 # Initial Data State
 $mentors = @(
     @{
-        id = "MEN-101"
-        name = "Dr. Samuel Osei"
-        email = "samuel.osei@mcf-mentors.org"
-        title = "Principal AI Scientist & Former Google Research Lead"
-        organization = "DeepMind / CMU Africa Faculty"
-        domain = "Software Engineering & AI"
-        bio = "15+ years experience in Artificial Intelligence and NLP for African languages."
-        avatar = "/assets/mentor_samuel.jpg"
-        rating = 4.9
-        totalSessions = 42
-        expertise = @("AI / Machine Learning", "PhD Advice", "Tech Career Roadmap")
+        id = "MEN-2026-001"
+        name = "Andre Garbutt"
+        email = "andre.garbutt@mcf-mentors.org"
+        title = "Founder & Lead Trainer | HR & Learning Consultant"
+        organization = "Hands-On Excellence Academy / WAVE"
+        domain = "Workforce Development, Talent Management & HR Strategy"
+        bio = "HR Consultant, Learning & Development Professional, and Corporate Trainer with over a decade of experience."
+        avatar = "/assets/mentors/andre_garbutt.jpg"
+        rating = 4.95
+        totalSessions = 24
+        expertise = @("Workforce Development", "Talent Management", "Employability Training")
         schedule = @(
-            @{ id = 1; date = "2026-08-18"; time = "10:00 AM"; isBooked = $false; bookedBy = $null },
-            @{ id = 2; date = "2026-08-18"; time = "02:30 PM"; isBooked = $true; bookedBy = "Amina Kwame" }
+            @{ id = 1; date = "2026-08-20"; time = "10:00 AM"; isBooked = $false; bookedBy = $null },
+            @{ id = 2; date = "2026-08-22"; time = "02:00 PM"; isBooked = $true; bookedBy = "Amina Kwame" }
         )
     },
     @{
-        id = "MEN-102"
-        name = "Nia Temilade"
-        email = "nia.temilade@mcf-mentors.org"
-        title = "VP of Product Management & Venture Partner"
-        organization = "Paystack / Flutterwave Mentor Network"
-        domain = "Fintech & Product"
-        bio = "Product strategist who scaled payments infrastructure across 6 African countries."
-        avatar = "/assets/mentor_nia.jpg"
+        id = "MEN-2026-002"
+        name = "Awele Elueze"
+        email = "awele.elueze@mcf-mentors.org"
+        title = "Group Head of Human Resources | CIPD (UK) Certified"
+        organization = "Alerzo Limited (Ex-EY & Saroafrica International)"
+        domain = "Strategic HR Transformation, Performance Management & Executive Leadership"
+        bio = "Seasoned HR executive and CIPD-certified strategist currently serving as Group Head of HR at Alerzo Limited."
+        avatar = "/assets/mentors/awele_elueze.jpg"
         rating = 5.0
-        totalSessions = 38
-        expertise = @("Product Strategy", "Fintech Leadership", "Interview Prep")
+        totalSessions = 32
+        expertise = @("HR Transformation", "Performance Management", "Executive Coaching")
         schedule = @(
-            @{ id = 3; date = "2026-08-19"; time = "09:00 AM"; isBooked = $false; bookedBy = $null }
+            @{ id = 3; date = "2026-08-21"; time = "11:00 AM"; isBooked = $false; bookedBy = $null }
         )
     }
 )
@@ -52,13 +52,13 @@ $sessions = @(
         id = "SES-8801"
         associateId = "MCF-2026-089"
         associateName = "Amina Kwame"
-        mentorId = "MEN-101"
-        mentorName = "Dr. Samuel Osei"
-        mentorDomain = "Software Engineering & AI"
-        date = "2026-08-18"
-        time = "02:30 PM"
+        mentorId = "MEN-2026-001"
+        mentorName = "Andre Garbutt"
+        mentorDomain = "Workforce Development, Talent Management & HR Strategy"
+        date = "2026-08-20"
+        time = "02:00 PM"
         duration = "1 Hour"
-        objective = "Review PhD statement of purpose for AI programs."
+        objective = "Review workforce development strategy and employability roadmap for African scholars."
         consentToRecord = $true
         status = "Accepted"
         meetingLink = "https://meet.zoho.com/mcf-mentorship-ses-8801"

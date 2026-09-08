@@ -100,16 +100,16 @@ def init_db():
 
         cursor.execute('''
             INSERT INTO users (id, role, email, password_hash, name, institution, title, track, bio, avatar)
-            VALUES ('MEN-101', 'mentor', 'samuel.osei@mcf-mentors.org', ?, 'Dr. Samuel Osei', 'DeepMind / CMU Africa Faculty', 'Principal AI Scientist', 'Software Engineering & AI', '15+ years experience in AI.', '/assets/mentor_samuel.jpg')
+            VALUES ('MEN-2026-001', 'mentor', 'andre.garbutt@mcf-mentors.org', ?, 'Andre Garbutt', 'Hands-On Excellence Academy / WAVE', 'Founder & Lead Trainer | HR & Learning Consultant', 'Workforce Development, Talent Management & HR Strategy', 'HR Consultant, Learning & Development Professional with over a decade of experience.', '/assets/mentors/andre_garbutt.jpg')
         ''', (pw_hash,))
 
         cursor.execute('''
             INSERT INTO mentors (id, name, email, title, organization, domain, bio, avatar, rating, total_sessions, expertise_json)
-            VALUES ('MEN-101', 'Dr. Samuel Osei', 'samuel.osei@mcf-mentors.org', 'Principal AI Scientist & Former Google Lead', 'DeepMind / CMU Africa Faculty', 'Software Engineering & AI', '15+ years experience in AI, NLP.', '/assets/mentor_samuel.jpg', 4.9, 42, ?)
-        ''', (json.dumps(["AI / Machine Learning", "PhD Advice", "Career Roadmap"]),))
+            VALUES ('MEN-2026-001', 'Andre Garbutt', 'andre.garbutt@mcf-mentors.org', 'Founder & Lead Trainer | HR & Learning Consultant', 'Hands-On Excellence Academy / WAVE', 'Workforce Development, Talent Management & HR Strategy', 'HR Consultant, Learning & Development Professional with over a decade of experience.', '/assets/mentors/andre_garbutt.jpg', 4.95, 24, ?)
+        ''', (json.dumps(["Workforce Development", "Talent Management", "Employability Training"]),))
 
-        cursor.execute("INSERT INTO schedule_slots (mentor_id, date, time, is_booked) VALUES ('MEN-101', '2026-08-18', '10:00 AM', 0)")
-        cursor.execute("INSERT INTO schedule_slots (mentor_id, date, time, is_booked) VALUES ('MEN-101', '2026-08-18', '02:30 PM', 0)")
+        cursor.execute("INSERT INTO schedule_slots (mentor_id, date, time, is_booked) VALUES ('MEN-2026-001', '2026-08-20', '10:00 AM', 0)")
+        cursor.execute("INSERT INTO schedule_slots (mentor_id, date, time, is_booked) VALUES ('MEN-2026-001', '2026-08-22', '02:00 PM', 0)")
 
     conn.commit()
     conn.close()
