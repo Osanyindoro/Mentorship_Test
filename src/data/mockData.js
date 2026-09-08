@@ -326,14 +326,14 @@ export const INITIAL_SESSIONS = [
     id: "SES-8801",
     associateId: "MCF-2026-089",
     associateName: "Amina Kwame",
-    mentorId: "MEN-101",
-    mentorName: "Dr. Samuel Osei",
-    mentorDomain: "Software Engineering & AI",
+    mentorId: "MEN-2026-001",
+    mentorName: "Andre Garbutt",
+    mentorDomain: "Workforce Development, Talent Management & HR Strategy",
     date: "2026-08-14",
     time: "02:30 PM",
     duration: "1 Hour",
     type: "1-on-1",
-    objective: "Review my PhD statement of purpose for Machine Learning programs and get guidance on structuring my publication draft.",
+    objective: "Review workforce development strategy and employability roadmap for African scholars.",
     consentToRecord: true,
     status: "Accepted",
     meetingLink: "https://meet.zoho.com/mently-ses-8801",
@@ -343,7 +343,7 @@ export const INITIAL_SESSIONS = [
     associateRating: {
       performance: 5,
       objectiveAlignment: 5,
-      feedback: "Dr. Samuel provided invaluable line-by-line feedback on my research statement!"
+      feedback: "Andre provided invaluable guidance on structuring my talent management roadmap!"
     },
     mentorRating: {
       engagement: 5,
@@ -355,14 +355,14 @@ export const INITIAL_SESSIONS = [
     id: "SES-8802",
     associateId: "MCF-2026-042",
     associateName: "Kofi Mensah",
-    mentorId: "MEN-102",
-    mentorName: "Nia Temilade",
-    mentorDomain: "Fintech & Product",
+    mentorId: "MEN-2026-002",
+    mentorName: "Awele Elueze",
+    mentorDomain: "Strategic HR Transformation, Performance Management & Executive Leadership",
     date: "2026-08-15",
     time: "01:00 PM",
     duration: "1 Hour",
     type: "1-on-1",
-    objective: "Discuss product roadmap validation for cross-border payment platform for SMEs.",
+    objective: "Discuss HR transformation frameworks and performance management for scaling teams.",
     consentToRecord: false,
     status: "Pending",
     meetingLink: null,
@@ -377,13 +377,13 @@ export const INITIAL_SESSIONS = [
 export const INITIAL_GROUP_SESSIONS = [
   {
     id: "GRP-901",
-    mentorId: "MEN-101",
-    mentorName: "Dr. Samuel Osei",
-    mentorTitle: "Principal AI Scientist",
-    mentorAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80",
-    title: "Navigating AI & Machine Learning Graduate Applications",
-    description: "An intensive masterclass covering statement of purpose strategy, finding research advisors, securing full funding, and standing out in global tech fellowships.",
-    domain: "Software Engineering & AI",
+    mentorId: "MEN-2026-001",
+    mentorName: "Andre Garbutt",
+    mentorTitle: "Founder & Lead Trainer | HR & Learning Consultant",
+    mentorAvatar: "",
+    title: "Workforce Readiness & Talent Strategy Masterclass",
+    description: "An intensive masterclass covering employability skills, talent management, and standing out in competitive global career opportunities.",
+    domain: "Workforce Development, Talent Management & HR Strategy",
     date: "2026-08-22",
     startTime: "04:00 PM",
     endTime: "05:00 PM",
@@ -391,17 +391,17 @@ export const INITIAL_GROUP_SESSIONS = [
     maxCapacity: 20,
     enrolledMentees: ["Amina Kwame", "Zainab Hassan", "Kofi Mensah"],
     meetingLink: "https://meet.zoho.com/mently-grp-901",
-    materials: "SOP Template & Research Proposal Checklist.pdf"
+    materials: "Workforce Readiness Framework Guide.pdf"
   },
   {
     id: "GRP-902",
-    mentorId: "MEN-102",
-    mentorName: "Nia Temilade",
-    mentorTitle: "VP of Product Management",
-    mentorAvatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=600&q=80",
-    title: "Product Strategy & Technical Interview Masterclass",
-    description: "Break down product design cases, metric estimation questions, and resume optimization for top African fintech and international tech companies.",
-    domain: "Fintech & Product",
+    mentorId: "MEN-2026-002",
+    mentorName: "Awele Elueze",
+    mentorTitle: "Group Head of Human Resources | CIPD Certified",
+    mentorAvatar: "",
+    title: "Strategic HR Transformation & Leadership Masterclass",
+    description: "Break down strategic HR transformation, competency assessment, and executive leadership development across African enterprises.",
+    domain: "Strategic HR Transformation, Performance Management & Executive Leadership",
     date: "2026-08-25",
     startTime: "05:30 PM",
     endTime: "06:45 PM",
@@ -409,31 +409,31 @@ export const INITIAL_GROUP_SESSIONS = [
     maxCapacity: 20,
     enrolledMentees: ["Kofi Mensah"],
     meetingLink: "https://meet.zoho.com/mently-grp-902",
-    materials: "PM Case Framework Guide 2026.pdf"
+    materials: "CIPD Leadership Strategy Framework.pdf"
   }
 ];
 
 export const INITIAL_TASKS = [
   {
     id: "TSK-301",
-    mentorId: "MEN-101",
-    mentorName: "Dr. Samuel Osei",
+    mentorId: "MEN-2026-001",
+    mentorName: "Andre Garbutt",
     associateId: "MCF-2026-089",
     associateName: "Amina Kwame",
-    title: "Draft Revised Statement of Purpose (SOP)",
-    description: "Incorporate line-by-line feedback on research contributions and align career goals with CMU Africa faculty interests.",
+    title: "Draft Revised Employability Strategy Roadmap",
+    description: "Incorporate line-by-line feedback on talent development goals and align with regional program objectives.",
     deadline: "2026-08-18",
     status: "In Progress",
     submissionNotes: ""
   },
   {
     id: "TSK-302",
-    mentorId: "MEN-102",
-    mentorName: "Nia Temilade",
+    mentorId: "MEN-2026-002",
+    mentorName: "Awele Elueze",
     associateId: "MCF-2026-042",
     associateName: "Kofi Mensah",
-    title: "Product Teardown & SME User Interview Questions",
-    description: "Draft 5 core questions to validate merchant pain points regarding cross-border transaction fees.",
+    title: "Performance Management Competency Audit",
+    description: "Draft 5 core competencies to evaluate talent capability across junior and mid-level roles.",
     deadline: "2026-08-20",
     status: "Pending",
     submissionNotes: ""
@@ -445,7 +445,7 @@ export const INITIAL_NOTIFICATIONS = [
     id: "NOTIF-101",
     userId: "MCF-2026-089",
     title: "Session Accepted!",
-    message: "Dr. Samuel Osei accepted your 1-on-1 mentorship session scheduled for Aug 14, 02:30 PM.",
+    message: "Andre Garbutt accepted your 1-on-1 mentorship session scheduled for Aug 14, 02:30 PM.",
     timestamp: "10 mins ago",
     type: "booking",
     read: false
@@ -454,7 +454,7 @@ export const INITIAL_NOTIFICATIONS = [
     id: "NOTIF-102",
     userId: "MCF-2026-089",
     title: "New Task Assigned",
-    message: "Dr. Samuel Osei assigned you a task: 'Draft Revised Statement of Purpose (SOP)'.",
+    message: "Andre Garbutt assigned you a task: 'Draft Revised Employability Strategy Roadmap'.",
     timestamp: "1 hour ago",
     type: "task",
     read: false
@@ -462,12 +462,12 @@ export const INITIAL_NOTIFICATIONS = [
 ];
 
 // LocalStorage Keys
-const STORAGE_KEY_SESSIONS = "mently_sessions_v5";
-const STORAGE_KEY_GROUP_SESSIONS = "mently_group_sessions_v5";
-const STORAGE_KEY_TASKS = "mently_tasks_v5";
-const STORAGE_KEY_NOTIFICATIONS = "mently_notifications_v5";
-const STORAGE_KEY_ASSOCIATES = "mently_associates_v5";
-const STORAGE_KEY_MENTORS = "mently_mentors_v6_real_profiles";
+const STORAGE_KEY_SESSIONS = "mently_sessions_v6_clean";
+const STORAGE_KEY_GROUP_SESSIONS = "mently_group_sessions_v6_clean";
+const STORAGE_KEY_TASKS = "mently_tasks_v6_clean";
+const STORAGE_KEY_NOTIFICATIONS = "mently_notifications_v6_clean";
+const STORAGE_KEY_ASSOCIATES = "mently_associates_v6_clean";
+const STORAGE_KEY_MENTORS = "mently_mentors_v7_official_only";
 const STORAGE_KEY_THEME = "mently_theme_v5";
 
 // Safe LocalStorage setItem with QuotaExceededError fallback
