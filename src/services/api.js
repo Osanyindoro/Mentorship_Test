@@ -369,11 +369,12 @@ export const apiService = {
 
   async fetchSessions() {
     const supabase = getSupabaseClient();
+    let supaSessions = [];
     if (supabase) {
       try {
         const { data, error } = await supabase.from('sessions').select('*');
         if (data && data.length > 0 && !error) {
-          return data.map(s => ({
+          supaSessions = data.map(s => ({
             id: s.id,
             associateId: s.associateId || s.associate_id || '',
             associateName: s.associateName || s.associate_name || 'Associate',
@@ -398,7 +399,20 @@ export const apiService = {
         console.warn('[Supabase Sessions Fetch]', err.message);
       }
     }
-    return getStoredSessions();
+
+    const localSessions = getStoredSessions();
+    if (supaSessions.length === 0) return localSessions;
+
+    // Merge Supabase sessions with local sessions so freshly booked sessions are never lost
+    const seenIds = new Set(supaSessions.map(s => s.id));
+    for (const ls of localSessions) {
+      if (!seenIds.has(ls.id)) {
+        supaSessions.unshift(ls);
+        seenIds.add(ls.id);
+      }
+    }
+    saveStoredSessions(supaSessions);
+    return supaSessions;
   },
 
   async updateMentorMonthlyCap(mentorId, newCap) {
@@ -503,8 +517,6 @@ export const apiService = {
           id: newSession.id,
           associate_id: newSession.associateId || '',
           associate_name: newSession.associateName || '',
-          associate_title: newSession.associateTitle || '',
-          associate_org: newSession.associateOrg || '',
           mentor_id: newSession.mentorId || '',
           mentor_name: newSession.mentorName || '',
           mentor_domain: newSession.mentorDomain || '',
