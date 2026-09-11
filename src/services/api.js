@@ -1,4 +1,3 @@
-// Mently Mentorship Platform - Integration-Ready API Service Layer (Supabase + Local Fallback)
 import {
   getStoredSessions, saveStoredSessions,
   getStoredGroupSessions, saveStoredGroupSessions,
@@ -8,6 +7,7 @@ import {
   getStoredMentors, saveStoredMentors
 } from '../data/mockData.js';
 import { getSupabaseClient } from './supabase.js';
+import { emailService } from './emailService.js';
 
 const env = (typeof import.meta !== 'undefined' && import.meta && import.meta.env) ? import.meta.env : {};
 const API_BASE_URL = env.VITE_API_BASE_URL || '/v1';
@@ -560,6 +560,19 @@ export const apiService = {
     });
     saveStoredNotifications(notifs);
 
+    // 📧 Trigger Live Resend Email Notification to Mentor
+    const targetMentorEmail = mentor?.email || mentor?.googleEmail || 'osanyindoro@gmail.com';
+    emailService.sendSessionBookedToMentor({
+      mentorEmail: targetMentorEmail,
+      mentorName: newSession.mentorName,
+      associateName: newSession.associateName,
+      associateTitle: newSession.associateTitle || 'Associate',
+      associateOrg: newSession.associateOrg || 'Jobberman Partner Network',
+      date: newSession.date,
+      time: newSession.time,
+      objective: newSession.objective || '1-on-1 Career Mentorship'
+    }).catch(err => console.warn('[Email Dispatch Warning]', err));
+
     return newSession;
   },
 
@@ -605,6 +618,20 @@ export const apiService = {
         read: false
       });
       saveStoredNotifications(notifs);
+
+      // 📧 Trigger Live Resend Email Notification to Associate
+      const associates = getStoredAssociates();
+      const targetAssoc = associates.find(a => String(a.id) === String(session.associateId) || a.name === session.associateName);
+      const targetAssocEmail = targetAssoc?.email || 'osanyindoro@gmail.com';
+
+      emailService.sendSessionAcceptedToAssociate({
+        associateEmail: targetAssocEmail,
+        associateName: session.associateName,
+        mentorName: session.mentorName,
+        date: session.date,
+        time: session.time,
+        meetingLink: googleMeetLink
+      }).catch(err => console.warn('[Email Dispatch Warning]', err));
     }
 
     return session;
@@ -652,9 +679,84 @@ export const apiService = {
         read: false
       });
       saveStoredNotifications(notifs);
+
+      // 📧 Trigger Live Resend Email Evaluation Request to Associate
+      const associates = getStoredAssociates();
+      const targetAssoc = associates.find(a => String(a.id) === String(session.associateId) || a.name === session.associateName);
+      const targetAssocEmail = targetAssoc?.email || 'osanyindoro@gmail.com';
+
+      emailService.sendEvaluationRequestToAssociate({
+        associateEmail: targetAssocEmail,
+        associateName: session.associateName,
+        mentorName: session.mentorName,
+        sessionId: session.id
+      }).catch(err => console.warn('[Email Dispatch Warning]', err));
     }
 
     return session;
+  },
+
+  /**
+   * ⏰ 2x Monthly Automated Booking Inactivity Reminder Engine
+   * Checks all associates and dispatches email & in-app alerts if they haven't booked a session this month
+   */
+  async checkAndDispatchMonthlyReminders() {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth(); // 0-indexed
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const currentMonthName = monthNames[currentMonth];
+
+    // Check if reminder already ran in this 15-day cycle (1st-15th = cycle 1, 16th-end = cycle 2)
+    const cycleKey = `mcf_reminder_cycle_${currentYear}_${currentMonth}_${now.getDate() <= 15 ? 'mid1' : 'mid2'}`;
+    const lastRan = localStorage.getItem(cycleKey);
+    if (lastRan) {
+      return { skipped: true, reason: 'Already checked for this 15-day cycle' };
+    }
+
+    const associates = await this.getAssociates();
+    const sessions = await this.fetchSessions();
+
+    const dispatched = [];
+
+    for (const assoc of associates) {
+      // Check if associate has booked any session this month
+      const hasBookedThisMonth = sessions.some(s => {
+        const isMySession = String(s.associateId) === String(assoc.id) || (s.associateName && s.associateName.toLowerCase() === assoc.name.toLowerCase());
+        if (!isMySession) return false;
+        const sessionDate = new Date(s.date);
+        return sessionDate.getFullYear() === currentYear && sessionDate.getMonth() === currentMonth;
+      });
+
+      if (!hasBookedThisMonth && assoc.email) {
+        // Dispatch In-App Notification
+        const notifs = getStoredNotifications();
+        notifs.unshift({
+          id: `NOTIF-${Date.now()}-REMINDER-${assoc.id}`,
+          userId: assoc.id,
+          recipientName: assoc.name,
+          title: `Book Your ${currentMonthName} Mentorship Session! 🚀`,
+          message: `You haven't scheduled your 1-on-1 mentorship session for ${currentMonthName} yet. Connect with verified mentors today!`,
+          timestamp: "Just now",
+          type: "monthly_reminder",
+          read: false
+        });
+        saveStoredNotifications(notifs);
+
+        // Dispatch Resend Email
+        emailService.sendMonthlyBookingReminder({
+          associateEmail: assoc.email,
+          associateName: assoc.name,
+          monthName: currentMonthName
+        }).catch(() => {});
+
+        dispatched.push(assoc.name);
+      }
+    }
+
+    localStorage.setItem(cycleKey, new Date().toISOString());
+    console.log(`[Monthly Reminder Engine] Dispatched 2x monthly reminder to ${dispatched.length} inactive associates.`);
+    return { success: true, count: dispatched.length, associates: dispatched };
   },
 
   async submitEvaluation(sessionId, evalPayload, role) {

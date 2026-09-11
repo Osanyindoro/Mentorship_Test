@@ -248,6 +248,9 @@ async function initAppData() {
     state.groupSessions = groupRes.status === 'fulfilled' && groupRes.value ? groupRes.value : [];
     state.tasks = taskRes.status === 'fulfilled' && taskRes.value ? taskRes.value : [];
     state.notifications = notifRes.status === 'fulfilled' && notifRes.value ? notifRes.value : [];
+
+    // Background 2x monthly reminder check for associates who haven't booked this month
+    apiService.checkAndDispatchMonthlyReminders().catch(() => {});
   } catch (err) {
     console.warn('Data load warning:', err);
   } finally {

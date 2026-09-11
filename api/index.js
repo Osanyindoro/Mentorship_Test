@@ -219,6 +219,42 @@ export default function handler(req, res) {
     return res.status(200).json(notifications);
   }
 
+  if (url.includes('/send-email') || url.includes('/send_email')) {
+    const { to, subject, html, replyTo } = req.body || {};
+    const resendKey = process.env.RESEND_API_KEY;
+    
+    if (!resendKey) {
+      console.warn('[Email Warning] RESEND_API_KEY environment variable is not configured');
+      return res.status(200).json({ success: false, warning: 'RESEND_API_KEY not configured on server' });
+    }
+
+    if (!to || !to.length) {
+      return res.status(400).json({ success: false, error: 'Recipient email required' });
+    }
+
+    try {
+      const response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${resendKey}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          from: "Mastercard Foundation Mentorship <onboarding@resend.dev>",
+          to: Array.isArray(to) ? to : [to],
+          reply_to: replyTo || "support@jobberman.com",
+          subject: subject || "Mastercard Foundation Mentorship Notification",
+          html: html
+        })
+      });
+
+      const data = await response.json();
+      return res.status(response.status).json(data);
+    } catch (err) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  }
+
   if (url.includes('/create-meeting') || url.includes('/create_meeting')) {
     const { sessionId } = req.body || {};
     const chars = 'abcdefghijklmnopqrstuvwxyz';
