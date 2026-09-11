@@ -205,5 +205,98 @@ export const emailService = {
       </div>
     `;
     return this.sendEmail({ to: associateEmail, subject, html });
+  },
+
+  /**
+   * 5. Triggered when Associate or Mentor requests to edit profile fields -> Sent to Admin
+   */
+  async sendProfileEditRequestToAdmin({ userName, userRole, userEmail, requestedFields = [], reason = "" }) {
+    const roleCapitalized = (userRole || 'associate').charAt(0).toUpperCase() + (userRole || 'associate').slice(1);
+    const fieldsText = Array.isArray(requestedFields) ? requestedFields.join(', ') : requestedFields;
+    const subject = `📝 Profile Edit Request: ${userName} (${roleCapitalized})`;
+    const html = `
+      <div style="font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 14px rgba(0,0,0,0.06);">
+        <div style="background: linear-gradient(135deg, #1b0a3a 0%, #2e1065 100%); padding: 32px 28px; text-align: center; color: #ffffff;">
+          <div style="font-size: 12px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: #ffd700; margin-bottom: 8px;">Mastercard Foundation Mentorship Portal</div>
+          <h1 style="margin: 0; font-size: 22px; font-weight: 800; color: #ffffff;">Profile Edit Access Request</h1>
+        </div>
+
+        <div style="padding: 28px; color: #1e293b; line-height: 1.6;">
+          <p style="font-size: 16px; margin-top: 0;">Hello <strong>Programme Administrator</strong>,</p>
+          <p style="font-size: 15px; color: #475569;">
+            A user has requested administrative permission to modify locked profile information on the portal.
+          </p>
+
+          <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin: 24px 0;">
+            <div style="font-size: 13px; font-weight: 800; text-transform: uppercase; color: #64748b; margin-bottom: 12px;">Request Details</div>
+            <div style="margin-bottom: 8px; font-size: 14px;"><strong>Member Name:</strong> ${userName}</div>
+            <div style="margin-bottom: 8px; font-size: 14px;"><strong>Role:</strong> <span style="background: #ede9fe; color: #6d28d9; padding: 2px 8px; border-radius: 6px; font-weight: 700; font-size: 12px;">${roleCapitalized}</span></div>
+            <div style="margin-bottom: 8px; font-size: 14px;"><strong>Email Address:</strong> ${userEmail}</div>
+            <div style="margin-bottom: 8px; font-size: 14px;"><strong>Fields Requested to Edit:</strong> <span style="color: #2563eb; font-weight: 700;">${fieldsText || 'General Profile Details'}</span></div>
+            <div style="margin-top: 14px; padding-top: 14px; border-top: 1px dashed #cbd5e1;">
+              <div style="font-weight: 700; font-size: 13px; color: #2e1065; margin-bottom: 4px;">User's Reason / Justification:</div>
+              <p style="font-size: 14px; color: #334155; margin: 0; font-style: italic; background: #ffffff; padding: 10px 14px; border-radius: 8px; border: 1px solid #e2e8f0;">"${reason || 'No justification provided.'}"</p>
+            </div>
+          </div>
+
+          <div style="text-align: center; margin: 32px 0 16px;">
+            <a href="https://mentorship-jobberman.vercel.app/admin" style="background: #2563eb; color: #ffffff; padding: 14px 28px; font-size: 15px; font-weight: 700; border-radius: 50px; text-decoration: none; display: inline-block; box-shadow: 0 4px 12px rgba(37,99,235,0.3);">
+              Review & Unlock Profile in Admin Portal
+            </a>
+          </div>
+        </div>
+
+        <div style="background-color: #f1f5f9; padding: 18px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #e2e8f0;">
+          Jobberman Nigeria · Mastercard Foundation Mentorship Initiative<br/>
+          Automated Admin Dispatch
+        </div>
+      </div>
+    `;
+    return this.sendEmail({ to: "bakinjole@jobberman.com", subject, html });
+  },
+
+  /**
+   * 6. Triggered when Admin approves a profile edit request -> Sent to User
+   */
+  async sendProfileEditApprovedToUser({ userEmail, userName, userRole }) {
+    const roleCapitalized = (userRole || 'associate').charAt(0).toUpperCase() + (userRole || 'associate').slice(1);
+    const subject = `🔓 Profile Edit Access Granted - Mastercard Foundation Portal`;
+    const portalUrl = userRole === 'mentor' ? 'https://mentorship-jobberman.vercel.app/mentor' : 'https://mentorship-jobberman.vercel.app/associate';
+    const html = `
+      <div style="font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 14px rgba(0,0,0,0.06);">
+        <div style="background: linear-gradient(135deg, #059669 0%, #047857 100%); padding: 32px 28px; text-align: center; color: #ffffff;">
+          <div style="font-size: 12px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: #a7f3d0; margin-bottom: 8px;">Mastercard Foundation Mentorship Portal</div>
+          <h1 style="margin: 0; font-size: 22px; font-weight: 800; color: #ffffff;">Edit Access Approved!</h1>
+        </div>
+
+        <div style="padding: 28px; color: #1e293b; line-height: 1.6;">
+          <p style="font-size: 16px; margin-top: 0;">Hello <strong>${userName}</strong>,</p>
+          <p style="font-size: 15px; color: #475569;">
+            Your request to update your <strong>${roleCapitalized}</strong> profile has been reviewed and <strong>approved</strong> by the Programme Administrator.
+          </p>
+
+          <div style="background-color: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 12px; padding: 20px; margin: 24px 0;">
+            <div style="font-size: 13px; font-weight: 800; text-transform: uppercase; color: #047857; margin-bottom: 8px;">What to do next:</div>
+            <ol style="margin: 0; padding-left: 20px; font-size: 14px; color: #065f46;">
+              <li style="margin-bottom: 6px;">Go to your Profile tab on the portal</li>
+              <li style="margin-bottom: 6px;">Modify your requested fields</li>
+              <li>Click <strong>Save Profile Changes</strong> to submit your updates</li>
+            </ol>
+          </div>
+
+          <div style="text-align: center; margin: 32px 0 16px;">
+            <a href="${portalUrl}" style="background: #059669; color: #ffffff; padding: 14px 28px; font-size: 15px; font-weight: 700; border-radius: 50px; text-decoration: none; display: inline-block; box-shadow: 0 4px 12px rgba(5,150,105,0.3);">
+              Go to Profile & Edit Details
+            </a>
+          </div>
+        </div>
+
+        <div style="background-color: #f1f5f9; padding: 18px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #e2e8f0;">
+          Jobberman Nigeria · Mastercard Foundation Mentorship Initiative
+        </div>
+      </div>
+    `;
+    return this.sendEmail({ to: userEmail, subject, html });
   }
 };
+

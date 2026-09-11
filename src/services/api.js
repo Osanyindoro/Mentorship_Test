@@ -4,7 +4,9 @@ import {
   getStoredTasks, saveStoredTasks,
   getStoredNotifications, saveStoredNotifications,
   getStoredAssociates, saveStoredAssociates,
-  getStoredMentors, saveStoredMentors
+  getStoredMentors, saveStoredMentors,
+  getStoredProfileEditRequests, saveStoredProfileEditRequests,
+  getStoredSpillovers, saveStoredSpillovers
 } from '../data/mockData.js';
 import { getSupabaseClient } from './supabase.js';
 import { emailService } from './emailService.js';
@@ -81,7 +83,8 @@ export const apiService = {
             monthlyCap: data.monthly_cap || data.monthlyCap || 15,
             sessionsUsedThisMonth: data.sessions_used || data.sessionsUsedThisMonth || 0,
             expertise: data.expertise || ["Career Guidance", "Leadership Strategy"],
-            socialLinks: data.social_links || data.socialLinks || { linkedin: "https://linkedin.com" }
+            socialLinks: data.social_links || data.socialLinks || { linkedin: "https://linkedin.com" },
+            canEditProfile: data.can_edit_profile || data.canEditProfile || false
           };
           const token = `mcf_supa_${Date.now()}`;
           localStorage.setItem('mently_auth_token', token);
@@ -218,7 +221,8 @@ export const apiService = {
             avatar: u.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80',
             skills: u.skills || ["Communication", "Leadership", "Project Management"],
             careerGoal: u.career_goal || u.careerGoal || '',
-            schedule: u.schedule || []
+            schedule: u.schedule || [],
+            canEditProfile: u.can_edit_profile || u.canEditProfile || false
           }));
         }
       } catch (err) {
@@ -262,7 +266,8 @@ export const apiService = {
               sessionsUsedThisMonth: u.sessions_used || u.sessionsUsedThisMonth || 0,
               expertise: u.expertise || ["Career Guidance", "Leadership Strategy"],
               socialLinks: u.social_links || u.socialLinks || { linkedin: "https://linkedin.com" },
-              schedule: u.schedule || []
+              schedule: u.schedule || [],
+              canEditProfile: u.can_edit_profile || u.canEditProfile || false
             }));
         }
       } catch (err) {
@@ -481,6 +486,34 @@ export const apiService = {
 
   async createBookingSession(bookingData) {
     const sessions = getStoredSessions();
+    const targetDate = bookingData.date || '';
+    const targetMonth = targetDate.substring(0, 7); // e.g. "2026-08"
+
+    // 🛑 GLOBAL MONTHLY CAP ENFORCEMENT (100 Sessions per calendar month)
+    const sessionsInMonth = sessions.filter(s => {
+      const sMonth = (s.date || '').substring(0, 7);
+      return sMonth === targetMonth && s.status !== 'Cancelled';
+    });
+
+    const GLOBAL_MONTHLY_CAP = 100;
+    if (sessionsInMonth.length >= GLOBAL_MONTHLY_CAP) {
+      // Record spill-over / unmet demand
+      await this.logSpillover({
+        associateId: bookingData.associateId,
+        associateName: bookingData.associateName,
+        associateEmail: bookingData.associateEmail || '',
+        mentorId: bookingData.mentorId,
+        mentorName: bookingData.mentorName,
+        targetMonth: targetMonth,
+        targetDate: bookingData.date,
+        targetTime: bookingData.time,
+        reason: `Monthly platform cap of ${GLOBAL_MONTHLY_CAP} sessions reached for ${targetMonth}`
+      });
+
+      const monthLabel = targetDate ? new Date(targetDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'this month';
+      throw new Error(`Monthly Capacity Reached: The monthly cap of ${GLOBAL_MONTHLY_CAP} sponsored mentorship sessions has been reached for ${monthLabel}. All funded slots for this month are taken. Please select a time slot in the following month.`);
+    }
+
     const newSession = {
       id: `SES-${Math.floor(8000 + Math.random() * 1000)}`,
       ...bookingData,
@@ -946,5 +979,248 @@ export const apiService = {
       if (error) throw new Error(error.message);
     }
     return true;
+  },
+
+  // --------------------------------------------------------------------------
+  // PROFILE EDIT REQUESTS (Admin Controlled Workflow)
+  // --------------------------------------------------------------------------
+  async requestProfileEdit({ userId, userName, userEmail, userRole, requestedFields, reason }) {
+    const requests = getStoredProfileEditRequests();
+    const newRequest = {
+      id: `REQ-EDIT-${Date.now()}`,
+      userId: userId || '',
+      userName: userName || 'Member',
+      userEmail: userEmail || '',
+      userRole: userRole || 'associate',
+      requestedFields: Array.isArray(requestedFields) ? requestedFields : [requestedFields],
+      reason: reason || '',
+      status: 'Pending',
+      requestedAt: new Date().toISOString()
+    };
+    requests.unshift(newRequest);
+    saveStoredProfileEditRequests(requests);
+
+    // In-app notification for Admin
+    const notifs = getStoredNotifications();
+    notifs.unshift({
+      id: `NOTIF-${Date.now()}-EDIT-REQ`,
+      userId: "ADM-001",
+      recipientName: "Program Administrator",
+      title: "New Profile Edit Request 📝",
+      message: `${newRequest.userName} (${newRequest.userRole}) requested to edit: ${newRequest.requestedFields.join(', ')}.`,
+      timestamp: "Just now",
+      type: "profile_edit_request",
+      read: false
+    });
+    saveStoredNotifications(notifs);
+
+    // 📧 Trigger Live Resend Email Notification to Admin
+    emailService.sendProfileEditRequestToAdmin({
+      userName: newRequest.userName,
+      userRole: newRequest.userRole,
+      userEmail: newRequest.userEmail,
+      requestedFields: newRequest.requestedFields,
+      reason: newRequest.reason
+    }).catch(err => console.warn('[Email Dispatch Warning]', err));
+
+    return newRequest;
+  },
+
+  async getProfileEditRequests() {
+    return getStoredProfileEditRequests();
+  },
+
+  async approveProfileEdit(requestId, userId) {
+    const requests = getStoredProfileEditRequests();
+    const req = requests.find(r => r.id === requestId);
+    if (req) {
+      req.status = 'Approved';
+      req.approvedAt = new Date().toISOString();
+      saveStoredProfileEditRequests(requests);
+    }
+
+    const targetUserId = userId || (req ? req.userId : null);
+
+    // Unlock profile editing for user in Supabase
+    const supabase = getSupabaseClient();
+    if (supabase && targetUserId) {
+      try {
+        await supabase.from('users').update({ can_edit_profile: true }).eq('id', targetUserId);
+      } catch (err) {
+        console.warn('[Supabase Unlock Edit]', err.message);
+      }
+    }
+
+    // Unlock locally in associates/mentors
+    const associates = getStoredAssociates();
+    const assoc = associates.find(a => a.id === targetUserId || (req && a.email === req.userEmail));
+    if (assoc) {
+      assoc.canEditProfile = true;
+      saveStoredAssociates(associates);
+    }
+
+    const mentors = getStoredMentors();
+    const mentor = mentors.find(m => m.id === targetUserId || (req && m.email === req.userEmail));
+    if (mentor) {
+      mentor.canEditProfile = true;
+      saveStoredMentors(mentors);
+    }
+
+    // Update current logged-in user in localStorage if matched
+    const currentUserStr = localStorage.getItem('mently_user');
+    if (currentUserStr) {
+      try {
+        const cu = JSON.parse(currentUserStr);
+        if (cu.id === targetUserId || (req && cu.email === req.userEmail)) {
+          cu.canEditProfile = true;
+          localStorage.setItem('mently_user', JSON.stringify(cu));
+        }
+      } catch (e) {}
+    }
+
+    // In-app notification to the member
+    if (req) {
+      const notifs = getStoredNotifications();
+      notifs.unshift({
+        id: `NOTIF-${Date.now()}-EDIT-APP`,
+        userId: targetUserId,
+        recipientName: req.userName,
+        title: "Profile Edit Approved! 🔓",
+        message: "Your request to edit your profile was approved by the Administrator. You can now update your details.",
+        timestamp: "Just now",
+        type: "profile_edit_approved",
+        read: false
+      });
+      saveStoredNotifications(notifs);
+
+      // 📧 Send Email to User
+      emailService.sendProfileEditApprovedToUser({
+        userEmail: req.userEmail,
+        userName: req.userName,
+        userRole: req.userRole
+      }).catch(err => console.warn('[Email Dispatch Warning]', err));
+    }
+
+    return req;
+  },
+
+  async rejectProfileEdit(requestId, rejectionReason = "Profile information is already up-to-date.") {
+    const requests = getStoredProfileEditRequests();
+    const req = requests.find(r => r.id === requestId);
+    if (req) {
+      req.status = 'Rejected';
+      req.rejectedReason = rejectionReason;
+      req.rejectedAt = new Date().toISOString();
+      saveStoredProfileEditRequests(requests);
+
+      const notifs = getStoredNotifications();
+      notifs.unshift({
+        id: `NOTIF-${Date.now()}-EDIT-REJ`,
+        userId: req.userId,
+        recipientName: req.userName,
+        title: "Profile Edit Request Update",
+        message: `Your request to edit your profile was reviewed: ${rejectionReason}`,
+        timestamp: "Just now",
+        type: "profile_edit_rejected",
+        read: false
+      });
+      saveStoredNotifications(notifs);
+    }
+    return req;
+  },
+
+  // --------------------------------------------------------------------------
+  // SPILL-OVER / UNMET DEMAND ENGINE (Global 100-Session Monthly Cap)
+  // --------------------------------------------------------------------------
+  async logSpillover(spillData) {
+    const spillovers = getStoredSpillovers();
+    const newSpillover = {
+      id: `SPIL-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`,
+      associateId: spillData.associateId || '',
+      associateName: spillData.associateName || 'Associate',
+      associateEmail: spillData.associateEmail || '',
+      mentorId: spillData.mentorId || '',
+      mentorName: spillData.mentorName || 'Mentor',
+      targetMonth: spillData.targetMonth || new Date().toISOString().substring(0, 7),
+      targetDate: spillData.targetDate || '',
+      targetTime: spillData.targetTime || '',
+      reason: spillData.reason || 'Monthly 100-session capacity cap reached',
+      timestamp: new Date().toISOString()
+    };
+    spillovers.unshift(newSpillover);
+    saveStoredSpillovers(spillovers);
+    return newSpillover;
+  },
+
+  async getSpillovers() {
+    return getStoredSpillovers();
+  },
+
+  // --------------------------------------------------------------------------
+  // 3-MONTH MENTOR AVAILABILITY GENERATOR (15 SLOTS TOTAL)
+  // --------------------------------------------------------------------------
+  async generateThreeMonthSlots(mentorId) {
+    const now = new Date();
+    const standardTimes = [
+      "10:00 AM - 11:00 AM",
+      "02:00 PM - 03:00 PM",
+      "04:00 PM - 05:00 PM",
+      "11:30 AM - 12:30 PM",
+      "03:30 PM - 04:30 PM"
+    ];
+
+    const targetSlots = [];
+    const pad = (n) => String(n).padStart(2, '0');
+
+    for (let monthOffset = 0; monthOffset < 3; monthOffset++) {
+      const year = now.getFullYear();
+      const month = now.getMonth() + monthOffset;
+      const targetDateObj = new Date(year, month, 1);
+      const targetYear = targetDateObj.getFullYear();
+      const targetMonth = targetDateObj.getMonth();
+
+      let day = 6;
+      let count = 0;
+      while (count < 5 && day <= 28) {
+        const date = new Date(targetYear, targetMonth, day);
+        const dayOfWeek = date.getDay();
+        if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+          const dateStr = `${targetYear}-${pad(targetMonth + 1)}-${pad(day)}`;
+          targetSlots.push({
+            id: Date.now() + Math.floor(Math.random() * 100000) + count + (monthOffset * 10),
+            date: dateStr,
+            time: standardTimes[count % standardTimes.length],
+            isBooked: false,
+            bookedBy: null
+          });
+          count++;
+        }
+        day += (dayOfWeek === 2 ? 3 : (dayOfWeek === 4 ? 4 : 2));
+      }
+    }
+
+    const supabase = getSupabaseClient();
+    if (supabase && mentorId) {
+      try {
+        const { data: userRecord } = await supabase.from('users').select('schedule').eq('id', mentorId).single();
+        const existing = (userRecord && Array.isArray(userRecord.schedule)) ? userRecord.schedule : [];
+        const existingBooked = existing.filter(s => s.isBooked);
+        const combined = [...existingBooked, ...targetSlots];
+        await supabase.from('users').update({ schedule: combined }).eq('id', mentorId);
+      } catch (err) {
+        console.warn('[Supabase 3-Month Auto-Fill]', err.message);
+      }
+    }
+
+    const mentors = getStoredMentors();
+    const mentor = mentors.find(m => m.id === mentorId);
+    if (mentor) {
+      const existingBooked = (mentor.schedule || []).filter(s => s.isBooked);
+      mentor.schedule = [...existingBooked, ...targetSlots];
+      saveStoredMentors(mentors);
+      return mentor.schedule;
+    }
+
+    return targetSlots;
   }
 };

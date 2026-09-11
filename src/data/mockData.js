@@ -485,6 +485,51 @@ export const INITIAL_NOTIFICATIONS = [
   }
 ];
 
+// Initial Profile Edit Requests
+export const INITIAL_PROFILE_EDIT_REQUESTS = [
+  {
+    id: "REQ-EDIT-101",
+    userId: "MCF-STAFF-001",
+    userName: "Bolaji Akinjole",
+    userEmail: "bakinjole@jobberman.com",
+    userRole: "associate",
+    requestedFields: ["Bio & Career Goals", "Job Title"],
+    reason: "Promoted to Senior M&E Lead and updated research focus for the upcoming evaluation cycle.",
+    status: "Pending",
+    requestedAt: "2026-09-08T10:30:00.000Z"
+  }
+];
+
+// Initial Spillover Logs (Unmet demand from monthly 100-session cap)
+export const INITIAL_SPILLOVERS = [
+  {
+    id: "SPIL-2026-001",
+    associateId: "MCF-STAFF-002",
+    associateName: "Victor Osanyindoro",
+    associateEmail: "vosanyindoro@jobberman.com",
+    mentorId: "MEN-2026-001",
+    mentorName: "Andre Garbutt",
+    targetMonth: "2026-08",
+    targetDate: "2026-08-28",
+    targetTime: "10:00 AM",
+    reason: "Monthly 100-session capacity reached for August 2026",
+    timestamp: "2026-08-24T14:20:00.000Z"
+  },
+  {
+    id: "SPIL-2026-002",
+    associateId: "MCF-STAFF-003",
+    associateName: "Oluwasegun Ogunnusi",
+    associateEmail: "oogunnusi@jobberman.com",
+    mentorId: "MEN-2026-002",
+    mentorName: "Awele Elueze",
+    targetMonth: "2026-08",
+    targetDate: "2026-08-29",
+    targetTime: "02:00 PM",
+    reason: "Monthly 100-session capacity reached for August 2026",
+    timestamp: "2026-08-25T09:15:00.000Z"
+  }
+];
+
 // LocalStorage Keys
 const STORAGE_KEY_SESSIONS = "mently_sessions_v6_clean";
 const STORAGE_KEY_GROUP_SESSIONS = "mently_group_sessions_v6_clean";
@@ -493,6 +538,8 @@ const STORAGE_KEY_NOTIFICATIONS = "mently_notifications_v6_clean";
 const STORAGE_KEY_ASSOCIATES = "mently_associates_v6_clean";
 const STORAGE_KEY_MENTORS = "mently_mentors_v7_official_only";
 const STORAGE_KEY_THEME = "mently_theme_v5";
+const STORAGE_KEY_PROFILE_EDIT_REQUESTS = "mently_profile_edit_requests_v1";
+const STORAGE_KEY_SPILLOVERS = "mently_spillover_logs_v1";
 
 // Safe LocalStorage setItem with QuotaExceededError fallback
 function safeSetLocalStorage(key, data) {
@@ -635,3 +682,38 @@ export function getStoredTheme() {
 export function saveStoredTheme(theme) {
   safeSetLocalStorage(STORAGE_KEY_THEME, theme);
 }
+
+export function getStoredProfileEditRequests() {
+  const data = localStorage.getItem(STORAGE_KEY_PROFILE_EDIT_REQUESTS);
+  if (!data) {
+    safeSetLocalStorage(STORAGE_KEY_PROFILE_EDIT_REQUESTS, INITIAL_PROFILE_EDIT_REQUESTS);
+    return INITIAL_PROFILE_EDIT_REQUESTS;
+  }
+  try {
+    return JSON.parse(data);
+  } catch (e) {
+    return INITIAL_PROFILE_EDIT_REQUESTS;
+  }
+}
+
+export function saveStoredProfileEditRequests(requests) {
+  safeSetLocalStorage(STORAGE_KEY_PROFILE_EDIT_REQUESTS, requests);
+}
+
+export function getStoredSpillovers() {
+  const data = localStorage.getItem(STORAGE_KEY_SPILLOVERS);
+  if (!data) {
+    safeSetLocalStorage(STORAGE_KEY_SPILLOVERS, INITIAL_SPILLOVERS);
+    return INITIAL_SPILLOVERS;
+  }
+  try {
+    return JSON.parse(data);
+  } catch (e) {
+    return INITIAL_SPILLOVERS;
+  }
+}
+
+export function saveStoredSpillovers(spillovers) {
+  safeSetLocalStorage(STORAGE_KEY_SPILLOVERS, spillovers);
+}
+

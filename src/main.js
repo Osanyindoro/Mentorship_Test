@@ -79,7 +79,7 @@ const state = {
   },
 
   // Modal State
-  activeModal: null,                 // null | 'booking' | 'mentor_profile' | 'group_create' | 'task_create' | 'admin_cap' | 'edit_mentor_profile' | 'session_evaluation'
+  activeModal: null,                 // null | 'booking' | 'mentor_profile' | 'group_create' | 'task_create' | 'admin_cap' | 'edit_mentor_profile' | 'session_evaluation' | 'request_profile_edit'
   bookingMentor: null,
   inspectingMentor: null,
   inspectingSession: null,
@@ -93,6 +93,11 @@ const state = {
     objectiveAlignment: 5,
     qualitativeFeedback: ''
   },
+  requestEditFormData: {
+    fields: [],
+    reason: ''
+  },
+  requestEditUser: null,
 
   bookingData: {
     date: null,
@@ -128,11 +133,56 @@ const state = {
   groupSessions: [],
   tasks: [],
   notifications: [],
+  profileEditRequests: [],
+  spillovers: [],
 
   // Set Password Page (first-login pre-loaded users)
   setPasswordError: null,
   setPasswordSubmitting: false
 };
+
+// 3-Month Mentor Availability Horizon Calculator (15 Slots Target)
+function getMentorThreeMonthStats(mentor) {
+  const schedule = (mentor && Array.isArray(mentor.schedule)) ? mentor.schedule : [];
+  const now = new Date();
+
+  const m0Date = new Date(now.getFullYear(), now.getMonth(), 1);
+  const m1Date = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  const m2Date = new Date(now.getFullYear(), now.getMonth() + 2, 1);
+
+  const pad = (n) => String(n).padStart(2, '0');
+  const m0Key = `${m0Date.getFullYear()}-${pad(m0Date.getMonth() + 1)}`;
+  const m1Key = `${m1Date.getFullYear()}-${pad(m1Date.getMonth() + 1)}`;
+  const m2Key = `${m2Date.getFullYear()}-${pad(m2Date.getMonth() + 1)}`;
+
+  const m0Name = m0Date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  const m1Name = m1Date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  const m2Name = m2Date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+
+  let m0Count = 0;
+  let m1Count = 0;
+  let m2Count = 0;
+
+  for (const s of schedule) {
+    if (!s.date) continue;
+    const monthKey = s.date.substring(0, 7);
+    if (monthKey === m0Key) m0Count++;
+    else if (monthKey === m1Key) m1Count++;
+    else if (monthKey === m2Key) m2Count++;
+  }
+
+  const totalSlots = m0Count + m1Count + m2Count;
+  const isComplete = totalSlots >= 15;
+
+  return {
+    m0Key, m0Name, m0Count,
+    m1Key, m1Name, m1Count,
+    m2Key, m2Name, m2Count,
+    totalSlots,
+    isComplete,
+    requiredTotal: 15
+  };
+}
 
 // Initial Theme Setting
 document.documentElement.setAttribute('data-theme', state.theme);
@@ -233,13 +283,15 @@ async function initAppData() {
   try {
     state.isLoadingData = true;
     render();
-    const [assocRes, mentRes, sessRes, groupRes, taskRes, notifRes] = await Promise.allSettled([
+    const [assocRes, mentRes, sessRes, groupRes, taskRes, notifRes, reqRes, spillRes] = await Promise.allSettled([
       apiService.getAssociates(),
       apiService.getMentors(),
       apiService.getSessions(),
       apiService.getGroupSessions(),
       apiService.getTasks(),
-      apiService.getNotifications()
+      apiService.getNotifications(),
+      apiService.getProfileEditRequests(),
+      apiService.getSpillovers()
     ]);
 
     state.associates = assocRes.status === 'fulfilled' && assocRes.value ? assocRes.value : [];
@@ -248,6 +300,8 @@ async function initAppData() {
     state.groupSessions = groupRes.status === 'fulfilled' && groupRes.value ? groupRes.value : [];
     state.tasks = taskRes.status === 'fulfilled' && taskRes.value ? taskRes.value : [];
     state.notifications = notifRes.status === 'fulfilled' && notifRes.value ? notifRes.value : [];
+    state.profileEditRequests = reqRes.status === 'fulfilled' && reqRes.value ? reqRes.value : [];
+    state.spillovers = spillRes.status === 'fulfilled' && spillRes.value ? spillRes.value : [];
 
     // Background 2x monthly reminder check for associates who haven't booked this month
     apiService.checkAndDispatchMonthlyReminders().catch(() => {});
@@ -1504,11 +1558,50 @@ function renderMenteeSessionsList(associate) {
 }
 
 function renderMenteeProfile(associate) {
+  const canEdit = Boolean(associate.canEditProfile || (state.currentUser && state.currentUser.canEditProfile));
+
   return `
     <div class="content-area" style="width: 100%; max-width: 800px; margin: 0 auto;">
-      <h2 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
-        <i class="fa-solid fa-user-gear" style="color: var(--brand-primary);"></i> My Associate Profile & Settings
-      </h2>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+        <h2 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+          <i class="fa-solid fa-user-gear" style="color: var(--brand-primary);"></i> My Associate Profile & Settings
+        </h2>
+        ${!canEdit ? `
+          <button type="button" class="btn-brand-primary btn-open-request-edit" data-role="associate" style="padding: 0.55rem 1.25rem; font-size: 0.85rem; font-weight: 800; border-radius: 50px; background: linear-gradient(135deg, #1b0a3a 0%, #2e1065 100%);">
+            <i class="fa-solid fa-paper-plane"></i> Request to Edit Profile
+          </button>
+        ` : `
+          <span class="badge-tag badge-green" style="font-size: 0.85rem; padding: 0.4rem 0.9rem;"><i class="fa-solid fa-lock-open"></i> Edit Access Active</span>
+        `}
+      </div>
+
+      <!-- LOCK / UNLOCK STATUS BANNER -->
+      ${!canEdit ? `
+        <div style="background: rgba(234, 179, 8, 0.09); border: 1.5px solid #eab308; border-radius: 14px; padding: 1.15rem 1.35rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+          <div style="display: flex; align-items: center; gap: 0.85rem;">
+            <div style="width: 40px; height: 40px; border-radius: 50%; background: #fef08a; display: flex; align-items: center; justify-content: center; color: #a16207; font-size: 1.15rem; flex-shrink: 0;">
+              <i class="fa-solid fa-lock"></i>
+            </div>
+            <div>
+              <div style="font-weight: 800; font-size: 0.95rem; color: #713f12;">Profile Details Are Locked</div>
+              <div style="font-size: 0.82rem; color: #854d0e; margin-top: 0.15rem;">To ensure verified scholar records, changes require Administrator approval. Click below to request editing.</div>
+            </div>
+          </div>
+          <button type="button" class="btn-brand-primary btn-open-request-edit" data-role="associate" style="padding: 0.5rem 1.15rem; font-size: 0.82rem; font-weight: 800; background: #ca8a04; border: none; white-space: nowrap;">
+            <i class="fa-solid fa-pen-to-square"></i> Request to Edit
+          </button>
+        </div>
+      ` : `
+        <div style="background: rgba(5, 150, 105, 0.09); border: 1.5px solid #059669; border-radius: 14px; padding: 1.15rem 1.35rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.85rem;">
+          <div style="width: 40px; height: 40px; border-radius: 50%; background: #a7f3d0; display: flex; align-items: center; justify-content: center; color: #047857; font-size: 1.15rem; flex-shrink: 0;">
+            <i class="fa-solid fa-lock-open"></i>
+          </div>
+          <div>
+            <div style="font-weight: 800; font-size: 0.95rem; color: #064e3b;">Profile Editing Unlocked</div>
+            <div style="font-size: 0.82rem; color: #065f46; margin-top: 0.15rem;">Admin has approved your edit request. You can now modify your details and save changes below.</div>
+          </div>
+        </div>
+      `}
 
       <form id="formEditMenteeProfile" class="mentor-card" style="padding: 2rem;">
         <!-- PROFILE PHOTO EDIT SECTION -->
@@ -1517,41 +1610,45 @@ function renderMenteeProfile(associate) {
           <div>
             <h4 style="font-weight: 800; font-size: 1.05rem; margin-bottom: 0.25rem;">Profile Headshot Photo</h4>
             <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.75rem;">JPG or PNG format. Compressed automatically.</p>
-            <label for="profileAvatarInput" class="btn-brand-primary" style="padding: 0.45rem 1rem; font-size: 0.82rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem;">
-              <i class="fa-solid fa-upload"></i> Upload New Picture
-            </label>
-            <input type="file" id="profileAvatarInput" accept="image/jpeg,image/png,image/webp" style="display: none;" />
+            ${canEdit ? `
+              <label for="profileAvatarInput" class="btn-brand-primary" style="padding: 0.45rem 1rem; font-size: 0.82rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem;">
+                <i class="fa-solid fa-upload"></i> Upload New Picture
+              </label>
+              <input type="file" id="profileAvatarInput" accept="image/jpeg,image/png,image/webp" style="display: none;" />
+            ` : `
+              <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); background: var(--bg-hover); padding: 0.35rem 0.75rem; border-radius: 6px; border: 1px solid var(--border-color);"><i class="fa-solid fa-lock"></i> Locked</span>
+            `}
           </div>
         </div>
 
         <!-- FULL NAME -->
         <div class="form-group">
           <label class="form-label">Full Name</label>
-          <input type="text" class="form-input" id="editProfileName" value="${associate.name}" required style="border-radius: 10px; padding: 0.7rem 1rem;" />
+          <input type="text" class="form-input" id="editProfileName" value="${associate.name}" ${canEdit ? '' : 'disabled style="background:var(--bg-hover); opacity:0.85; cursor:not-allowed;"'} required style="border-radius: 10px; padding: 0.7rem 1rem;" />
         </div>
 
         <!-- EMAIL ADDRESS -->
         <div class="form-group">
           <label class="form-label">Email Address</label>
-          <input type="email" class="form-input" id="editProfileEmail" value="${associate.email}" required style="border-radius: 10px; padding: 0.7rem 1rem;" />
+          <input type="email" class="form-input" id="editProfileEmail" value="${associate.email}" ${canEdit ? '' : 'disabled style="background:var(--bg-hover); opacity:0.85; cursor:not-allowed;"'} required style="border-radius: 10px; padding: 0.7rem 1rem;" />
         </div>
 
         <!-- HOST ORGANIZATION -->
         <div class="form-group">
           <label class="form-label">Host Organization</label>
-          <input type="text" class="form-input" id="editProfileOrg" value="${associate.institution || associate.organization || 'Jobberman'}" required style="border-radius: 10px; padding: 0.7rem 1rem;" />
+          <input type="text" class="form-input" id="editProfileOrg" value="${associate.institution || associate.organization || 'Jobberman'}" ${canEdit ? '' : 'disabled style="background:var(--bg-hover); opacity:0.85; cursor:not-allowed;"'} required style="border-radius: 10px; padding: 0.7rem 1rem;" />
         </div>
 
         <!-- JOB TITLE -->
         <div class="form-group">
           <label class="form-label">Job Title</label>
-          <input type="text" class="form-input" id="editProfileTitle" placeholder="e.g. Software Engineer / Data Analyst / Product Lead" value="${associate.title || ''}" required style="border-radius: 10px; padding: 0.7rem 1rem;" />
+          <input type="text" class="form-input" id="editProfileTitle" placeholder="e.g. Software Engineer / Data Analyst / Product Lead" value="${associate.title || ''}" ${canEdit ? '' : 'disabled style="background:var(--bg-hover); opacity:0.85; cursor:not-allowed;"'} required style="border-radius: 10px; padding: 0.7rem 1rem;" />
         </div>
 
         <!-- GENDER -->
         <div class="form-group">
           <label class="form-label">Gender</label>
-          <select class="form-input" id="editProfileGender" style="border-radius: 10px; padding: 0.7rem 1rem;">
+          <select class="form-input" id="editProfileGender" ${canEdit ? '' : 'disabled style="background:var(--bg-hover); opacity:0.85; cursor:not-allowed;"'} style="border-radius: 10px; padding: 0.7rem 1rem;">
             <option value="" ${!associate.gender ? 'selected' : ''}>-- Select Gender --</option>
             <option value="Male" ${associate.gender === 'Male' ? 'selected' : ''}>Male</option>
             <option value="Female" ${associate.gender === 'Female' ? 'selected' : ''}>Female</option>
@@ -1563,13 +1660,19 @@ function renderMenteeProfile(associate) {
         <!-- BIO -->
         <div class="form-group">
           <label class="form-label">Bio & Career Goals</label>
-          <textarea class="form-input" id="editProfileBio" rows="4" style="border-radius: 10px; padding: 0.7rem 1rem; resize: vertical;">${associate.bio}</textarea>
+          <textarea class="form-input" id="editProfileBio" rows="4" ${canEdit ? '' : 'disabled style="background:var(--bg-hover); opacity:0.85; cursor:not-allowed;"'} style="border-radius: 10px; padding: 0.7rem 1rem; resize: vertical;">${associate.bio}</textarea>
         </div>
 
         <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;">
-          <button type="submit" class="btn-brand-primary" style="padding: 0.65rem 1.5rem; font-weight: 800; font-size: 0.9rem;">
-            <i class="fa-solid fa-floppy-disk"></i> Save Profile Changes
-          </button>
+          ${canEdit ? `
+            <button type="submit" class="btn-brand-primary" style="padding: 0.65rem 1.5rem; font-weight: 800; font-size: 0.9rem;">
+              <i class="fa-solid fa-floppy-disk"></i> Save Profile Changes
+            </button>
+          ` : `
+            <button type="button" class="btn-brand-primary btn-open-request-edit" data-role="associate" style="padding: 0.65rem 1.5rem; font-weight: 800; font-size: 0.9rem;">
+              <i class="fa-solid fa-paper-plane"></i> Request to Edit Profile
+            </button>
+          `}
         </div>
       </form>
     </div>
@@ -1583,16 +1686,37 @@ function renderMentorDashboard(mentor) {
   const cap = Number(mentor.monthlyCap) || 15;
   const used = Number(mentor.sessionsUsedThisMonth) || 0;
   const usagePct = Math.round((used / cap) * 100) || 0;
+  const stats = getMentorThreeMonthStats(mentor);
 
   return `
     <div class="content-area" style="width: 100%;">
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
         <div>
-          <h2 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 800;">Mentor Dashboard — ${mentor.name}</h2>
-          <p style="font-size: 0.88rem; color: var(--text-secondary);">${mentor.title} (${mentor.organization})</p>
+          <h2 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; margin: 0;">Mentor Dashboard — ${mentor.name}</h2>
+          <p style="font-size: 0.88rem; color: var(--text-secondary); margin-top: 0.2rem;">${mentor.title} (${mentor.organization})</p>
         </div>
         <button class="btn-brand-primary" id="btnEditMyProfile"><i class="fa-solid fa-user-pen"></i> Edit Profile</button>
       </div>
+
+      <!-- 3-MONTH MANDATORY AVAILABILITY WARNING BANNER (15 Slots Target) -->
+      ${!stats.isComplete ? `
+        <div class="mentor-card" style="margin-bottom: 1.75rem; background: #fffbeb; border: 1.5px solid #f59e0b; border-radius: 14px; padding: 1.25rem 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; box-shadow: var(--shadow-sm);">
+          <div style="display: flex; align-items: center; gap: 1rem;">
+            <div style="width: 44px; height: 44px; border-radius: 50%; background: #fef3c7; display: flex; align-items: center; justify-content: center; color: #d97706; font-size: 1.3rem; flex-shrink: 0;">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <div>
+              <div style="font-weight: 800; font-size: 0.98rem; color: #92400e;">⚠️ Action Required: Complete 15 Bookings for Next 3 Months</div>
+              <div style="font-size: 0.85rem; color: #b45309; margin-top: 0.2rem; line-height: 1.45;">
+                Kindly complete your 15 bookings for the next 3 months (currently configured: <strong>${stats.totalSlots}/15 slots</strong> — ${stats.m0Name}: ${stats.m0Count}/5, ${stats.m1Name}: ${stats.m1Count}/5, ${stats.m2Name}: ${stats.m2Count}/5).
+              </div>
+            </div>
+          </div>
+          <button class="btn-brand-primary btn-nav-to-availability" style="background: #d97706; font-size: 0.85rem; padding: 0.65rem 1.3rem; border-radius: 50px; font-weight: 800; white-space: nowrap; border: none;">
+            <i class="fa-solid fa-calendar-plus"></i> Set 15 Slots Now
+          </button>
+        </div>
+      ` : ''}
 
       <!-- Capacity Progress Meter -->
       <div class="mentor-card" style="margin-bottom: 2rem; border-left: 4px solid var(--brand-primary);">
@@ -1648,88 +1772,70 @@ function renderMentorDashboard(mentor) {
                       </a>
                     </div>
                     <div style="font-size: 0.85rem; font-weight: 700; color: var(--brand-violet); margin-top: 0.2rem;">
-                      ${title} <span style="color: var(--text-muted); font-weight: 400;">at</span> ${org}
+                      ${title} · ${org}
                     </div>
                   </div>
-                  <span class="badge-tag ${s.status === 'Completed' ? 'badge-purple' : s.status === 'Accepted' ? 'badge-green' : 'badge-gold'}" style="font-size: 0.8rem; padding: 0.35rem 0.85rem; border-radius: 20px;">
-                    ${s.status === 'Completed' ? '<i class="fa-solid fa-circle-check"></i> Completed' : s.status === 'Accepted' ? '<i class="fa-solid fa-circle-check"></i> Accepted' : '<i class="fa-solid fa-clock"></i> Pending Acceptance'}
+                  <span class="badge-tag ${s.status === 'Accepted' ? 'badge-blue' : s.status === 'Completed' ? 'badge-green' : 'badge-gold'}" style="font-size: 0.85rem; padding: 0.4rem 0.9rem;">
+                    ${s.status === 'Accepted' ? '<i class="fa-solid fa-video"></i> Session Confirmed' : s.status === 'Completed' ? '<i class="fa-solid fa-circle-check"></i> Completed' : '<i class="fa-regular fa-clock"></i> Pending Acceptance'}
                   </span>
                 </div>
 
-                <!-- Associate Track & Host Org Tags -->
-                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;">
-                  <span style="font-size: 0.76rem; font-weight: 700; background: var(--bg-hover); color: var(--text-secondary); padding: 0.25rem 0.65rem; border-radius: 6px; border: 1px solid var(--border-color);">
-                    <i class="fa-solid fa-building" style="margin-right: 0.3rem; color: var(--brand-primary);"></i> Host: ${org}
-                  </span>
-                  <span style="font-size: 0.76rem; font-weight: 700; background: var(--bg-hover); color: var(--text-secondary); padding: 0.25rem 0.65rem; border-radius: 6px; border: 1px solid var(--border-color);">
-                    <i class="fa-solid fa-briefcase" style="margin-right: 0.3rem; color: var(--brand-violet);"></i> Role: ${title}
-                  </span>
-                  <span style="font-size: 0.76rem; font-weight: 700; background: var(--bg-hover); color: var(--text-secondary); padding: 0.25rem 0.65rem; border-radius: 6px; border: 1px solid var(--border-color);">
-                    <i class="fa-regular fa-calendar" style="margin-right: 0.3rem; color: #4285F4;"></i> ${s.date} at ${s.time}
-                  </span>
+                <!-- Date, Time & Track Info Box -->
+                <div style="background: var(--bg-hover); border-radius: 12px; padding: 1rem; margin-bottom: 1rem; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+                  <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
+                    <div>
+                      <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted);">Scheduled Date & Time</div>
+                      <div style="font-weight: 800; font-size: 0.95rem; color: var(--text-primary); margin-top: 0.15rem;">
+                        <i class="fa-regular fa-calendar" style="color: var(--brand-primary); margin-right: 0.35rem;"></i> ${s.date} at ${s.time}
+                      </div>
+                    </div>
+                    <div>
+                      <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted);">Focus Domain / Track</div>
+                      <div style="font-weight: 800; font-size: 0.95rem; color: var(--brand-primary); margin-top: 0.15rem;">
+                        <i class="fa-solid fa-layer-group" style="margin-right: 0.35rem;"></i> ${track}
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                <!-- Detailed Mentorship Reason & Agenda -->
-                <div style="background: var(--bg-surface-secondary); border-radius: 10px; padding: 1rem; border-left: 3px solid var(--brand-primary); margin-bottom: 1.2rem;">
-                  <div style="font-size: 0.76rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--brand-primary); margin-bottom: 0.35rem;">
-                    <i class="fa-solid fa-bullseye"></i> Mentorship Agenda & Discussion Points
+                <!-- Mentorship Agenda / Reason -->
+                <div style="margin-bottom: 1.25rem;">
+                  <div style="font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 0.35rem;">
+                    <i class="fa-solid fa-clipboard-list" style="color: var(--brand-primary); margin-right: 0.35rem;"></i> Associate Agenda & Discussion Points:
                   </div>
-                  <p style="font-size: 0.88rem; color: var(--text-primary); line-height: 1.55; margin: 0; white-space: pre-wrap;">${s.objective}</p>
+                  <p style="font-size: 0.88rem; color: var(--text-primary); background: var(--bg-hover); padding: 0.85rem 1rem; border-radius: 10px; margin: 0; line-height: 1.5; font-style: italic; border-left: 3px solid var(--brand-primary);">
+                    "${s.objective || '1-on-1 Career Mentorship & Strategic Guidance'}"
+                  </p>
                 </div>
 
-                <!-- Footer with Action Buttons & Completion Toggle -->
-                <div class="card-footer" style="padding-top: 1rem; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                  <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
-                    <span style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted);">
-                      <i class="fa-regular fa-clock"></i> Duration: ${s.duration || '1 Hour'}
-                    </span>
-                    ${s.mentorRating ? `
-                      <span style="font-size: 0.8rem; font-weight: 800; color: var(--brand-gold); background: rgba(245, 158, 11, 0.1); padding: 0.25rem 0.6rem; border-radius: 20px; display: inline-flex; align-items: center; gap: 0.3rem;">
-                        <i class="fa-solid fa-star"></i> You rated: ${s.mentorRating.stars}/5
-                      </span>
-                    ` : ''}
-                    ${s.associateRating ? `
-                      <span style="font-size: 0.8rem; font-weight: 800; color: var(--brand-emerald); background: rgba(16, 185, 129, 0.1); padding: 0.25rem 0.6rem; border-radius: 20px; display: inline-flex; align-items: center; gap: 0.3rem;">
-                        <i class="fa-solid fa-check"></i> Associate rated: ${s.associateRating.stars}/5
-                      </span>
-                    ` : ''}
-                  </div>
+                <!-- Actions: Accept, Join Google Meet, Calendar, Conducted -->
+                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+                  ${s.status === 'Pending' ? `
+                    <button class="btn-brand-primary btn-accept-session" data-id="${s.id}" style="padding: 0.55rem 1.25rem; font-size: 0.85rem; font-weight: 800;">
+                      <i class="fa-solid fa-check"></i> Accept & Generate Google Meet
+                    </button>
+                  ` : ''}
 
-                  <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
-                    ${s.status === 'Pending' ? `
-                      <button class="btn-brand-primary btn-accept-session" data-id="${s.id}" style="padding: 0.5rem 1.1rem; font-size: 0.85rem; border-radius: 10px;">
-                        <i class="fa-solid fa-calendar-check"></i> Accept & Generate Google Meet Link
-                      </button>
-                    ` : `
-                      <a href="${s.meetingLink}" target="_blank" class="btn-brand-primary" style="padding: 0.5rem 1.1rem; font-size: 0.85rem; border-radius: 10px; text-decoration: none;">
-                        <i class="fa-solid fa-video"></i> ${isGoogleMeet ? 'Start Google Meet' : 'Start Meeting'}
-                      </a>
-                      <a href="${calUrl}" target="_blank" class="btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem; border-radius: 10px; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 700; border: 1px solid var(--border-color); color: var(--text-primary);">
-                        <i class="fa-regular fa-calendar-plus" style="color: #4285F4;"></i> Add to Google Calendar
-                      </a>
+                  ${s.status !== 'Completed' ? `
+                    <a href="${s.meetingLink || 'https://meet.google.com/new'}" target="_blank" class="btn-brand-primary" style="padding: 0.55rem 1.25rem; font-size: 0.85rem; font-weight: 800; background: #059669; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem;">
+                      <i class="fa-solid fa-video"></i> Join Google Meet Room
+                    </a>
+                    <a href="${calUrl}" target="_blank" class="btn-brand-primary" style="padding: 0.55rem 1.15rem; font-size: 0.85rem; font-weight: 800; background: #4285F4; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem;" title="Add event to Google Calendar">
+                      <i class="fa-brands fa-google"></i> Google Calendar
+                    </a>
+                  ` : ''}
 
-                      ${s.status === 'Completed' ? `
-                        <div style="display: flex; align-items: center; gap: 0.5rem;">
-                          <span class="badge-tag badge-green" style="font-size: 0.85rem; padding: 0.5rem 0.95rem; border-radius: 10px; display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 800;">
-                            <i class="fa-solid fa-circle-check"></i> Conducted
-                          </span>
-                          ${s.mentorRating ? `
-                            <span class="badge-tag badge-gold" style="font-size: 0.82rem; padding: 0.5rem 0.95rem; border-radius: 10px; display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 800; background: rgba(245, 158, 11, 0.15); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.3);">
-                              <i class="fa-solid fa-star"></i> Evaluation Submitted (${s.mentorRating.stars}★)
-                            </span>
-                          ` : `
-                            <button class="btn-brand-primary btn-open-evaluation" data-id="${s.id}" data-role="mentor" style="padding: 0.5rem 1rem; font-size: 0.82rem; border-radius: 10px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
-                              <i class="fa-solid fa-star"></i> Evaluate Associate
-                            </button>
-                          `}
-                        </div>
-                      ` : `
-                        <button class="btn-secondary btn-mark-conducted" data-id="${s.id}" style="padding: 0.5rem 1rem; font-size: 0.85rem; border-radius: 10px; font-weight: 800; border: 1.5px solid var(--brand-emerald); color: var(--brand-emerald); background: rgba(5, 150, 105, 0.08); cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem;">
-                          <i class="fa-solid fa-square-check"></i> Mark Conducted
-                        </button>
-                      `}
-                    `}
-                  </div>
+                  ${s.status === 'Accepted' ? `
+                    <button class="btn-brand-primary btn-mark-conducted" data-id="${s.id}" style="padding: 0.55rem 1.25rem; font-size: 0.85rem; font-weight: 800; background: #7c3aed;">
+                      <i class="fa-solid fa-circle-check"></i> Mark Conducted & Request Rating
+                    </button>
+                  ` : ''}
+
+                  ${s.status === 'Completed' ? `
+                    <button class="btn-brand-primary btn-rate-session" data-id="${s.id}" data-role="mentor" style="padding: 0.55rem 1.25rem; font-size: 0.85rem; font-weight: 800; background: var(--brand-gold);">
+                      <i class="fa-solid fa-star"></i> ${s.mentorRating ? 'Update Associate Evaluation' : 'Evaluate Associate'}
+                    </button>
+                  ` : ''}
                 </div>
               </div>
             `;
@@ -1742,11 +1848,60 @@ function renderMentorDashboard(mentor) {
 
 function renderMentorAvailability(mentor) {
   const defaultDate = new Date().toISOString().split('T')[0];
+  const stats = getMentorThreeMonthStats(mentor);
+
   return `
     <div class="content-area" style="width: 100%;">
+      <!-- 3-MONTH AVAILABILITY HORIZON PROGRESS TRACKER -->
+      <div class="mentor-card" style="margin-bottom: 2rem; border-radius: 16px; border: 1.5px solid ${stats.isComplete ? '#059669' : '#f59e0b'}; box-shadow: var(--shadow-sm); padding: 1.75rem; background: var(--bg-surface);">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem;">
+          <div>
+            <h3 style="font-family: var(--font-display); font-size: 1.2rem; font-weight: 800; color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+              <i class="fa-solid fa-calendar-week" style="color: var(--brand-primary);"></i> 3-Month Availability Horizon (15 Slots Target)
+            </h3>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.25rem;">
+              Mentors are required to maintain a 3-month rolling schedule with at least 5 available slots per month (15 total).
+            </p>
+          </div>
+          <div>
+            ${stats.isComplete 
+              ? `<span class="badge-tag badge-green" style="font-size: 0.88rem; padding: 0.45rem 1rem;"><i class="fa-solid fa-circle-check"></i> 15-Slot Requirement Satisfied (${stats.totalSlots} Slots)</span>` 
+              : `<span class="badge-tag badge-gold" style="font-size: 0.88rem; padding: 0.45rem 1rem;"><i class="fa-solid fa-triangle-exclamation"></i> Action Required (${stats.totalSlots}/15 Slots)</span>`}
+          </div>
+        </div>
+
+        <!-- 3 Month Breakdown Cards -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+          <div style="background: var(--bg-hover); padding: 1.1rem; border-radius: 12px; border: 1px solid var(--border-color); text-align: center;">
+            <div style="font-size: 0.78rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted);">${stats.m0Name} (Current Month)</div>
+            <div style="font-size: 1.6rem; font-weight: 800; color: ${stats.m0Count >= 5 ? '#059669' : '#d97706'}; margin: 0.35rem 0;">${stats.m0Count} / 5 Slots</div>
+            <div style="font-size: 0.76rem; color: var(--text-secondary);">${stats.m0Count >= 5 ? '✓ Target Met' : `${5 - stats.m0Count} more needed`}</div>
+          </div>
+
+          <div style="background: var(--bg-hover); padding: 1.1rem; border-radius: 12px; border: 1px solid var(--border-color); text-align: center;">
+            <div style="font-size: 0.78rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted);">${stats.m1Name} (Month 2)</div>
+            <div style="font-size: 1.6rem; font-weight: 800; color: ${stats.m1Count >= 5 ? '#059669' : '#d97706'}; margin: 0.35rem 0;">${stats.m1Count} / 5 Slots</div>
+            <div style="font-size: 0.76rem; color: var(--text-secondary);">${stats.m1Count >= 5 ? '✓ Target Met' : `${5 - stats.m1Count} more needed`}</div>
+          </div>
+
+          <div style="background: var(--bg-hover); padding: 1.1rem; border-radius: 12px; border: 1px solid var(--border-color); text-align: center;">
+            <div style="font-size: 0.78rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted);">${stats.m2Name} (Month 3)</div>
+            <div style="font-size: 1.6rem; font-weight: 800; color: ${stats.m2Count >= 5 ? '#059669' : '#d97706'}; margin: 0.35rem 0;">${stats.m2Count} / 5 Slots</div>
+            <div style="font-size: 0.76rem; color: var(--text-secondary);">${stats.m2Count >= 5 ? '✓ Target Met' : `${5 - stats.m2Count} more needed`}</div>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+          <button type="button" class="btn-brand-primary" id="btnAutoFill3Months" style="padding: 0.65rem 1.4rem; font-size: 0.88rem; font-weight: 800; border-radius: 50px; background: linear-gradient(135deg, #1b0a3a 0%, #2e1065 100%);">
+            <i class="fa-solid fa-wand-magic-sparkles" style="color: #ffd700;"></i> ✨ Quick 3-Month Auto-Fill (15 Slots)
+          </button>
+        </div>
+      </div>
+
+      <!-- ADD SINGLE SLOT CARD -->
       <div class="mentor-card" style="margin-bottom: 2rem; border-radius: 16px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); padding: 1.75rem;">
         <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 800; color: var(--brand-primary); margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
-          <i class="fa-solid fa-circle-plus"></i> Add Open Time Slot
+          <i class="fa-solid fa-circle-plus"></i> Add Custom Open Time Slot
         </h3>
         
         <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 1.25rem; align-items: flex-end;">
@@ -1787,7 +1942,7 @@ function renderMentorAvailability(mentor) {
             </tr>
           </thead>
           <tbody>
-            ${mentor.schedule.map((s, idx) => `
+            ${(mentor.schedule || []).map((s, idx) => `
               <tr style="border-bottom: 1px solid var(--border-color);">
                 <td style="padding: 1rem 0.85rem; font-weight: 800; color: var(--text-primary);">${s.date}</td>
                 <td style="padding: 1rem 0.85rem; font-weight: 800; color: var(--brand-primary);">${s.time}</td>
@@ -1864,13 +2019,50 @@ function renderMentorTasks(mentor) {
 }
 
 function renderMentorProfile(mentor) {
+  const canEdit = Boolean(mentor.canEditProfile || (state.currentUser && state.currentUser.canEditProfile));
+
   return `
     <div class="content-area" style="width: 100%; max-width: 800px; margin: 0 auto;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-        <h2 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; display: flex; align-items: center; gap: 0.5rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+        <h2 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; display: flex; align-items: center; gap: 0.5rem; margin: 0;">
           <i class="fa-solid fa-user-pen" style="color: var(--brand-primary);"></i> My Mentor Profile & Settings
         </h2>
+        ${!canEdit ? `
+          <button type="button" class="btn-brand-primary btn-open-request-edit" data-role="mentor" style="padding: 0.55rem 1.25rem; font-size: 0.85rem; font-weight: 800; border-radius: 50px; background: linear-gradient(135deg, #1b0a3a 0%, #2e1065 100%);">
+            <i class="fa-solid fa-paper-plane"></i> Request to Edit Profile
+          </button>
+        ` : `
+          <span class="badge-tag badge-green" style="font-size: 0.85rem; padding: 0.4rem 0.9rem;"><i class="fa-solid fa-lock-open"></i> Edit Access Active</span>
+        `}
       </div>
+
+      <!-- LOCK / UNLOCK STATUS BANNER -->
+      ${!canEdit ? `
+        <div style="background: rgba(234, 179, 8, 0.09); border: 1.5px solid #eab308; border-radius: 14px; padding: 1.15rem 1.35rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+          <div style="display: flex; align-items: center; gap: 0.85rem;">
+            <div style="width: 40px; height: 40px; border-radius: 50%; background: #fef08a; display: flex; align-items: center; justify-content: center; color: #a16207; font-size: 1.15rem; flex-shrink: 0;">
+              <i class="fa-solid fa-lock"></i>
+            </div>
+            <div>
+              <div style="font-weight: 800; font-size: 0.95rem; color: #713f12;">Executive Profile Details Are Locked</div>
+              <div style="font-size: 0.82rem; color: #854d0e; margin-top: 0.15rem;">Mentor credentials and bio are verified by Programme Administrators. Click below to request changes.</div>
+            </div>
+          </div>
+          <button type="button" class="btn-brand-primary btn-open-request-edit" data-role="mentor" style="padding: 0.5rem 1.15rem; font-size: 0.82rem; font-weight: 800; background: #ca8a04; border: none; white-space: nowrap;">
+            <i class="fa-solid fa-pen-to-square"></i> Request to Edit
+          </button>
+        </div>
+      ` : `
+        <div style="background: rgba(5, 150, 105, 0.09); border: 1.5px solid #059669; border-radius: 14px; padding: 1.15rem 1.35rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.85rem;">
+          <div style="width: 40px; height: 40px; border-radius: 50%; background: #a7f3d0; display: flex; align-items: center; justify-content: center; color: #047857; font-size: 1.15rem; flex-shrink: 0;">
+            <i class="fa-solid fa-lock-open"></i>
+          </div>
+          <div>
+            <div style="font-weight: 800; font-size: 0.95rem; color: #064e3b;">Profile Editing Unlocked</div>
+            <div style="font-size: 0.82rem; color: #065f46; margin-top: 0.15rem;">Admin has approved your edit request. You can now modify your details and save changes below.</div>
+          </div>
+        </div>
+      `}
 
       <div class="mentor-card" style="padding: 2rem; border-radius: 16px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
         <!-- MENTOR PHOTO UPLOAD SECTION -->
@@ -1879,38 +2071,42 @@ function renderMentorProfile(mentor) {
           <div>
             <h4 style="font-weight: 800; font-size: 1.05rem; margin-bottom: 0.25rem;">Executive Headshot Photo</h4>
             <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.75rem;">JPG or PNG format (Max 5MB)</p>
-            <label for="mentorTabAvatarInput" class="btn-brand-primary" style="padding: 0.45rem 1rem; font-size: 0.82rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem;">
-              <i class="fa-solid fa-upload"></i> Upload New Picture
-            </label>
-            <input type="file" id="mentorTabAvatarInput" accept="image/jpeg,image/png,image/webp" style="display: none;" />
+            ${canEdit ? `
+              <label for="mentorTabAvatarInput" class="btn-brand-primary" style="padding: 0.45rem 1rem; font-size: 0.82rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem;">
+                <i class="fa-solid fa-upload"></i> Upload New Picture
+              </label>
+              <input type="file" id="mentorTabAvatarInput" accept="image/jpeg,image/png,image/webp" style="display: none;" />
+            ` : `
+              <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); background: var(--bg-hover); padding: 0.35rem 0.75rem; border-radius: 6px; border: 1px solid var(--border-color);"><i class="fa-solid fa-lock"></i> Locked</span>
+            `}
           </div>
         </div>
 
         <form id="formMentorTabProfile">
           <div class="form-group">
             <label class="form-label" style="font-weight: 700;">Full Name</label>
-            <input type="text" class="form-input" id="mentorTabName" value="${mentor.name || ''}" required style="border-radius: 10px; padding: 0.7rem 1rem;" />
+            <input type="text" class="form-input" id="mentorTabName" value="${mentor.name || ''}" ${canEdit ? '' : 'disabled style="background:var(--bg-hover); opacity:0.85; cursor:not-allowed;"'} required style="border-radius: 10px; padding: 0.7rem 1rem;" />
           </div>
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
             <div class="form-group">
               <label class="form-label" style="font-weight: 700;">Professional Title</label>
-              <input type="text" class="form-input" id="mentorTabTitle" value="${mentor.title || ''}" required style="border-radius: 10px; padding: 0.7rem 1rem;" />
+              <input type="text" class="form-input" id="mentorTabTitle" value="${mentor.title || ''}" ${canEdit ? '' : 'disabled style="background:var(--bg-hover); opacity:0.85; cursor:not-allowed;"'} required style="border-radius: 10px; padding: 0.7rem 1rem;" />
             </div>
             <div class="form-group">
               <label class="form-label" style="font-weight: 700;">Organization / Employer</label>
-              <input type="text" class="form-input" id="mentorTabOrg" value="${mentor.organization || mentor.institution || ''}" required style="border-radius: 10px; padding: 0.7rem 1rem;" />
+              <input type="text" class="form-input" id="mentorTabOrg" value="${mentor.organization || mentor.institution || ''}" ${canEdit ? '' : 'disabled style="background:var(--bg-hover); opacity:0.85; cursor:not-allowed;"'} required style="border-radius: 10px; padding: 0.7rem 1rem;" />
             </div>
           </div>
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
             <div class="form-group">
               <label class="form-label" style="font-weight: 700;">Specialist Domain</label>
-              <input type="text" class="form-input" id="mentorTabDomain" value="${mentor.domain || ''}" placeholder="e.g. Monitoring & Evaluation" style="border-radius: 10px; padding: 0.7rem 1rem;" />
+              <input type="text" class="form-input" id="mentorTabDomain" value="${mentor.domain || ''}" ${canEdit ? '' : 'disabled style="background:var(--bg-hover); opacity:0.85; cursor:not-allowed;"'} placeholder="e.g. Monitoring & Evaluation" style="border-radius: 10px; padding: 0.7rem 1rem;" />
             </div>
             <div class="form-group">
               <label class="form-label" style="font-weight: 700;">Gender</label>
-              <select class="form-input" id="mentorTabGender" style="border-radius: 10px; padding: 0.7rem 1rem;">
+              <select class="form-input" id="mentorTabGender" ${canEdit ? '' : 'disabled style="background:var(--bg-hover); opacity:0.85; cursor:not-allowed;"'} style="border-radius: 10px; padding: 0.7rem 1rem;">
                 <option value="" ${!mentor.gender ? 'selected' : ''}>-- Select Gender --</option>
                 <option value="Male" ${mentor.gender === 'Male' ? 'selected' : ''}>Male</option>
                 <option value="Female" ${mentor.gender === 'Female' ? 'selected' : ''}>Female</option>
@@ -1922,25 +2118,31 @@ function renderMentorProfile(mentor) {
 
           <div class="form-group">
             <label class="form-label" style="font-weight: 700;">Bio / Executive Summary</label>
-            <textarea class="form-input" id="mentorTabBio" rows="4" style="border-radius: 10px; padding: 0.7rem 1rem; resize: vertical;">${mentor.bio || ''}</textarea>
+            <textarea class="form-input" id="mentorTabBio" rows="4" ${canEdit ? '' : 'disabled style="background:var(--bg-hover); opacity:0.85; cursor:not-allowed;"'} style="border-radius: 10px; padding: 0.7rem 1rem; resize: vertical;">${mentor.bio || ''}</textarea>
           </div>
 
           <div class="form-group">
             <label class="form-label" style="font-weight: 700;">Areas of Expertise (Comma Separated)</label>
-            <input type="text" class="form-input" id="mentorTabExpertise" value="${(mentor.expertise || []).join(', ')}" placeholder="e.g. MERL, Data Strategy, Career Coaching" style="border-radius: 10px; padding: 0.7rem 1rem;" />
+            <input type="text" class="form-input" id="mentorTabExpertise" value="${(mentor.expertise || []).join(', ')}" ${canEdit ? '' : 'disabled style="background:var(--bg-hover); opacity:0.85; cursor:not-allowed;"'} placeholder="e.g. MERL, Data Strategy, Career Coaching" style="border-radius: 10px; padding: 0.7rem 1rem;" />
           </div>
 
           <div style="font-size: 0.85rem; font-weight: 800; text-transform: uppercase; color: var(--brand-primary); margin-bottom: 0.8rem; margin-top: 1.25rem;">Social Media Links & Handles</div>
 
           <div class="form-group">
             <label class="form-label" style="font-weight: 700;"><i class="fa-brands fa-linkedin" style="color: #0A66C2;"></i> LinkedIn Profile URL</label>
-            <input type="url" class="form-input" id="mentorTabLinkedIn" value="${mentor.socialLinks?.linkedin || ''}" placeholder="https://linkedin.com/in/username" style="border-radius: 10px; padding: 0.7rem 1rem;" />
+            <input type="url" class="form-input" id="mentorTabLinkedIn" value="${mentor.socialLinks?.linkedin || ''}" ${canEdit ? '' : 'disabled style="background:var(--bg-hover); opacity:0.85; cursor:not-allowed;"'} placeholder="https://linkedin.com/in/username" style="border-radius: 10px; padding: 0.7rem 1rem;" />
           </div>
 
           <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.75rem;">
-            <button type="submit" class="btn-brand-primary" style="padding: 0.7rem 1.8rem; font-weight: 800; font-size: 0.92rem;">
-              <i class="fa-solid fa-floppy-disk"></i> Save Mentor Profile
-            </button>
+            ${canEdit ? `
+              <button type="submit" class="btn-brand-primary" style="padding: 0.7rem 1.8rem; font-weight: 800; font-size: 0.92rem;">
+                <i class="fa-solid fa-floppy-disk"></i> Save Mentor Profile
+              </button>
+            ` : `
+              <button type="button" class="btn-brand-primary btn-open-request-edit" data-role="mentor" style="padding: 0.7rem 1.8rem; font-weight: 800; font-size: 0.92rem;">
+                <i class="fa-solid fa-paper-plane"></i> Request to Edit Profile
+              </button>
+            `}
           </div>
         </form>
       </div>
@@ -1968,6 +2170,9 @@ function renderAdminAnalytics() {
   const totalSessions = state.sessions ? state.sessions.length : 0;
   const completedOrAccepted = (state.sessions || []).filter(s => s.status === 'Completed' || s.status === 'Accepted' || (s.attendance && s.attendance.joined));
   const attendanceRate = totalSessions > 0 ? ((completedOrAccepted.length / totalSessions) * 100).toFixed(1) + '%' : '100.0%';
+
+  const spilloversCount = (state.spillovers || []).length;
+  const pendingRequestsCount = (state.profileEditRequests || []).filter(r => r.status === 'Pending').length;
 
   const rangeLabel = (fromDate && toDate) ? `${fromDate} to ${toDate}` : 'Selected Range';
 
@@ -2034,7 +2239,7 @@ function renderAdminAnalytics() {
       </div>
 
       <!-- CLICKABLE KPI STAT CARDS GRID -->
-      <div class="stats-overview-grid" style="margin-bottom: 2rem;">
+      <div class="stats-overview-grid" style="margin-bottom: 2rem; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
         <!-- KPI 1: TOTAL MENTEES -->
         <div class="stat-card btn-admin-kpi-card ${activeTable === 'mentees' ? 'active-kpi-card' : ''}" data-table="mentees" style="cursor: pointer; position: relative; transition: all 0.25s ease; ${activeTable === 'mentees' ? 'border: 2px solid var(--brand-primary); background: var(--bg-hover); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(107,33,168,0.18);' : 'border: 1px solid var(--border-color);'}">
           <div class="stat-card-header">
@@ -2078,6 +2283,17 @@ function renderAdminAnalytics() {
           <div class="stat-meta" style="color: var(--text-secondary);">Real-Time Verified Logs</div>
           ${activeTable === 'attendance' ? `<div style="position: absolute; bottom: 8px; right: 12px; font-size: 0.72rem; font-weight: 800; color: var(--brand-gold); display: flex; align-items: center; gap: 0.3rem;"><i class="fa-solid fa-eye"></i> Viewing Table</div>` : ''}
         </div>
+
+        <!-- KPI 5: MONTHLY SPILL-OVER DEMAND -->
+        <div class="stat-card btn-admin-kpi-card ${activeTable === 'spillovers' ? 'active-kpi-card' : ''}" data-table="spillovers" style="cursor: pointer; position: relative; transition: all 0.25s ease; ${activeTable === 'spillovers' ? 'border: 2px solid #dc2626; background: var(--bg-hover); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(220,38,38,0.18);' : 'border: 1px solid var(--border-color);'}">
+          <div class="stat-card-header">
+            <span class="stat-label" style="font-weight: 800; color: ${activeTable === 'spillovers' ? '#dc2626' : 'var(--text-secondary)'};">CAP SPILL-OVER</span>
+            <div class="stat-icon" style="background: rgba(220,38,38,0.12); color: #dc2626;"><i class="fa-solid fa-arrow-trend-up"></i></div>
+          </div>
+          <div class="stat-value" style="font-size: 2rem; font-weight: 800; color: ${spilloversCount > 0 ? '#dc2626' : 'inherit'};">${spilloversCount}</div>
+          <div class="stat-meta" style="color: var(--text-secondary); font-size: 0.78rem;">Unmet Demand (100 Cap)</div>
+          ${activeTable === 'spillovers' ? `<div style="position: absolute; bottom: 8px; right: 12px; font-size: 0.72rem; font-weight: 800; color: #dc2626; display: flex; align-items: center; gap: 0.3rem;"><i class="fa-solid fa-eye"></i> Viewing Table</div>` : ''}
+        </div>
       </div>
 
       <!-- FILTER TAB PILLS -->
@@ -2097,6 +2313,12 @@ function renderAdminAnalytics() {
         <button class="btn-admin-kpi-pill ${activeTable === 'attendance' ? 'active-pill' : ''}" data-table="attendance" style="padding: 0.6rem 1.25rem; font-size: 0.88rem; font-weight: 800; border-radius: 20px; border: none; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; ${activeTable === 'attendance' ? 'background: #d97706; color: white;' : 'background: var(--bg-hover); color: var(--text-secondary);'}">
           <i class="fa-solid fa-chart-line"></i> Attendance Audit (96.4%)
         </button>
+        <button class="btn-admin-kpi-pill ${activeTable === 'profile_requests' ? 'active-pill' : ''}" data-table="profile_requests" style="padding: 0.6rem 1.25rem; font-size: 0.88rem; font-weight: 800; border-radius: 20px; border: none; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; ${activeTable === 'profile_requests' ? 'background: #ca8a04; color: white;' : 'background: var(--bg-hover); color: var(--text-secondary);'}">
+          <i class="fa-solid fa-id-card-clip"></i> Profile Edit Requests (${pendingRequestsCount} Pending)
+        </button>
+        <button class="btn-admin-kpi-pill ${activeTable === 'spillovers' ? 'active-pill' : ''}" data-table="spillovers" style="padding: 0.6rem 1.25rem; font-size: 0.88rem; font-weight: 800; border-radius: 20px; border: none; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; ${activeTable === 'spillovers' ? 'background: #dc2626; color: white;' : 'background: var(--bg-hover); color: var(--text-secondary);'}">
+          <i class="fa-solid fa-chart-pie"></i> Spill-Over Demand Audit (${spilloversCount})
+        </button>
       </div>
 
       <!-- DYNAMIC TABLE CONTAINER -->
@@ -2110,6 +2332,12 @@ function renderAdminAnalytics() {
 function renderAdminSelectedTable(activeTable) {
   if (activeTable === 'feedback') {
     return renderAdminFeedbackTable();
+  }
+  if (activeTable === 'profile_requests') {
+    return renderAdminProfileRequestsTable();
+  }
+  if (activeTable === 'spillovers') {
+    return renderAdminSpilloversTable();
   }
   if (activeTable === 'mentees') {
     const q = (state.adminMenteeSearchQuery || '').toLowerCase().trim();
@@ -2343,6 +2571,262 @@ function renderAdminFeedbackTable() {
   `;
 }
 
+function renderAdminProfileRequestsTable() {
+  const requests = state.profileEditRequests || [];
+  const pendingCount = requests.filter(r => r.status === 'Pending').length;
+
+  return `
+    <div class="mentor-card" style="padding: 1.75rem;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <h3 style="font-weight: 800; font-size: 1.2rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
+            <i class="fa-solid fa-id-card-clip" style="color: #ca8a04;"></i> Profile Edit Access Requests & Approvals
+          </h3>
+          <p style="font-size: 0.85rem; color: var(--text-secondary);">
+            Approve or reject requests from Associates and Mentors to update locked profile fields. Approved requests unlock editing immediately and notify the member via email.
+          </p>
+        </div>
+
+        <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+          <div style="background: rgba(202, 138, 4, 0.12); color: #ca8a04; padding: 0.5rem 1rem; border-radius: 10px; font-size: 0.85rem; font-weight: 800;">
+            ${pendingCount} Action Required
+          </div>
+          <button class="btn-brand-primary btn-export-csv" data-table="profile_requests" style="padding: 0.6rem 1.2rem; font-size: 0.85rem; border-radius: 10px; background: #059669; color: white;">
+            <i class="fa-solid fa-file-csv"></i> Export Requests CSV
+          </button>
+        </div>
+      </div>
+
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem;">
+          <thead>
+            <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-secondary);">
+              <th style="padding: 0.85rem;">Request ID</th>
+              <th style="padding: 0.85rem;">Member</th>
+              <th style="padding: 0.85rem;">Role</th>
+              <th style="padding: 0.85rem;">Requested Fields</th>
+              <th style="padding: 0.85rem; max-width: 280px;">Reason / Justification</th>
+              <th style="padding: 0.85rem;">Submitted</th>
+              <th style="padding: 0.85rem;">Status</th>
+              <th style="padding: 0.85rem; text-align: right;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${requests.length > 0 ? requests.map(r => {
+              const isPending = r.status === 'Pending';
+              const isApproved = r.status === 'Approved';
+              const fields = Array.isArray(r.requestedFields) ? r.requestedFields : [r.requestedFields];
+              const dateStr = r.requestedAt ? new Date(r.requestedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recent';
+
+              return `
+                <tr style="border-bottom: 1px solid var(--border-color); vertical-align: middle;">
+                  <td style="padding: 0.9rem 0.85rem; font-family: monospace; font-size: 0.8rem; font-weight: 700; color: var(--text-muted);">${r.id}</td>
+                  <td style="padding: 0.9rem 0.85rem;">
+                    <div style="font-weight: 800; color: var(--text-primary);">${r.userName || 'Member'}</div>
+                    <div style="font-size: 0.78rem; color: var(--text-muted);">${r.userEmail || ''}</div>
+                  </td>
+                  <td style="padding: 0.9rem 0.85rem;">
+                    <span class="badge-tag ${r.userRole === 'mentor' ? 'badge-green' : 'badge-purple'}" style="text-transform: capitalize;">${r.userRole || 'associate'}</span>
+                  </td>
+                  <td style="padding: 0.9rem 0.85rem;">
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.35rem;">
+                      ${fields.map(f => `<span style="background: var(--bg-hover); border: 1px solid var(--border-color); font-size: 0.74rem; font-weight: 700; padding: 0.2rem 0.55rem; border-radius: 6px; color: var(--brand-primary);">${f}</span>`).join('')}
+                    </div>
+                  </td>
+                  <td style="padding: 0.9rem 0.85rem; max-width: 280px; font-size: 0.82rem; color: var(--text-secondary); line-height: 1.4;">
+                    "${r.reason || 'No reason specified'}"
+                  </td>
+                  <td style="padding: 0.9rem 0.85rem; font-size: 0.8rem; color: var(--text-muted); white-space: nowrap;">
+                    ${dateStr}
+                  </td>
+                  <td style="padding: 0.9rem 0.85rem;">
+                    ${isPending ? `<span class="badge-tag badge-gold"><i class="fa-solid fa-clock"></i> Pending Review</span>` : ''}
+                    ${isApproved ? `<span class="badge-tag badge-green"><i class="fa-solid fa-check"></i> Approved</span>` : ''}
+                    ${r.status === 'Rejected' ? `<span class="badge-tag badge-red"><i class="fa-solid fa-xmark"></i> Rejected</span>` : ''}
+                  </td>
+                  <td style="padding: 0.9rem 0.85rem; text-align: right; white-space: nowrap;">
+                    ${isPending ? `
+                      <div style="display: inline-flex; gap: 0.45rem;">
+                        <button type="button" class="btn-brand-primary btn-approve-profile-edit" data-id="${r.id}" data-user-id="${r.userId || ''}" style="padding: 0.45rem 0.85rem; font-size: 0.78rem; font-weight: 800; background: #059669; color: white; border-radius: 8px;">
+                          <i class="fa-solid fa-check"></i> Approve & Unlock
+                        </button>
+                        <button type="button" class="btn-brand-primary btn-reject-profile-edit" data-id="${r.id}" style="padding: 0.45rem 0.75rem; font-size: 0.78rem; font-weight: 800; background: #dc2626; color: white; border-radius: 8px;">
+                          <i class="fa-solid fa-xmark"></i> Reject
+                        </button>
+                      </div>
+                    ` : `
+                      <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600;">Processed</span>
+                    `}
+                  </td>
+                </tr>
+              `;
+            }).join('') : `
+              <tr>
+                <td colspan="8" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+                  No profile edit requests have been submitted yet.
+                </td>
+              </tr>
+            `}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+function renderAdminSpilloversTable() {
+  const spillovers = state.spillovers || [];
+  const monthlyCap = 100;
+
+  // Aggregate monthly stats from state.sessions and state.spillovers
+  const monthsMap = {};
+
+  (state.sessions || []).forEach(s => {
+    if (!s.date) return;
+    const mKey = s.date.substring(0, 7);
+    if (!monthsMap[mKey]) monthsMap[mKey] = { booked: 0, spillovers: 0 };
+    monthsMap[mKey].booked++;
+  });
+
+  spillovers.forEach(sp => {
+    const mKey = sp.targetMonth || (sp.targetDate ? sp.targetDate.substring(0, 7) : new Date().toISOString().substring(0, 7));
+    if (!monthsMap[mKey]) monthsMap[mKey] = { booked: 0, spillovers: 0 };
+    monthsMap[mKey].spillovers++;
+  });
+
+  const monthKeys = Object.keys(monthsMap).sort().reverse();
+  if (monthKeys.length === 0) {
+    const currentMonth = new Date().toISOString().substring(0, 7);
+    monthKeys.push(currentMonth);
+    monthsMap[currentMonth] = { booked: state.sessions ? state.sessions.length : 0, spillovers: spillovers.length };
+  }
+
+  return `
+    <div class="mentor-card" style="padding: 1.75rem;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <h3 style="font-weight: 800; font-size: 1.2rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
+            <i class="fa-solid fa-chart-pie" style="color: #dc2626;"></i> Monthly Booking Capacity & Spill-Over Demand Analytics
+          </h3>
+          <p style="font-size: 0.85rem; color: var(--text-secondary);">
+            Tracking unmet demand when monthly bookings reach the 100-session program ceiling. Informs data-driven budget expansion and mentor scaling.
+          </p>
+        </div>
+
+        <button class="btn-brand-primary btn-export-csv" data-table="spillovers" style="padding: 0.6rem 1.2rem; font-size: 0.85rem; border-radius: 10px; background: #059669; color: white;">
+          <i class="fa-solid fa-file-csv"></i> Export Spill-Over CSV
+        </button>
+      </div>
+
+      <!-- MONTHLY CAPACITY & SPILL-OVER SUMMARY TABLE -->
+      <div style="background: var(--bg-hover); border-radius: 14px; border: 1px solid var(--border-color); padding: 1.25rem; margin-bottom: 1.75rem;">
+        <h4 style="font-weight: 800; font-size: 1rem; margin-bottom: 0.85rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.4rem;">
+          <i class="fa-solid fa-scale-balanced" style="color: var(--brand-primary);"></i> Monthly Ceiling vs. Real Demand Breakdown
+        </h4>
+
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.86rem;">
+            <thead>
+              <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-secondary);">
+                <th style="padding: 0.7rem;">Calendar Month</th>
+                <th style="padding: 0.7rem;">Program Cap</th>
+                <th style="padding: 0.7rem;">Booked Sessions</th>
+                <th style="padding: 0.7rem;">Spill-Over (Unmet Attempts)</th>
+                <th style="padding: 0.7rem;">Total Real Demand</th>
+                <th style="padding: 0.7rem;">Cap Utilization</th>
+                <th style="padding: 0.7rem;">Program Recommendation</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${monthKeys.map(mKey => {
+                const data = monthsMap[mKey] || { booked: 0, spillovers: 0 };
+                const totalDemand = data.booked + data.spillovers;
+                const utilRate = Math.min(100, Math.round((data.booked / monthlyCap) * 100));
+                const isCapped = data.booked >= monthlyCap;
+                const dateObj = new Date(mKey + '-01T00:00:00');
+                const monthName = isNaN(dateObj) ? mKey : dateObj.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+                return `
+                  <tr style="border-bottom: 1px solid var(--border-color);">
+                    <td style="padding: 0.75rem; font-weight: 800; color: var(--brand-primary);">${monthName}</td>
+                    <td style="padding: 0.75rem; font-weight: 700;">${monthlyCap} Sessions</td>
+                    <td style="padding: 0.75rem; font-weight: 800; color: ${isCapped ? '#dc2626' : '#059669'};">${data.booked} / ${monthlyCap}</td>
+                    <td style="padding: 0.75rem; font-weight: 800; color: ${data.spillovers > 0 ? '#dc2626' : 'var(--text-muted)'};">${data.spillovers > 0 ? `+${data.spillovers} attempts` : '0'}</td>
+                    <td style="padding: 0.75rem; font-weight: 800;">${totalDemand} Sessions</td>
+                    <td style="padding: 0.75rem;">
+                      <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <div style="flex: 1; min-width: 80px; height: 8px; background: var(--border-color); border-radius: 4px; overflow: hidden;">
+                          <div style="width: ${utilRate}%; height: 100%; background: ${isCapped ? '#dc2626' : 'var(--brand-primary)'};"></div>
+                        </div>
+                        <span style="font-weight: 700; font-size: 0.8rem;">${utilRate}%</span>
+                      </div>
+                    </td>
+                    <td style="padding: 0.75rem;">
+                      ${data.spillovers > 0 
+                        ? `<span class="badge-tag badge-red" style="font-size: 0.74rem;"><i class="fa-solid fa-arrow-up"></i> Expand Slot Budget (+${data.spillovers})</span>` 
+                        : (data.booked >= 80 
+                          ? `<span class="badge-tag badge-gold" style="font-size: 0.74rem;">Near Capacity (${data.booked}%)</span>` 
+                          : `<span class="badge-tag badge-green" style="font-size: 0.74rem;">Capacity Healthy</span>`)}
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- DETAILED SPILL-OVER EVENT LOG -->
+      <h4 style="font-weight: 800; font-size: 1rem; margin-bottom: 0.85rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.4rem;">
+        <i class="fa-solid fa-list-ul" style="color: var(--brand-primary);"></i> Unmet Mentorship Attempt Audit Log
+      </h4>
+
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem;">
+          <thead>
+            <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-secondary);">
+              <th style="padding: 0.8rem;">Log ID</th>
+              <th style="padding: 0.8rem;">Timestamp</th>
+              <th style="padding: 0.8rem;">Associate</th>
+              <th style="padding: 0.8rem;">Target Mentor</th>
+              <th style="padding: 0.8rem;">Intended Slot</th>
+              <th style="padding: 0.8rem;">Block Reason / Cap Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${spillovers.length > 0 ? spillovers.map(s => {
+              const timeStr = s.timestamp ? new Date(s.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recent';
+              return `
+                <tr style="border-bottom: 1px solid var(--border-color);">
+                  <td style="padding: 0.85rem; font-family: monospace; font-size: 0.8rem; font-weight: 700; color: var(--text-muted);">${s.id}</td>
+                  <td style="padding: 0.85rem; font-size: 0.8rem; color: var(--text-muted); white-space: nowrap;">${timeStr}</td>
+                  <td style="padding: 0.85rem;">
+                    <div style="font-weight: 800; color: var(--text-primary);">${s.associateName || 'Associate'}</div>
+                    <div style="font-size: 0.76rem; color: var(--text-muted);">${s.associateEmail || ''}</div>
+                  </td>
+                  <td style="padding: 0.85rem; font-weight: 700;">${s.mentorName || 'Mentor'}</td>
+                  <td style="padding: 0.85rem; font-size: 0.82rem; color: var(--text-secondary);">${s.targetDate || ''} ${s.targetTime ? `at ${s.targetTime}` : ''}</td>
+                  <td style="padding: 0.85rem;">
+                    <span class="badge-tag badge-red" style="font-size: 0.76rem;">
+                      <i class="fa-solid fa-ban"></i> ${s.reason || 'Monthly 100-session cap reached'}
+                    </span>
+                  </td>
+                </tr>
+              `;
+            }).join('') : `
+              <tr>
+                <td colspan="6" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+                  No spill-overs recorded yet. All booking attempts have been accommodated within the 100-session monthly cap.
+                </td>
+              </tr>
+            `}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
 function exportAdminTableToCSV(activeTable) {
   let filename = `Mastercard_Mentorship_${activeTable}_${state.adminMonthFilter}.csv`;
   let rows = [];
@@ -2384,6 +2868,19 @@ function exportAdminTableToCSV(activeTable) {
         s.mentorRating?.qualitativeFeedback || s.mentorRating?.notes || '',
         s.status
       ]);
+    });
+  } else if (activeTable === 'profile_requests') {
+    filename = `Mastercard_Mentorship_Profile_Edit_Requests_${new Date().toISOString().split('T')[0]}.csv`;
+    rows.push(['Request ID', 'Member Name', 'Email', 'Role', 'Requested Fields', 'Reason / Justification', 'Status', 'Submitted At']);
+    (state.profileEditRequests || []).forEach(r => {
+      const fields = Array.isArray(r.requestedFields) ? r.requestedFields.join('; ') : r.requestedFields;
+      rows.push([r.id, r.userName, r.userEmail, r.userRole, fields, r.reason, r.status, r.requestedAt || '']);
+    });
+  } else if (activeTable === 'spillovers') {
+    filename = `Mastercard_Mentorship_Spillover_Demand_Export_${new Date().toISOString().split('T')[0]}.csv`;
+    rows.push(['Log ID', 'Timestamp', 'Associate Name', 'Associate Email', 'Target Mentor', 'Intended Date', 'Intended Time', 'Block Reason']);
+    (state.spillovers || []).forEach(s => {
+      rows.push([s.id, s.timestamp, s.associateName, s.associateEmail, s.mentorName, s.targetDate, s.targetTime, s.reason]);
     });
   } else if (activeTable === 'mentees') {
     rows.push(['Associate Name', 'Email Address', 'Host Organization', 'Job Title / Specialization', 'Cohort', 'Status']);
@@ -3206,6 +3703,94 @@ function renderModals() {
             <input type="number" class="form-input" id="inputNewMentorCap" value="${m.monthlyCap}" />
           </div>
           <button class="btn-brand-primary" id="btnSaveCapSubmit" style="width: 100%; justify-content: center;">Save Limit</button>
+        </div>
+      </div>
+    `;
+  }
+
+  if (state.activeModal === 'request_profile_edit') {
+    const user = state.requestEditUser || state.currentUser || {};
+    const role = user.role || (state.currentRole || 'associate');
+    const isAssociate = role === 'associate';
+    const availableFields = isAssociate ? [
+      { id: 'name', label: 'Full Name' },
+      { id: 'email', label: 'Email Address' },
+      { id: 'title', label: 'Job Title / Specialization' },
+      { id: 'organization', label: 'Host Organization / Institution' },
+      { id: 'track', label: 'Domain / Specialization Track' },
+      { id: 'bio', label: 'Professional Bio & Experience' },
+      { id: 'avatar', label: 'Profile Picture / Avatar' }
+    ] : [
+      { id: 'name', label: 'Full Name' },
+      { id: 'email', label: 'Email Address' },
+      { id: 'title', label: 'Professional Title' },
+      { id: 'organization', label: 'Current Company / Organization' },
+      { id: 'domain', label: 'Specialist Domain / Field' },
+      { id: 'bio', label: 'Biography & Expertise' },
+      { id: 'linkedin', label: 'LinkedIn Profile URL' },
+      { id: 'avatar', label: 'Profile Picture / Avatar' }
+    ];
+
+    const currentSelectedFields = state.requestEditFormData?.fields || [];
+    const currentReason = state.requestEditFormData?.reason || '';
+
+    return `
+      <div class="modal-overlay">
+        <div class="modal-content-card" style="max-width: 580px; border-radius: 20px; padding: 2rem;">
+          <div class="modal-header-flex" style="margin-bottom: 1.25rem;">
+            <div>
+              <div class="modal-title" style="font-size: 1.35rem; font-weight: 800; font-family: var(--font-display); display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fa-solid fa-lock-open" style="color: var(--brand-gold);"></i> Request Profile Edit Access
+              </div>
+              <p style="font-size: 0.86rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                To protect data integrity, profile changes require administrative authorization.
+              </p>
+            </div>
+            <button class="close-modal-btn btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+
+          <form id="formSubmitProfileEditRequest">
+            <div style="background: var(--bg-hover); padding: 1rem; border-radius: 12px; border: 1px solid var(--border-color); margin-bottom: 1.25rem;">
+              <div style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.25rem;">Requesting Member:</div>
+              <div style="font-weight: 800; font-size: 0.95rem; color: var(--text-primary);">${user.name || 'Member'} <span class="badge-tag ${isAssociate ? 'badge-purple' : 'badge-green'}" style="margin-left: 0.5rem; text-transform: capitalize;">${role}</span></div>
+              <div style="font-size: 0.8rem; color: var(--text-muted);">${user.email || ''}</div>
+            </div>
+
+            <!-- STEP 1: SELECT FIELDS TO EDIT -->
+            <div class="form-group" style="margin-bottom: 1.25rem;">
+              <label class="form-label" style="font-weight: 800; font-size: 0.88rem; margin-bottom: 0.6rem; display: flex; align-items: center; justify-content: space-between;">
+                <span><i class="fa-solid fa-list-check" style="color: var(--brand-primary); margin-right: 0.35rem;"></i> Select Fields to Edit <span style="color: #dc2626;">*</span></span>
+                <span style="font-size: 0.75rem; font-weight: 700; color: var(--brand-violet);">${currentSelectedFields.length} selected</span>
+              </label>
+              
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; background: var(--bg-surface); padding: 0.85rem; border-radius: 10px; border: 1px solid var(--border-color);">
+                ${availableFields.map(f => {
+                  const isChecked = currentSelectedFields.includes(f.label) || currentSelectedFields.includes(f.id);
+                  return `
+                    <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.84rem; cursor: pointer; padding: 0.35rem 0.5rem; border-radius: 6px; transition: background 0.15s ease;" class="field-checkbox-label">
+                      <input type="checkbox" class="cb-profile-field" value="${f.label}" ${isChecked ? 'checked' : ''} style="cursor: pointer;" />
+                      <span style="font-weight: ${isChecked ? '700' : '500'}; color: ${isChecked ? 'var(--brand-primary)' : 'var(--text-primary)'};">${f.label}</span>
+                    </label>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+
+            <!-- STEP 2: REASON -->
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+              <label class="form-label" style="font-weight: 800; font-size: 0.88rem; margin-bottom: 0.5rem;">
+                <i class="fa-solid fa-comment-dots" style="color: var(--brand-primary); margin-right: 0.35rem;"></i> Reason for Update <span style="color: #dc2626;">*</span>
+              </label>
+              <textarea class="form-textarea" id="inputRequestEditReason" rows="3" placeholder="Please describe why these changes are needed (e.g., role promotion, updated host organization, new specialization)..." required style="border-radius: 10px; padding: 0.75rem 0.85rem; font-size: 0.85rem;">${currentReason}</textarea>
+            </div>
+
+            <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+              <button type="button" class="btn-brand-primary btn-close-modal" style="background: var(--bg-hover); color: var(--text-primary); border: 1px solid var(--border-color); padding: 0.75rem 1.25rem;">Cancel</button>
+              <button type="submit" class="btn-brand-primary" id="btnSubmitProfileEditRequest" style="padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #1b0a3a 0%, #2e1065 100%);">
+                <i class="fa-solid fa-paper-plane" style="margin-right: 0.35rem;"></i> Send Request to Admin
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     `;
@@ -4521,6 +5106,137 @@ function bindEvents() {
         showToast('Monthly session cap updated!');
         await initAppData();
       }
+    });
+
+    // Profile Edit Request Modal Triggers
+    document.querySelectorAll('.btn-open-request-edit').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.requestEditUser = state.currentUser;
+        state.requestEditFormData = {
+          fields: [],
+          reason: ''
+        };
+        state.activeModal = 'request_profile_edit';
+        render();
+      });
+    });
+
+    // Profile Edit Request Field Checkboxes
+    document.querySelectorAll('.cb-profile-field').forEach(cb => {
+      cb.addEventListener('change', () => {
+        let fields = state.requestEditFormData?.fields || [];
+        if (cb.checked) {
+          if (!fields.includes(cb.value)) fields.push(cb.value);
+        } else {
+          fields = fields.filter(f => f !== cb.value);
+        }
+        state.requestEditFormData.fields = fields;
+      });
+    });
+
+    // Profile Edit Request Reason Input
+    document.getElementById('inputRequestEditReason')?.addEventListener('input', (e) => {
+      state.requestEditFormData.reason = e.target.value;
+    });
+
+    // Profile Edit Request Form Submission
+    document.getElementById('formSubmitProfileEditRequest')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fields = state.requestEditFormData?.fields || [];
+      const reason = document.getElementById('inputRequestEditReason')?.value || state.requestEditFormData?.reason || '';
+
+      if (fields.length === 0) {
+        showToast('Please select at least one field you wish to edit.', 'fa-circle-exclamation');
+        return;
+      }
+      if (!reason.trim()) {
+        showToast('Please provide a reason for the edit request.', 'fa-circle-exclamation');
+        return;
+      }
+
+      const user = state.currentUser || {};
+      try {
+        await apiService.requestProfileEdit({
+          userId: user.id,
+          userName: user.name,
+          userEmail: user.email,
+          userRole: user.role || 'associate',
+          requestedFields: fields,
+          reason: reason.trim()
+        });
+
+        state.activeModal = null;
+        state.requestEditFormData = { fields: [], reason: '' };
+        showToast('Profile edit request submitted to Admin! 📩', 'fa-paper-plane');
+        await initAppData();
+      } catch (err) {
+        console.error('[Request Profile Edit Error]', err);
+        showToast('Failed to submit request. Please try again.', 'fa-triangle-exclamation');
+      }
+    });
+
+    // Admin Profile Edit Approve & Reject Handlers
+    document.querySelectorAll('.btn-approve-profile-edit').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const requestId = btn.dataset.id;
+        const userId = btn.dataset.userId;
+        try {
+          await apiService.approveProfileEdit(requestId, userId);
+          showToast('Profile edit request approved! User unlocked. 🔓', 'fa-circle-check');
+          await initAppData();
+        } catch (err) {
+          console.error('[Approve Profile Edit Error]', err);
+          showToast('Failed to approve request.', 'fa-triangle-exclamation');
+        }
+      });
+    });
+
+    document.querySelectorAll('.btn-reject-profile-edit').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const requestId = btn.dataset.id;
+        try {
+          await apiService.rejectProfileEdit(requestId);
+          showToast('Profile edit request rejected.', 'fa-circle-check');
+          await initAppData();
+        } catch (err) {
+          console.error('[Reject Profile Edit Error]', err);
+          showToast('Failed to reject request.', 'fa-triangle-exclamation');
+        }
+      });
+    });
+
+    // Mentor 3-Month Availability Auto-Fill Generator
+    document.getElementById('btnAutoFill3Months')?.addEventListener('click', async () => {
+      const activeMentor = (state.currentUser && state.currentUser.role === 'mentor')
+        ? state.currentUser
+        : (state.mentors[state.currentMentorIndex] || state.mentors[0]);
+      if (!activeMentor) return;
+
+      try {
+        await apiService.generateThreeMonthSlots(activeMentor.id);
+        showToast('✨ 15 Slots generated across 3 rolling months!', 'fa-wand-magic-sparkles');
+        await initAppData();
+      } catch (err) {
+        console.error('[Auto Fill 3 Months Error]', err);
+        showToast('Failed to generate slots.', 'fa-triangle-exclamation');
+      }
+    });
+
+    // Mentor Dashboard Warning Banner Link -> Navigate to Availability Tab
+    document.querySelectorAll('.btn-nav-to-availability').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.mentorTab = 'availability';
+        render();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    });
+
+    // In-Table CSV Export Buttons (e.g. from feedback, profile_requests, spillovers tables)
+    document.querySelectorAll('.btn-export-csv').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetTable = btn.dataset.table || state.adminActiveTable || 'mentees';
+        exportAdminTableToCSV(targetTable);
+      });
     });
 
     // Close Modal Buttons
