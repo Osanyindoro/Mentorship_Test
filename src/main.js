@@ -1691,7 +1691,6 @@ function renderMentorDashboard(mentor) {
           <h2 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; margin: 0;">Mentor Dashboard — ${mentor.name}</h2>
           <p style="font-size: 0.88rem; color: var(--text-secondary); margin-top: 0.2rem;">${mentor.title} (${mentor.organization})</p>
         </div>
-        <button class="btn-brand-primary" id="btnEditMyProfile"><i class="fa-solid fa-user-pen"></i> Edit Profile</button>
       </div>
 
       <!-- 3-MONTH MANDATORY AVAILABILITY WARNING BANNER (15 Slots Target) -->
