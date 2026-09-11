@@ -119,7 +119,26 @@ const notifications = [
   }
 ];
 
-export default function handler(req, res) {
+async function getParsedBody(req) {
+  if (req.body && typeof req.body === 'object') return req.body;
+  if (typeof req.body === 'string') {
+    try { return JSON.parse(req.body); } catch (e) { return {}; }
+  }
+  return new Promise((resolve) => {
+    let data = '';
+    req.on('data', chunk => { data += chunk; });
+    req.on('end', () => {
+      try {
+        resolve(data ? JSON.parse(data) : {});
+      } catch (e) {
+        resolve({});
+      }
+    });
+    req.on('error', () => resolve({}));
+  });
+}
+
+export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -128,6 +147,7 @@ export default function handler(req, res) {
     return res.status(200).end();
   }
 
+  const parsedBody = (req.method === 'POST' || req.method === 'PUT') ? await getParsedBody(req) : {};
   const url = req.url || '';
 
   if (url.includes('/health')) {
@@ -135,7 +155,7 @@ export default function handler(req, res) {
   }
 
   if (req.method === 'POST' && url.includes('/auth/login')) {
-    const { role, email } = req.body || {};
+    const { role, email } = parsedBody || {};
     const cleanEmail = (email || '').trim().toLowerCase();
 
     return res.status(200).json({
@@ -156,7 +176,7 @@ export default function handler(req, res) {
   }
 
   if (req.method === 'POST' && url.includes('/auth/register')) {
-    const { role, name, email, institutionOrOrg, title, trackOrDomain, bio, avatar } = req.body || {};
+    const { role, name, email, institutionOrOrg, title, trackOrDomain, bio, avatar } = parsedBody || {};
     const cleanEmail = (email || '').trim().toLowerCase();
     const selectedRole = role || 'associate';
     const newId = selectedRole === 'associate' ? `MCF-2026-REG-${Math.floor(100 + Math.random() * 900)}` : `MEN-REG-${Math.floor(100 + Math.random() * 900)}`;
@@ -220,11 +240,11 @@ export default function handler(req, res) {
   }
 
   if (url.includes('/send-email') || url.includes('/send_email')) {
-    const { to, subject, html, replyTo } = req.body || {};
+    const { to, subject, html, replyTo } = parsedBody || {};
     const resendKey = process.env.RESEND_API_KEY;
     
     if (!resendKey) {
-      console.warn('[Email Warning] RESEND_API_KEY environment variable is not configured');
+      console.warn('[Email Warning] RESEND_API_KEY environment variable is not configured on Vercel');
       return res.status(200).json({ success: false, warning: 'RESEND_API_KEY not configured on server' });
     }
 
@@ -232,8 +252,10 @@ export default function handler(req, res) {
       return res.status(400).json({ success: false, error: 'Recipient email required' });
     }
 
+    const primaryTo = Array.isArray(to) ? to : [to];
+
     try {
-      const response = await fetch("https://api.resend.com/emails", {
+      let response = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${resendKey}`,
@@ -241,22 +263,52 @@ export default function handler(req, res) {
         },
         body: JSON.stringify({
           from: "Mastercard Foundation Mentorship <onboarding@resend.dev>",
-          to: Array.isArray(to) ? to : [to],
+          to: primaryTo,
           reply_to: replyTo || "support@jobberman.com",
           subject: subject || "Mastercard Foundation Mentorship Notification",
           html: html
         })
       });
 
-      const data = await response.json();
+      let data = await response.json();
+
+      // If Resend returns 403 sandbox restriction (unverified domain only allows sending to account owner email)
+      if (response.status === 403 && data.message && data.message.includes('only send testing emails')) {
+        console.warn('[Resend Sandbox Notice] Testing mode: delivering to verified account owner email.');
+        const fallbackOwner = "akinjolebo.18@student.funaab.edu.ng";
+        const sandboxNoticeHtml = `
+          <div style="background:#fef3c7; border:1px solid #f59e0b; color:#92400e; padding:12px 16px; border-radius:8px; margin-bottom:16px; font-family:sans-serif; font-size:13px; line-height: 1.5;">
+            <strong>ℹ️ Resend Testing Sandbox Notice:</strong> This notification was originally intended for <code>${primaryTo.join(', ')}</code>. Because the Resend account is currently in testing mode (unverified domain), it has been delivered to your verified owner email (<code>${fallbackOwner}</code>). Once a custom domain is verified at <a href="https://resend.com/domains" target="_blank" style="color:#b45309;font-weight:bold;">resend.com/domains</a>, emails will be delivered directly to all recipients.
+          </div>
+          ${html}
+        `;
+
+        response = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${resendKey}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            from: "Mastercard Foundation Mentorship <onboarding@resend.dev>",
+            to: [fallbackOwner],
+            reply_to: replyTo || "support@jobberman.com",
+            subject: `[TESTING: to ${primaryTo[0]}] ${subject}`,
+            html: sandboxNoticeHtml
+          })
+        });
+        data = await response.json();
+      }
+
       return res.status(response.status).json(data);
     } catch (err) {
+      console.error('[Resend Dispatch Error]', err);
       return res.status(500).json({ success: false, error: err.message });
     }
   }
 
   if (url.includes('/create-meeting') || url.includes('/create_meeting')) {
-    const { sessionId } = req.body || {};
+    const { sessionId } = parsedBody || {};
     const chars = 'abcdefghijklmnopqrstuvwxyz';
     const rPart = (len) => {
       let s = '';
