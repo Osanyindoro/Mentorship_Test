@@ -1604,20 +1604,16 @@ function renderMenteeProfile(associate) {
       `}
 
       <form id="formEditMenteeProfile" class="mentor-card" style="padding: 2rem;">
-        <!-- PROFILE PHOTO EDIT SECTION -->
+        <!-- PROFILE PHOTO EDIT SECTION (LIVE) -->
         <div style="display: flex; align-items: center; gap: 1.5rem; padding-bottom: 1.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color);">
           <img src="${associate.avatar && associate.avatar.startsWith('data:') ? associate.avatar : (associate.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80')}" id="profileAvatarPreview" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(associate.name)}&background=2e1065&color=ffffff';" style="width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 3px solid var(--brand-primary); box-shadow: var(--shadow-sm);" />
           <div>
             <h4 style="font-weight: 800; font-size: 1.05rem; margin-bottom: 0.25rem;">Profile Headshot Photo</h4>
-            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.75rem;">JPG or PNG format. Compressed automatically.</p>
-            ${canEdit ? `
-              <label for="profileAvatarInput" class="btn-brand-primary" style="padding: 0.45rem 1rem; font-size: 0.82rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem;">
-                <i class="fa-solid fa-upload"></i> Upload New Picture
-              </label>
-              <input type="file" id="profileAvatarInput" accept="image/jpeg,image/png,image/webp" style="display: none;" />
-            ` : `
-              <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); background: var(--bg-hover); padding: 0.35rem 0.75rem; border-radius: 6px; border: 1px solid var(--border-color);"><i class="fa-solid fa-lock"></i> Locked</span>
-            `}
+            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.75rem;">JPG or PNG format (Max 5MB). Photo updates take effect immediately.</p>
+            <label for="profileAvatarInput" class="btn-brand-primary" style="padding: 0.45rem 1.15rem; font-size: 0.82rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.45rem; background: linear-gradient(135deg, #1b0a3a 0%, #2e1065 100%);">
+              <i class="fa-solid fa-camera"></i> Change Photo
+            </label>
+            <input type="file" id="profileAvatarInput" accept="image/jpeg,image/png,image/webp" style="display: none;" />
           </div>
         </div>
 
@@ -2070,20 +2066,16 @@ function renderMentorProfile(mentor) {
       `}
 
       <div class="mentor-card" style="padding: 2rem; border-radius: 16px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
-        <!-- MENTOR PHOTO UPLOAD SECTION -->
+        <!-- MENTOR PHOTO UPLOAD SECTION (LIVE) -->
         <div style="display: flex; align-items: center; gap: 1.5rem; padding-bottom: 1.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color);">
           <img src="${mentor.avatar && mentor.avatar.startsWith('data:') ? mentor.avatar : (mentor.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80')}" id="mentorTabAvatarPreview" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(mentor.name)}&background=2e1065&color=ffffff';" style="width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 3px solid var(--brand-primary);" />
           <div>
             <h4 style="font-weight: 800; font-size: 1.05rem; margin-bottom: 0.25rem;">Executive Headshot Photo</h4>
-            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.75rem;">JPG or PNG format (Max 5MB)</p>
-            ${canEdit ? `
-              <label for="mentorTabAvatarInput" class="btn-brand-primary" style="padding: 0.45rem 1rem; font-size: 0.82rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem;">
-                <i class="fa-solid fa-upload"></i> Upload New Picture
-              </label>
-              <input type="file" id="mentorTabAvatarInput" accept="image/jpeg,image/png,image/webp" style="display: none;" />
-            ` : `
-              <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); background: var(--bg-hover); padding: 0.35rem 0.75rem; border-radius: 6px; border: 1px solid var(--border-color);"><i class="fa-solid fa-lock"></i> Locked</span>
-            `}
+            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.75rem;">JPG or PNG format (Max 5MB). Photo updates take effect immediately.</p>
+            <label for="mentorTabAvatarInput" class="btn-brand-primary" style="padding: 0.45rem 1.15rem; font-size: 0.82rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.45rem; background: linear-gradient(135deg, #1b0a3a 0%, #2e1065 100%);">
+              <i class="fa-solid fa-camera"></i> Change Photo
+            </label>
+            <input type="file" id="mentorTabAvatarInput" accept="image/jpeg,image/png,image/webp" style="display: none;" />
           </div>
         </div>
 
@@ -4178,17 +4170,30 @@ function bindEvents() {
     document.getElementById('btnHomeBookSession')?.addEventListener('click', () => { state.associateTab = 'mentors'; render(); });
     document.getElementById('btnHeroGroupSessions')?.addEventListener('click', () => { state.associateTab = 'group_sessions'; render(); });
 
-    // Associate Profile Photo File Upload Listener
+    // Associate Profile Photo File Upload Listener (Live Instant Update)
     const profileAvatarInput = document.getElementById('profileAvatarInput');
     if (profileAvatarInput) {
       profileAvatarInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (file) {
-          compressImageFile(file, (compressedDataUrl) => {
-            if (state.currentUser) state.currentUser.avatar = compressedDataUrl;
-            const preview = document.getElementById('profileAvatarPreview');
-            if (preview) preview.src = compressedDataUrl;
-            showToast('New profile photo selected!', 'fa-image');
+          compressImageFile(file, async (compressedDataUrl) => {
+            if (state.currentUser) {
+              state.currentUser.avatar = compressedDataUrl;
+              localStorage.setItem('mently_user', JSON.stringify(state.currentUser));
+            }
+            // Update in associates collection & localStorage
+            const associates = getStoredAssociates();
+            const aIdx = associates.findIndex(a => a.id === state.currentUser?.id || a.email === state.currentUser?.email);
+            if (aIdx !== -1) {
+              associates[aIdx].avatar = compressedDataUrl;
+              saveStoredAssociates(associates);
+            }
+            // Update in Supabase if available
+            if (state.currentUser?.id && apiService.updateAssociateProfile) {
+              apiService.updateAssociateProfile(state.currentUser.id, { avatar: compressedDataUrl }).catch(() => {});
+            }
+            showToast('Profile photo updated live! 📸', 'fa-image');
+            render();
           });
         }
       });
@@ -4223,17 +4228,30 @@ function bindEvents() {
       render();
     });
 
-    // Mentor In-Page Profile Tab Photo Upload Handler
+    // Mentor In-Page Profile Tab Photo Upload Handler (Live Instant Update)
     const mentorTabAvatarInput = document.getElementById('mentorTabAvatarInput');
     if (mentorTabAvatarInput) {
       mentorTabAvatarInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (file) {
-          compressImageFile(file, (compressedDataUrl) => {
-            if (state.currentUser) state.currentUser.avatar = compressedDataUrl;
-            const preview = document.getElementById('mentorTabAvatarPreview');
-            if (preview) preview.src = compressedDataUrl;
-            showToast('New executive headshot photo selected!', 'fa-image');
+          compressImageFile(file, async (compressedDataUrl) => {
+            if (state.currentUser) {
+              state.currentUser.avatar = compressedDataUrl;
+              localStorage.setItem('mently_user', JSON.stringify(state.currentUser));
+            }
+            // Update in mentors collection & localStorage
+            const mentors = getStoredMentors();
+            const mIdx = mentors.findIndex(m => m.id === state.currentUser?.id || m.email === state.currentUser?.email);
+            if (mIdx !== -1) {
+              mentors[mIdx].avatar = compressedDataUrl;
+              saveStoredMentors(mentors);
+            }
+            // Update in Supabase if available
+            if (state.currentUser?.id && apiService.updateMentorProfile) {
+              apiService.updateMentorProfile(state.currentUser.id, { avatar: compressedDataUrl }).catch(() => {});
+            }
+            showToast('Executive headshot updated live! 📸', 'fa-image');
+            render();
           });
         }
       });
