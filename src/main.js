@@ -1890,12 +1890,6 @@ function renderMentorAvailability(mentor) {
             <div style="font-size: 0.76rem; color: var(--text-secondary);">${stats.m2Count >= 5 ? '✓ Target Met' : `${5 - stats.m2Count} more needed`}</div>
           </div>
         </div>
-
-        <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
-          <button type="button" class="btn-brand-primary" id="btnAutoFill3Months" style="padding: 0.65rem 1.4rem; font-size: 0.88rem; font-weight: 800; border-radius: 50px; background: linear-gradient(135deg, #1b0a3a 0%, #2e1065 100%);">
-            <i class="fa-solid fa-wand-magic-sparkles" style="color: #ffd700;"></i> ✨ Quick 3-Month Auto-Fill (15 Slots)
-          </button>
-        </div>
       </div>
 
       <!-- ADD SINGLE SLOT CARD -->
@@ -1911,14 +1905,25 @@ function renderMentorAvailability(mentor) {
           </div>
           
           <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label" style="font-weight: 700; color: var(--text-primary);">1–Hour Time Slot</label>
+            <label class="form-label" style="font-weight: 700; color: var(--text-primary);">1–Hour Time Slot (9:00 AM – 6:00 PM)</label>
             <select class="form-select" id="inputSlotTime" style="border-radius: 10px; padding: 0.65rem 1rem;">
               <option value="09:00 AM - 10:00 AM">09:00 AM - 10:00 AM</option>
+              <option value="09:30 AM - 10:30 AM">09:30 AM - 10:30 AM</option>
+              <option value="10:00 AM - 11:00 AM">10:00 AM - 11:00 AM</option>
               <option value="10:30 AM - 11:30 AM">10:30 AM - 11:30 AM</option>
+              <option value="11:00 AM - 12:00 PM">11:00 AM - 12:00 PM</option>
+              <option value="11:30 AM - 12:30 PM">11:30 AM - 12:30 PM</option>
+              <option value="12:00 PM - 01:00 PM">12:00 PM - 01:00 PM</option>
+              <option value="12:30 PM - 01:30 PM">12:30 PM - 01:30 PM</option>
               <option value="01:00 PM - 02:00 PM">01:00 PM - 02:00 PM</option>
+              <option value="01:30 PM - 02:30 PM">01:30 PM - 02:30 PM</option>
+              <option value="02:00 PM - 03:00 PM">02:00 PM - 03:00 PM</option>
               <option value="02:30 PM - 03:30 PM">02:30 PM - 03:30 PM</option>
+              <option value="03:00 PM - 04:00 PM">03:00 PM - 04:00 PM</option>
+              <option value="03:30 PM - 04:30 PM">03:30 PM - 04:30 PM</option>
               <option value="04:00 PM - 05:00 PM">04:00 PM - 05:00 PM</option>
-              <option value="05:30 PM - 06:30 PM">05:30 PM - 06:30 PM</option>
+              <option value="04:30 PM - 05:30 PM">04:30 PM - 05:30 PM</option>
+              <option value="05:00 PM - 06:00 PM">05:00 PM - 06:00 PM</option>
             </select>
           </div>
 
